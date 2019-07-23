@@ -258,9 +258,9 @@ class SnorkelClassifier(nn.Module):
 
             # Select the active samples
             if len(Y.size()) == 1:
-                active = Y.detach() != 0
+                active = Y.detach() != -1
             else:
-                active = torch.any(Y.detach() != 0, dim=1)
+                active = torch.any(Y.detach() != -1, dim=1)
 
             # Only calculate the loss when active example exists
             if active.any():

@@ -10,10 +10,9 @@ class LabelingFunction:
     A labeling function (LF) is a function that takes a data point
     as input and produces an integer label, corresponding to a
     class. A labeling function can also abstain from voting by
-    outputting 0. For examples, see the Snorkel tutorials.
+    outputting ``-1``. For examples, see the Snorkel tutorials.
 
-    This class wraps a Python function outputting a label. Metadata
-    about the input data types and label space are stored. Extra
+    This class wraps a Python function outputting a label. Extra
     functionality, such as running preprocessors and storing
     resources, is provided. Simple LFs can be defined via a
     decorator. See ``labeling_function``.
@@ -29,7 +28,7 @@ class LabelingFunction:
     preprocessors
         Preprocessors to run on data points before LF execution
     fault_tolerant
-        Output 0 if LF execution fails?
+        Output ``-1`` if LF execution fails?
 
     Raises
     ------
@@ -87,7 +86,7 @@ class LabelingFunction:
             try:
                 return self._f(x, **self._resources)
             except Exception:
-                return 0
+                return -1
         return self._f(x, **self._resources)
 
     def __repr__(self) -> str:
@@ -105,14 +104,14 @@ class labeling_function:
     Examples
     --------
     >>> @labeling_function()
-    ... def f(x: DataPoint) -> int:
-    ...     return 1 if x.a > 42 else 0
+    ... def f(x):
+    ...     return 0 if x.a > 42 else -1
     >>> f
     LabelingFunction f, Preprocessors: []
 
     >>> @labeling_function(name="my_lf")
-    ... def g(x: DataPoint) -> int:
-    ...     return 1 if x.a > 42 else 0
+    ... def g(x):
+    ...     return 0 if x.a > 42 else -1
     >>> g
     LabelingFunction my_lf, Preprocessors: []
     """

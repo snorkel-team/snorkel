@@ -1,12 +1,11 @@
 from typing import Tuple
 
 import numpy as np
-from scipy.sparse import csr_matrix, lil_matrix
 
 
 def generate_simple_label_matrix(
     n: int, m: int, cardinality: int
-) -> Tuple[np.ndarray, np.ndarray, csr_matrix]:
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Generate a synthetic label matrix with true parameters and labels.
 
     This function generates a set of labeling function conditional probability tables,
@@ -24,14 +23,15 @@ def generate_simple_label_matrix(
 
     Returns
     -------
-    Tuple[np.ndarray, np.ndarray, csr_matrix]
-        A tuple containing the LF conditional probabilities P, the true labels Y, and the output label matrix L
+    Tuple[np.ndarray, np.ndarray, np.ndarray]
+        A tuple containing the LF conditional probabilities P,
+        the true labels Y, and the output label matrix L
     """
     # Generate the conditional probability tables for the LFs
     # The first axis is LF, second is LF output label, third is true class label
     # Note that we include abstains in the LF output space, and that we bias the
     # conditional probabilities towards being non-adversarial
-    P = np.zeros((m, cardinality + 1, cardinality))
+    P = np.empty((m, cardinality + 1, cardinality))
     for i in range(m):
         p = np.random.rand(cardinality + 1, cardinality)
         p[1:, :] += (cardinality - 1) * np.eye(cardinality)
@@ -39,12 +39,11 @@ def generate_simple_label_matrix(
 
     # Generate the true datapoint labels
     # Note: Assuming balanced classes to start
-    Y = np.random.choice(cardinality, n) + 1  # Note y \in {1,...,self.cardinality}
+    Y = np.random.choice(cardinality, n)
 
     # Generate the label matrix L
-    L = lil_matrix((n, m))
+    L = np.empty((n, m), dtype=int)
     for i in range(n):
         for j in range(m):
-            L[i, j] = np.random.choice(cardinality + 1, p=P[j, :, Y[i] - 1])
-    L = L.tocsr()
+            L[i, j] = np.random.choice(cardinality + 1, p=P[j, :, Y[i]]) - 1
     return P, Y, L

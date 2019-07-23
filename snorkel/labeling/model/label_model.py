@@ -3,7 +3,6 @@ from itertools import chain
 from typing import Any, Dict, List, NamedTuple, Optional, Set, Tuple, Union
 
 import numpy as np
-import scipy.sparse as sparse
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -11,6 +10,7 @@ import torch.optim as optim
 from snorkel.analysis.utils import probs_to_preds, set_seed
 from snorkel.classification.scorer import Scorer
 from snorkel.classification.utils import merge_config
+from snorkel.labeling.analysis import LFAnalysis
 from snorkel.labeling.model.graph_utils import get_clique_tree
 from snorkel.labeling.model.logger import Logger
 from snorkel.types import Config
@@ -45,7 +45,7 @@ class TrainConfig(Config):
         Report loss every this many epochs (steps)
     """
 
-    n_epochs: int = 100
+    n_epochs: int = 1000
     l2: float = 0.0
     optimizer: str = "sgd"
     optimizer_config: OptimizerConfig = OptimizerConfig()  # type: ignore
@@ -53,7 +53,7 @@ class TrainConfig(Config):
     lr_scheduler_config: LRSchedulerConfig = LRSchedulerConfig()  # type: ignore
     prec_init: float = 0.7
     seed: int = np.random.randint(1e6)
-    log_freq: int = 10
+    log_freq: int = 100
 
 
 class LabelModelConfig(Config):
@@ -120,30 +120,6 @@ class LabelModel(nn.Module):
 
         # By default, put model in eval mode; switch to train mode in training
         self.eval()
-
-    def _check_L(self, L: np.ndarray) -> np.ndarray:
-        """Check label matrix format and content.
-
-        Parameters
-        ----------
-        L
-            A [n, m] matrix of labels
-
-        Returns
-        -------
-        np.ndarray
-            A [n, m] dense matrix of labels
-
-        Raises
-        ------
-        ValueError
-            If values in L are less than 0
-        """
-        # Check for correct values, e.g. warning if in {-1,0,1}
-        if np.any(L < 0):
-            raise ValueError("L must have values in {0,1,...,k}.")
-
-        return L
 
     def _create_L_ind(self, L: np.ndarray) -> np.ndarray:
         """Convert a label matrix with labels in 0...k to a one-hot format.
@@ -348,13 +324,8 @@ class LabelModel(nn.Module):
         else:
             return c_probs
 
-    def get_accuracies(self, probs: Optional[np.ndarray] = None) -> np.ndarray:
+    def get_accuracies(self) -> np.ndarray:
         """Return the vector of LF accuracies.
-
-        Parameters
-        ----------
-        probs
-            Conditional probabilities, by default None
 
         Returns
         -------
@@ -363,30 +334,26 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
+        >>> L = np.array([[1, 1, 1], [1, 1, -1], [-1, 0, 0], [0, 0, 0]])
         >>> label_model = LabelModel(verbose=False)
-        >>> label_model.fit(L, seed=123)
+        >>> label_model.fit(L)
         >>> np.around(label_model.get_accuracies(), 2)
-        array([0.79, 0.79, 0.01])
+        array([0.99, 0.99, 0.99])
         """
         accs = np.zeros(self.m)
         for i in range(self.m):
-            if probs is None:
-                cps = self._get_conditional_probs(source=i)[1:, :]
-            else:
-                cps = probs[
-                    i * (self.cardinality + 1) : (i + 1) * (self.cardinality + 1)
-                ][1:, :]
+            cps = self._get_conditional_probs(source=i)[1:, :]
             accs[i] = np.diag(cps @ self.P.numpy()).sum()
-        return accs
 
-    def predict_proba(self, L: sparse.spmatrix) -> np.ndarray:
+        return np.clip(accs / self.coverage, 1e-6, 1.0)
+
+    def predict_proba(self, L: np.ndarray) -> np.ndarray:
         r"""Return label probabilities P(Y | \lambda).
 
         Parameters
         ----------
         L
-            An [n,m] matrix with values in {0,1,...,k}
+            An [n,m] matrix with values in {-1,0,1,...,k-1}
 
         Returns
         -------
@@ -395,18 +362,17 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
+        >>> L = np.array([[0, 0, -1], [1, 1, -1], [0, 0, -1]])
         >>> label_model = LabelModel(verbose=False)
-        >>> label_model.fit(L, seed=123)
+        >>> label_model.fit(L)
         >>> np.around(label_model.predict_proba(L), 1)
         array([[1., 0.],
                [0., 1.],
                [1., 0.]])
         """
-        L = L.todense()
-        self._set_constants(L)
-
-        L_aug = self._get_augmented_label_matrix(L)
+        L_shift = L + 1  # convert to {0, 1, ..., k}
+        self._set_constants(L_shift)
+        L_aug = self._get_augmented_label_matrix(L_shift)
         mu = np.clip(self.mu.detach().clone().numpy(), 0.01, 0.99)
         jtm = np.ones(L_aug.shape[1])
 
@@ -417,9 +383,9 @@ class LabelModel(nn.Module):
 
     def predict(
         self,
-        L: sparse.spmatrix,
+        L: np.ndarray,
         return_probs: Optional[bool] = False,
-        tie_break_policy: Optional[str] = "random",
+        tie_break_policy: str = "random",
     ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """Return predicted labels, with ties broken according to policy.
 
@@ -428,17 +394,18 @@ class LabelModel(nn.Module):
         "true-random": randomly choose among the tied options
         "random": randomly choose among tied option using deterministic hash
 
-        NOTE: if tie_break_policy="true-random", repeated runs may have slightly different results due to difference in broken ties
+        NOTE: if tie_break_policy="true-random", repeated runs may have slightly different
+        results due to difference in broken ties
 
 
         Parameters
         ----------
         L
-            An [n,m] matrix with values in {0,1,...,k}
+            An [n,m] matrix with values in {-1,0,1,...,k-1}
         return_probs
-            Whether to return probs along with preds, by default False
+            Whether to return probs along with preds
         tie_break_policy
-            Policy to break ties when converting probabilistic labels to predictions, by default 'random'
+            Policy to break ties when converting probabilistic labels to predictions
 
         Returns
         -------
@@ -451,11 +418,11 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
+        >>> L = np.array([[0, 0, -1], [1, 1, -1], [0, 0, -1]])
         >>> label_model = LabelModel(verbose=False)
         >>> label_model.fit(L, seed=123)
         >>> label_model.predict(L)
-        array([1, 2, 1])
+        array([0, 1, 0])
         """
         Y_probs = self.predict_proba(L)
         Y_p = probs_to_preds(Y_probs, tie_break_policy)
@@ -465,23 +432,23 @@ class LabelModel(nn.Module):
 
     def score(
         self,
-        L: sparse.spmatrix,
+        L: np.ndarray,
         Y: np.ndarray,
         metrics: Optional[List[str]] = ["accuracy"],
-        tie_break_policy: Optional[str] = "random",
+        tie_break_policy: str = "random",
     ) -> Dict[str, float]:
         """Calculate one or more scores from user-specified and/or user-defined metrics.
 
         Parameters
         ----------
         L
-            An [n,m] matrix with values in {0,1,...,k}
+            An [n,m] matrix with values in {-1,0,1,...,k-1}
         Y
             Gold labels associated with datapoints in L
         metrics
-            A list of metric names, by default ["accuracy"]
+            A list of metric names
         tie_break_policy
-            Policy to break ties when converting probabilistic labels to predictions, by default 'random'
+            Policy to break ties when converting probabilistic labels to predictions
 
 
         Returns
@@ -491,7 +458,7 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
+        >>> L = np.array([[1, 1, -1], [0, 0, -1], [1, 1, -1]])
         >>> label_model = LabelModel(verbose=False)
         >>> label_model.fit(L, seed=123)
         >>> label_model.score(L, Y=np.array([1, 1, 1]))
@@ -574,7 +541,7 @@ class LabelModel(nn.Module):
             self.p = (1 / self.cardinality) * np.ones(self.cardinality)
         self.P = torch.diag(torch.from_numpy(self.p)).float()
 
-    def _set_constants(self, L: Union[np.ndarray, sparse.spmatrix]) -> None:
+    def _set_constants(self, L: np.ndarray) -> None:
         self.n, self.m = L.shape
         self.t = 1
 
@@ -723,7 +690,7 @@ class LabelModel(nn.Module):
 
     def fit(
         self,
-        L_train: sparse.spmatrix,
+        L_train: np.ndarray,
         Y_dev: Optional[np.ndarray] = None,
         class_balance: Optional[List[float]] = None,
         **kwargs: Any,
@@ -735,7 +702,7 @@ class LabelModel(nn.Module):
         Parameters
         ----------
         L_train
-            An [n,m] matrix with values in {0,1,...,k}
+            An [n,m] matrix with values in {-1,0,1,...,k-1}
         Y_dev
             Gold labels for dev set for estimating class_balance, by default None
         class_balance
@@ -750,10 +717,10 @@ class LabelModel(nn.Module):
 
         Examples
         --------
-        >>> L = sparse.csr_matrix([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
-        >>> Y_dev = [1, 2, 1]
+        >>> L = np.array([[0, 0, -1], [-1, 0, 1], [1, -1, 0]])
+        >>> Y_dev = [0, 1, 0]
         >>> label_model = LabelModel(verbose=False)
-        >>> label_model.fit(L, n_epochs=1)
+        >>> label_model.fit(L)
         >>> label_model.fit(L, Y_dev=Y_dev)
         >>> label_model.fit(L, class_balance=[0.7, 0.3])
         """
@@ -764,16 +731,17 @@ class LabelModel(nn.Module):
         # Update base config so that it includes all parameters
         set_seed(self.train_config.seed)
 
-        L_train = L_train.todense()
-        L_train = self._check_L(L_train)
+        L_shift = L_train + 1  # convert to {0, 1, ..., k}
         self._set_class_balance(class_balance, Y_dev)
-        self._set_constants(L_train)
+        self._set_constants(L_shift)
         self._create_tree()
+        lf_analysis = LFAnalysis(L_train)
+        self.coverage = lf_analysis.lf_coverages()
 
         # Compute O and initialize params
         if self.config.verbose:  # pragma: no cover
             print("Computing O...")
-        self._generate_O(L_train)
+        self._generate_O(L_shift)
         self._init_params()
 
         # Estimate \mu

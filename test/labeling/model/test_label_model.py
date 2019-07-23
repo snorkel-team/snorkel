@@ -7,7 +7,6 @@ import numpy as np
 import pytest
 import torch
 import torch.nn as nn
-from scipy.sparse import csr_matrix
 
 from snorkel.labeling.model.label_model import LabelModel
 from snorkel.synthetic.synthetic_data import generate_simple_label_matrix
@@ -15,40 +14,33 @@ from snorkel.synthetic.synthetic_data import generate_simple_label_matrix
 
 class LabelModelTest(unittest.TestCase):
     def _set_up_model(self, L: np.ndarray, class_balance: List[float] = [0.5, 0.5]):
-        label_model = LabelModel(k=2, verbose=False)
-        label_model._set_constants(L)
+        label_model = LabelModel(cardinality=2, verbose=False)
+        L_aug = L + 1
+        label_model._set_constants(L_aug)
         label_model._create_tree()
-        label_model._generate_O(L)
+        label_model._generate_O(L_aug)
         label_model._build_mask()
-        label_model._get_augmented_label_matrix(L)
+        label_model._get_augmented_label_matrix(L_aug)
         label_model._set_class_balance(class_balance=class_balance, Y_dev=None)
         label_model._init_params()
-
         return label_model
 
     def test_L_form(self):
-        label_model = LabelModel(k=2, verbose=False)
-
-        # Test dimension constants
-        L = np.array([[1, 2, 1], [1, 0, 1], [2, 1, 1], [1, 2, -1]])
-        with self.assertRaisesRegex(ValueError, "L must have values in"):
-            label_model._check_L(L)
-
-        L = np.array([[1, 2, 1], [1, 2, 1], [2, 1, 1], [1, 2, 1]])
+        label_model = LabelModel(cardinality=2, verbose=False)
+        L = np.array([[0, 1, 0], [0, 1, 0], [1, 0, 0], [0, 1, 0]])
         label_model._set_constants(L)
         self.assertEqual(label_model.n, 4)
         self.assertEqual(label_model.m, 3)
 
     def test_class_balance(self):
-        label_model = LabelModel(k=2, verbose=False)
-
+        label_model = LabelModel(cardinality=2, verbose=False)
         # Test class balance
-        Y_dev = np.array([1, 1, 2, 2, 1, 1, 1, 1, 2, 2])
+        Y_dev = np.array([0, 0, 1, 1, 0, 0, 0, 0, 1, 1])
         label_model._set_class_balance(class_balance=None, Y_dev=Y_dev)
         np.testing.assert_array_almost_equal(label_model.p, np.array([0.6, 0.4]))
 
     def test_generate_O(self):
-        L = np.array([[1, 2, 1], [1, 2, 1], [2, 1, 1], [1, 2, 2]])
+        L = np.array([[0, 1, 0], [0, 1, 0], [1, 0, 0], [0, 1, 1]])
         label_model = self._set_up_model(L)
 
         # O = (1/n) * L^TL = L^TL/4
@@ -64,10 +56,8 @@ class LabelModelTest(unittest.TestCase):
         )
         np.testing.assert_array_almost_equal(label_model.O.numpy(), true_O)
 
-        L = np.array([[1, 2, 1], [1, 2, 1], [2, 1, 1], [1, 2, 2]])
         label_model = self._set_up_model(L)
-
-        label_model._generate_O(L, higher_order=False)
+        label_model._generate_O(L + 1, higher_order=False)
         true_O = np.array(
             [
                 [3 / 4, 0, 0, 3 / 4, 1 / 2, 1 / 4],
@@ -82,7 +72,7 @@ class LabelModelTest(unittest.TestCase):
 
         # Higher order returns same matrix (num source = num cliques)
         # Need to test c_tree form
-        label_model._generate_O(L, higher_order=True)
+        label_model._generate_O(L + 1, higher_order=True)
         np.testing.assert_array_almost_equal(label_model.O.numpy(), true_O)
 
     def test_augmented_L_construction(self):
@@ -90,11 +80,12 @@ class LabelModelTest(unittest.TestCase):
         n = 3
         m = 5
         k = 2
-        L = np.array([[1, 1, 1, 2, 1], [1, 2, 2, 1, 0], [1, 1, 1, 1, 0]])
-        lm = LabelModel(k=k, verbose=False)
-        lm._set_constants(L)
+        L = np.array([[0, 0, 0, 1, 0], [0, 1, 1, 0, -1], [0, 0, 0, 0, -1]])
+        L_shift = L + 1
+        lm = LabelModel(cardinality=k, verbose=False)
+        lm._set_constants(L_shift)
         lm._create_tree()
-        L_aug = lm._get_augmented_label_matrix(L, higher_order=True)
+        L_aug = lm._get_augmented_label_matrix(L_shift, higher_order=True)
 
         # Should have 10 columns:
         # - 5 * 2 = 10 for the sources
@@ -106,8 +97,8 @@ class LabelModelTest(unittest.TestCase):
         # Next, check the singleton entries
         for i in range(n):
             for j in range(m):
-                if L[i, j] > 0:
-                    self.assertEqual(L_aug[i, j * k + L[i, j] - 1], 1)
+                if L_shift[i, j] > 0:
+                    self.assertEqual(L_aug[i, j * k + L_shift[i, j] - 1], 1)
 
         # Finally, check the clique entries
         # Singleton clique 1
@@ -121,14 +112,14 @@ class LabelModelTest(unittest.TestCase):
         self.assertEqual(L_aug[0, j + 1], 0)
 
     def test_conditional_probs(self):
-        L = np.array([[1, 2, 1], [1, 2, 1]])
+        L = np.array([[0, 1, 0], [0, 1, 0]])
         label_model = self._set_up_model(L, class_balance=[0.6, 0.4])
         probs = label_model._get_conditional_probs()
         self.assertLessEqual(probs.max(), 1.0)
         self.assertGreaterEqual(probs.min(), 0.0)
 
     def test_get_accuracy(self):
-        L = np.array([[1, 2], [1, 0]])
+        L = np.array([[0, 1], [0, -1]])
         label_model = self._set_up_model(L)
         probs = np.array(
             [
@@ -163,7 +154,7 @@ class LabelModelTest(unittest.TestCase):
 
     def test_build_mask(self):
 
-        L = np.array([[1, 2, 1], [1, 2, 1]])
+        L = np.array([[0, 1, 0], [0, 1, 0]])
         label_model = self._set_up_model(L)
 
         # block diagonal with 0s for dependent LFs
@@ -183,7 +174,7 @@ class LabelModelTest(unittest.TestCase):
         np.testing.assert_array_equal(mask, true_mask)
 
     def test_init_params(self):
-        L = np.array([[1, 2, 1], [1, 0, 1]])
+        L = np.array([[0, 1, 0], [0, -1, 0]])
         label_model = self._set_up_model(L, class_balance=[0.6, 0.4])
 
         # mu_init = P(\lf=y|Y=y) = clamp(P(\lf=y) * prec_i / P(Y=y), (0,1))
@@ -208,49 +199,47 @@ class LabelModelTest(unittest.TestCase):
         np.testing.assert_array_equal(mu_init, true_mu_init)
 
     def test_predict_proba(self):
-        L = np.array([[1, 2, 1], [1, 2, 1]])
+        L = np.array([[0, 1, 0], [0, 1, 0]])
         label_model = self._set_up_model(L)
 
         label_model.mu = nn.Parameter(label_model.mu_init.clone())
-        probs = label_model.predict_proba(csr_matrix(L))
+        probs = label_model.predict_proba(L)
 
         # with matching labels from 3 LFs, predicted probs clamped at (0.99,0.01)
         true_probs = np.array([[0.99, 0.01], [0.99, 0.01]])
         np.testing.assert_array_almost_equal(probs, true_probs)
 
     def test_predict(self):
-        L = np.array([[1, 2, 1], [1, 2, 1]])
+        L = np.array([[0, 1, 0], [0, 1, 0]])
         label_model = self._set_up_model(L)
 
         label_model.mu = nn.Parameter(label_model.mu_init.clone())
-        preds = label_model.predict(csr_matrix(L))
+        preds = label_model.predict(L)
 
-        true_preds = np.array([1, 1])
+        true_preds = np.array([0, 0])
         np.testing.assert_array_equal(preds, true_preds)
 
-        preds, probs = label_model.predict(csr_matrix(L), return_probs=True)
+        preds, probs = label_model.predict(L, return_probs=True)
         true_probs = np.array([[0.99, 0.01], [0.99, 0.01]])
         np.testing.assert_array_almost_equal(probs, true_probs)
 
     def test_score(self):
-        L = np.array([[1, 2, 1], [1, 2, 1]])
+        L = np.array([[1, 0, 1], [1, 0, 1]])
         label_model = self._set_up_model(L)
         label_model.mu = nn.Parameter(label_model.mu_init.clone())
 
-        results = label_model.score(csr_matrix(L), Y=np.array([1, 2]))
+        results = label_model.score(L, Y=np.array([0, 1]))
         results_expected = dict(accuracy=0.5)
         self.assertEqual(results, results_expected)
 
-        results = label_model.score(
-            L=csr_matrix(L), Y=np.array([2, 1]), metrics=["accuracy", "f1"]
-        )
+        results = label_model.score(L=L, Y=np.array([1, 0]), metrics=["accuracy", "f1"])
         results_expected = dict(accuracy=0.5, f1=2 / 3)
         self.assertEqual(results, results_expected)
 
     def test_loss(self):
-        L = np.array([[1, 0, 1], [1, 2, 0]])
+        L = np.array([[0, -1, 0], [0, 1, -1]])
         label_model = self._set_up_model(L)
-        label_model._get_augmented_label_matrix(L, higher_order=True)
+        label_model._get_augmented_label_matrix(L + 1, higher_order=True)
 
         label_model.mu = nn.Parameter(label_model.mu_init.clone() + 0.05)
 
@@ -262,8 +251,8 @@ class LabelModelTest(unittest.TestCase):
         self.assertAlmostEqual(label_model._loss_mu().item(), 0.675, 3)
 
     def test_model_loss(self):
-        L = csr_matrix([[1, 0, 1], [1, 2, 1]])
-        label_model = LabelModel(k=2, verbose=False)
+        L = np.array([[0, -1, 0], [0, 1, 0]])
+        label_model = LabelModel(cardinality=2, verbose=False)
 
         label_model.train_model(L, n_epochs=1, lr=0.01, momentum=0.9)
         init_loss = label_model._loss_mu().item()
@@ -272,20 +261,21 @@ class LabelModelTest(unittest.TestCase):
         next_loss = label_model._loss_mu().item()
 
         self.assertLessEqual(next_loss, init_loss)
+
         with self.assertRaisesRegex(Exception, "Loss is NaN."):
             label_model.train_model(L, n_epochs=10, lr=1e8)
 
     def test_optimizer(self):
-        L = csr_matrix([[1, 0, 1], [1, 2, 1]])
-        label_model = LabelModel(k=2, verbose=False)
+        L = np.array([[0, -1, 0], [0, 1, 0]])
+        label_model = LabelModel(cardinality=2, verbose=False)
         label_model.train_model(L, n_epochs=1, optimizer="rmsprop")
         label_model.train_model(L, n_epochs=1, optimizer="adam")
         with self.assertRaisesRegex(ValueError, "Did not recognize optimizer"):
             label_model.train_model(L, n_epochs=1, optimizer="bad_opt")
 
     def test_lr_scheduler(self):
-        L = csr_matrix([[1, 0, 1], [1, 2, 1]])
-        label_model = LabelModel(k=2, verbose=False)
+        L = np.array([[0, -1, 0], [0, 1, 0]])
+        label_model = LabelModel(cardinality=2, verbose=False)
         label_model.train_model(L, n_epochs=1, lr_scheduler=None)
         label_model.train_model(L, n_epochs=1, lr_scheduler="exponential")
         with self.assertRaisesRegex(
@@ -294,8 +284,8 @@ class LabelModelTest(unittest.TestCase):
             label_model.train_model(L, n_epochs=1, lr_scheduler="bad_scheduler")
 
     def test_save_and_load(self):
-        L = csr_matrix([[1, 0, 1], [1, 2, 1]])
-        label_model = LabelModel(k=2, verbose=False)
+        L = np.array([[0, -1, 0], [0, 1, 0]])
+        label_model = LabelModel(cardinality=2, verbose=False)
         label_model.train_model(L, n_epochs=1, lr_scheduler=None)
         dir_path = tempfile.mkdtemp()
         save_path = dir_path + "label_model"
@@ -330,7 +320,7 @@ class TestLabelModelAdvanced(unittest.TestCase):
         np.testing.assert_array_almost_equal(P, P_lm, decimal=2)
 
         # Test predicted labels
-        Y_lm = label_model.predict_proba(L).argmax(axis=1) + 1
+        Y_lm = label_model.predict_proba(L).argmax(axis=1)
         err = np.where(Y != Y_lm, 1, 0).sum() / self.n
         self.assertLess(err, 0.1)
 

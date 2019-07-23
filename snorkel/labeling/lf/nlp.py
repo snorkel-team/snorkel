@@ -59,7 +59,7 @@ class NLPLabelingFunction(LabelingFunction):
     preprocessors
         Preprocessors to run before SpacyPreprocessor is executed
     fault_tolerant
-        Output 0 if LF execution fails?
+        Output -1 if LF execution fails?
     text_field
         Name of data point text field to input
     doc_field
@@ -82,7 +82,7 @@ class NLPLabelingFunction(LabelingFunction):
     -------
     >>> def f(x):
     ...     person_ents = [ent for ent in x.doc.ents if ent.label_ == "PERSON"]
-    ...     return 1 if len(person_ents) > 0 else 0
+    ...     return 0 if len(person_ents) > 0 else -1
     >>> has_person_mention = NLPLabelingFunction(name="has_person_mention", f=f)
     >>> has_person_mention
     NLPLabelingFunction has_person_mention, Preprocessors: [SpacyPreprocessor...]
@@ -90,7 +90,7 @@ class NLPLabelingFunction(LabelingFunction):
     >>> from types import SimpleNamespace
     >>> x = SimpleNamespace(text="The movie was good.")
     >>> has_person_mention(x)
-    0
+    -1
 
     Attributes
     ----------
@@ -169,14 +169,14 @@ class nlp_labeling_function:
     >>> @nlp_labeling_function()
     ... def has_person_mention(x):
     ...     person_ents = [ent for ent in x.doc.ents if ent.label_ == "PERSON"]
-    ...     return 1 if len(person_ents) > 0 else 0
+    ...     return 0 if len(person_ents) > 0 else -1
     >>> has_person_mention
     NLPLabelingFunction has_person_mention, Preprocessors: [SpacyPreprocessor...]
 
     >>> from types import SimpleNamespace
     >>> x = SimpleNamespace(text="The movie was good.")
     >>> has_person_mention(x)
-    0
+    -1
     """
 
     def __init__(

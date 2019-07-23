@@ -31,23 +31,17 @@ class SquareHitTracker:
 
 @labeling_function()
 def f(x):
-    if x.num > 42:
-        return 0
-    return None
+    return 0 if x.num > 42 else None
 
 
 @labeling_function(preprocessors=[square])
 def fp(x):
-    if x.num_squared > 42:
-        return 0
-    return None
+    return 0 if x.num_squared > 42 else None
 
 
 @labeling_function(resources=dict(db=[3, 6, 9]))
 def g(x, db):
-    if x.num in db:
-        return 0
-    return None
+    return 0 if x.num in db else None
 
 
 DATA = [3, 43, 12, 9, 3]
@@ -82,9 +76,7 @@ class TestLFApplier(unittest.TestCase):
 
         @labeling_function(preprocessors=[square_memoize])
         def fp_memoized(x):
-            if x.num_squared > 42:
-                return 0
-            return None
+            return 0 if x.num_squared > 42 else None
 
         applier = LFApplier([f, fp_memoized])
         L = applier.apply(data_points)
@@ -115,9 +107,7 @@ class TestPandasApplier(unittest.TestCase):
 
         @labeling_function(preprocessors=[square_memoize])
         def fp_memoized(x):
-            if x.num_squared > 42:
-                return 0
-            return None
+            return 0 if x.num_squared > 42 else None
 
         df = pd.DataFrame(dict(num=DATA))
         applier = PandasLFApplier([f, fp_memoized])
@@ -130,15 +120,11 @@ class TestPandasApplier(unittest.TestCase):
 
         @labeling_function(preprocessors=[spacy])
         def first_is_name(x):
-            if x.doc[0].pos_ == "PROPN":
-                return 0
-            return None
+            return 0 if x.doc[0].pos_ == "PROPN" else None
 
         @labeling_function(preprocessors=[spacy])
         def has_verb(x):
-            if sum(t.pos_ == "VERB" for t in x.doc) > 0:
-                return 0
-            return None
+            return 0 if sum(t.pos_ == "VERB" for t in x.doc) > 0 else None
 
         df = pd.DataFrame(dict(text=TEXT_DATA))
         applier = PandasLFApplier([first_is_name, has_verb])
@@ -151,15 +137,11 @@ class TestPandasApplier(unittest.TestCase):
 
         @labeling_function(preprocessors=[spacy])
         def first_is_name(x):
-            if x.doc[0].pos_ == "PROPN":
-                return 0
-            return None
+            return 0 if x.doc[0].pos_ == "PROPN" else None
 
         @labeling_function(preprocessors=[spacy])
         def has_verb(x):
-            if sum(t.pos_ == "VERB" for t in x.doc) > 0:
-                return 0
-            return None
+            return 0 if sum(t.pos_ == "VERB" for t in x.doc) > 0 else None
 
         df = pd.DataFrame(dict(text=TEXT_DATA))
         applier = PandasLFApplier([first_is_name, has_verb])
@@ -191,9 +173,7 @@ class TestDaskApplier(unittest.TestCase):
 
         @labeling_function(preprocessors=[square_memoize])
         def fp_memoized(x):
-            if x.num_squared > 42:
-                return 0
-            return None
+            return 0 if x.num_squared > 42 else None
 
         df = pd.DataFrame(dict(num=DATA))
         df = dd.from_pandas(df, npartitions=2)
@@ -207,15 +187,11 @@ class TestDaskApplier(unittest.TestCase):
 
         @labeling_function(preprocessors=[spacy])
         def first_is_name(x):
-            if x.doc[0].pos_ == "PROPN":
-                return 0
-            return None
+            return 0 if x.doc[0].pos_ == "PROPN" else None
 
         @labeling_function(preprocessors=[spacy])
         def has_verb(x):
-            if sum(t.pos_ == "VERB" for t in x.doc) > 0:
-                return 0
-            return None
+            return 0 if sum(t.pos_ == "VERB" for t in x.doc) > 0 else None
 
         df = pd.DataFrame(dict(text=TEXT_DATA))
         df = dd.from_pandas(df, npartitions=2)
@@ -230,15 +206,11 @@ class TestDaskApplier(unittest.TestCase):
 
         @labeling_function(preprocessors=[spacy])
         def first_is_name(x):
-            if x.doc[0].pos_ == "PROPN":
-                return 0
-            return None
+            return 0 if x.doc[0].pos_ == "PROPN" else None
 
         @labeling_function(preprocessors=[spacy])
         def has_verb(x):
-            if sum(t.pos_ == "VERB" for t in x.doc) > 0:
-                return 0
-            return None
+            return 0 if sum(t.pos_ == "VERB" for t in x.doc) > 0 else None
 
         df = pd.DataFrame(dict(text=TEXT_DATA))
         df = dd.from_pandas(df, npartitions=2)

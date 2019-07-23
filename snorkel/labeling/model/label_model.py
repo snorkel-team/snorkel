@@ -294,7 +294,7 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        >>> L = sparse.csr_matrix([[1, 1, 0], [2, 2, 0], [1, 1, 0]])
+        >>> L = np.array([[0, 0, -1], [1, 1, -1], [0, 0, -1]])
         >>> label_model = LabelModel(verbose=False)
         >>> label_model.train_model(L)
         >>> np.around(label_model.get_accuracies(), 2)
@@ -382,7 +382,7 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        >>> L = np.ndarray([[0, 0, -1], [1, 1, -1], [0, 0, -1]])
+        >>> L = np.array([[0, 0, -1], [1, 1, -1], [0, 0, -1]])
         >>> label_model = LabelModel(verbose=False)
         >>> label_model.train_model(L)
         >>> label_model.predict(L)
@@ -422,12 +422,12 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        >>> L = np.array([[0, 0, -1], [1, 1, -1], [0, 0, -1]])
+        >>> L = np.array([[1, 1, -1], [0, 0, -1], [1, 1, -1]])
         >>> label_model = LabelModel(verbose=False)
         >>> label_model.train_model(L)
-        >>> label_model.score(L, Y=np.array([0, 0, 0]))
+        >>> label_model.score(L, Y=np.array([1, 1, 1]))
         {'accuracy': 0.6666666666666666}
-        >>> label_model.score(L, Y=np.array([0, 0, 0]), metrics=["f1"])
+        >>> label_model.score(L, Y=np.array([1, 1, 1]), metrics=["f1"])
         {'f1': 0.8}
         """
         Y_pred, Y_prob = self.predict(

@@ -2,7 +2,6 @@ from typing import Any
 
 import numpy as np
 
-from snorkel.analysis.utils import to_int_label_array
 from snorkel.labeling.model.label_model import LabelModel
 
 
@@ -139,15 +138,13 @@ class MajorityLabelVoter(BaselineVoter):
                [0.5, 0.5],
                [0.5, 0.5]])
         """
-        L = L.todense()
-        L = to_int_label_array(L, flatten_vector=False)
         n, m = L.shape
         Y_p = np.zeros((n, self.cardinality))
         for i in range(n):
             counts = np.zeros(self.cardinality)
             for j in range(m):
-                if L[i, j]:
-                    counts[L[i, j] - 1] += 1
+                if L[i, j] != -1:
+                    counts[L[i, j]] += 1
             Y_p[i, :] = np.where(counts == max(counts), 1, 0)
         Y_p /= Y_p.sum(axis=1).reshape(-1, 1)
         return Y_p

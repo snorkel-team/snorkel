@@ -19,23 +19,17 @@ def square(x: Row) -> Row:
 
 @labeling_function()
 def f(x):
-    if x.num > 42:
-        return 0
-    return None
+    return 0 if x.num > 42 else None
 
 
 @labeling_function(preprocessors=[square])
 def fp(x):
-    if x.num_squared > 42:
-        return 0
-    return None
+    return 0 if x.num_squared > 42 else None
 
 
 @labeling_function(resources=dict(db=[3, 6, 9]))
 def g(x, db):
-    if x.num in db:
-        return 0
-    return None
+    return 0 if x.num in db else None
 
 
 DATA = [3, 43, 12, 9, 3]
@@ -71,7 +65,7 @@ class TestSparkApplier(unittest.TestCase):
 
     @pytest.mark.complex
     @pytest.mark.spark
-    def test_lf_applier_pandas_preprocessor_memoized(self) -> None:
+    def test_lf_applier_spark_preprocessor_memoized(self) -> None:
         sc = SparkContext.getOrCreate()
         sql = SQLContext(sc)
 
@@ -81,9 +75,7 @@ class TestSparkApplier(unittest.TestCase):
 
         @labeling_function(preprocessors=[square_memoize])
         def fp_memoized(x):
-            if x.num_squared > 42:
-                return 0
-            return None
+            return 0 if x.num_squared > 42 else None
 
         df = pd.DataFrame(dict(num=DATA))
         rdd = sql.createDataFrame(df).rdd

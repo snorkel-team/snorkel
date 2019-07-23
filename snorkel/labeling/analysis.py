@@ -18,6 +18,7 @@ class LFAnalysis:
         Label matrix where L_{i,j} is the label given by the jth LF to the ith
         candidate (using -1 for abstain)
     """
+
     def __init__(self, L: np.ndarray) -> None:
         self.L = L
         self._L_sparse = sparse.csr_matrix(L + 1)
@@ -33,7 +34,11 @@ class LFAnalysis:
     def _conflicted_data_points(self) -> np.ndarray:
         """Get indicator vector z where z_i = 1 if x_i is labeled differently by two LFs."""
         m = sparse.diags(np.ravel(self._L_sparse.max(axis=1).todense()))
-        return np.ravel(np.max(m @ (self._L_sparse != 0) != self._L_sparse, axis=1).astype(int).todense())
+        return np.ravel(
+            np.max(m @ (self._L_sparse != 0) != self._L_sparse, axis=1)
+            .astype(int)
+            .todense()
+        )
 
     def label_coverage(self) -> float:
         """Compute the fraction of data points with at least one label.
@@ -121,7 +126,10 @@ class LFAnalysis:
         >>> LFAnalysis(L).lf_polarities()
         [[0, 1], [0], [0]]
         """
-        return [sorted(list(set(self._L_sparse[:, i].data - 1))) for i in range(self._L_sparse.shape[1])]
+        return [
+            sorted(list(set(self._L_sparse[:, i].data - 1)))
+            for i in range(self._L_sparse.shape[1])
+        ]
 
     def lf_coverages(self) -> np.ndarray:
         """Compute frac. of examples each LF labels.
@@ -179,7 +187,11 @@ class LFAnalysis:
         >>> LFAnalysis(L).lf_overlaps(normalize_by_coverage=True)
         array([1.  , 0.75, 1.  ])
         """
-        overlaps = (self._L_sparse != 0).T @ self._overlapped_data_points() / self._L_sparse.shape[0]
+        overlaps = (
+            (self._L_sparse != 0).T
+            @ self._overlapped_data_points()
+            / self._L_sparse.shape[0]
+        )
         if normalize_by_coverage:
             overlaps /= self.lf_coverages()
         return np.nan_to_num(overlaps)
@@ -218,7 +230,11 @@ class LFAnalysis:
         >>> LFAnalysis(L).lf_conflicts(normalize_by_overlaps=True)
         array([0.5       , 0.33333333, 0.        ])
         """
-        conflicts = (self._L_sparse != 0).T @ self._conflicted_data_points() / self._L_sparse.shape[0]
+        conflicts = (
+            (self._L_sparse != 0).T
+            @ self._conflicted_data_points()
+            / self._L_sparse.shape[0]
+        )
         if normalize_by_overlaps:
             conflicts /= self.lf_overlaps()
         return np.nan_to_num(conflicts)
@@ -239,7 +255,11 @@ class LFAnalysis:
             Empirical accuracies for each LF
         """
         Y = to_int_label_array(Y)
-        X = np.where(self.L == -1, 0, np.where(self.L == np.vstack([Y] * self.L.shape[1]).T, 1, -1))
+        X = np.where(
+            self.L == -1,
+            0,
+            np.where(self.L == np.vstack([Y] * self.L.shape[1]).T, 1, -1),
+        )
         return np.nan_to_num(0.5 * (X.sum(axis=0) / (self.L != -1).sum(axis=0) + 1))
 
     def lf_empirical_probs(self, Y: np.ndarray, k: int) -> np.ndarray:
@@ -315,9 +335,7 @@ class LFAnalysis:
 
         if Y is not None:
             col_names.extend(["Correct", "Incorrect", "Emp. Acc."])
-            confusions = [
-                confusion_matrix(Y, self.L[:, i])[1:, 1:] for i in range(m)
-            ]
+            confusions = [confusion_matrix(Y, self.L[:, i])[1:, 1:] for i in range(m)]
             corrects = [np.diagonal(conf).sum() for conf in confusions]
             incorrects = [
                 conf.sum() - correct for conf, correct in zip(confusions, corrects)

@@ -1,7 +1,7 @@
 from itertools import chain
 from typing import List, Tuple
 
-import scipy.sparse as sparse
+import numpy as np
 from tqdm import tqdm
 
 from snorkel.labeling.lf import LabelingFunction
@@ -32,10 +32,11 @@ class BaseLFApplier:
     def __init__(self, lfs: List[LabelingFunction]) -> None:
         self._lfs = lfs
 
-    def _matrix_from_row_data(self, labels: List[RowData]) -> sparse.csr_matrix:
+    def _matrix_from_row_data(self, labels: List[RowData]) -> np.ndarray:
         row, col, data = zip(*chain.from_iterable(labels))
-        n, m = len(labels), len(self._lfs)
-        return sparse.csr_matrix((data, (row, col)), shape=(n, m))
+        L = np.zeros((len(labels), len(self._lfs)), dtype=int) - 1
+        L[row, col] = data
+        return L
 
 
 def apply_lfs_to_data_point(
@@ -60,7 +61,7 @@ def apply_lfs_to_data_point(
     labels = []
     for j, lf in enumerate(lfs):
         y = lf(x)
-        if y != 0:
+        if y is not None:
             labels.append((index, j, y))
     return labels
 
@@ -72,7 +73,7 @@ class LFApplier(BaseLFApplier):
     useful for testing.
     """
 
-    def apply(self, data_points: DataPoints) -> sparse.csr_matrix:
+    def apply(self, data_points: DataPoints) -> np.ndarray:
         """Label list of data points with LFs.
 
         Parameters
@@ -82,8 +83,8 @@ class LFApplier(BaseLFApplier):
 
         Returns
         -------
-        sparse.csr_matrix
-            Sparse matrix of labels emitted by LFs
+        np.ndarray
+            Matrix of labels emitted by LFs
         """
         labels = []
         for i, x in tqdm(enumerate(data_points)):

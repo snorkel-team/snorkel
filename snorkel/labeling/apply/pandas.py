@@ -1,7 +1,7 @@
 from functools import partial
 from typing import List, Tuple
 
-import scipy.sparse as sparse
+import numpy as np
 from pandas import DataFrame
 from tqdm import tqdm
 
@@ -31,7 +31,7 @@ def apply_lfs_to_data_point(x: DataPoint, lfs: List[LabelingFunction]) -> Pandas
     labels = []
     for j, lf in enumerate(lfs):
         y = lf(x)
-        if y != 0:
+        if y is not None:
             labels.append((j, y))
     return labels
 
@@ -53,7 +53,7 @@ class PandasLFApplier(BaseLFApplier):
     For large datasets, consider ``DaskLFApplier`` or ``SparkLFApplier``.
     """
 
-    def apply(self, df: DataFrame) -> sparse.csr_matrix:  # type: ignore
+    def apply(self, df: DataFrame) -> np.ndarray:
         """Label Pandas DataFrame of data points with LFs.
 
         Parameters
@@ -63,8 +63,8 @@ class PandasLFApplier(BaseLFApplier):
 
         Returns
         -------
-        sparse.csr_matrix
-            Sparse matrix of labels emitted by LFs
+        np.ndarray
+            Matrix of labels emitted by LFs
         """
         apply_fn = partial(apply_lfs_to_data_point, lfs=self._lfs)
         tqdm.pandas()

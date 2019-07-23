@@ -1,7 +1,7 @@
 from typing import Any, Callable, List, Mapping, Optional
 
 from snorkel.labeling.preprocess import BasePreprocessor
-from snorkel.types import DataPoint
+from snorkel.types import DataPoint, Label
 
 
 class LabelingFunction:
@@ -10,10 +10,9 @@ class LabelingFunction:
     A labeling function (LF) is a function that takes a data point
     as input and produces an integer label, corresponding to a
     class. A labeling function can also abstain from voting by
-    outputting 0. For examples, see the Snorkel tutorials.
+    outputting ``None``. For examples, see the Snorkel tutorials.
 
-    This class wraps a Python function outputting a label. Metadata
-    about the input data types and label space are stored. Extra
+    This class wraps a Python function outputting a label. Extra
     functionality, such as running preprocessors and storing
     resources, is provided. Simple LFs can be defined via a
     decorator. See ``labeling_function``.
@@ -29,7 +28,7 @@ class LabelingFunction:
     preprocessors
         Preprocessors to run on data points before LF execution
     fault_tolerant
-        Output 0 if LF execution fails?
+        Output ``None`` if LF execution fails?
 
     Raises
     ------
@@ -47,7 +46,7 @@ class LabelingFunction:
     def __init__(
         self,
         name: str,
-        f: Callable[..., int],
+        f: Callable[..., Label],
         resources: Optional[Mapping[str, Any]] = None,
         preprocessors: Optional[List[BasePreprocessor]] = None,
         fault_tolerant: bool = False,
@@ -65,7 +64,7 @@ class LabelingFunction:
                 raise ValueError("Preprocessor should not return None")
         return x
 
-    def __call__(self, x: DataPoint) -> int:
+    def __call__(self, x: DataPoint) -> Label:
         """Label data point.
 
         Runs all preprocessors, then passes to LF. If an exception
@@ -87,7 +86,7 @@ class LabelingFunction:
             try:
                 return self._f(x, **self._resources)
             except Exception:
-                return 0
+                return None
         return self._f(x, **self._resources)
 
     def __repr__(self) -> str:
@@ -105,14 +104,14 @@ class labeling_function:
     Examples
     --------
     >>> @labeling_function()
-    ... def f(x: DataPoint) -> int:
-    ...     return 1 if x.a > 42 else 0
+    ... def f(x):
+    ...     if x.a > 42: return 1
     >>> f
     LabelingFunction f, Preprocessors: []
 
     >>> @labeling_function(name="my_lf")
-    ... def g(x: DataPoint) -> int:
-    ...     return 1 if x.a > 42 else 0
+    ... def g(x):
+    ...     if x.a > 42: return 1
     >>> g
     LabelingFunction my_lf, Preprocessors: []
     """
@@ -129,7 +128,7 @@ class labeling_function:
         self.preprocessors = preprocessors
         self.fault_tolerant = fault_tolerant
 
-    def __call__(self, f: Callable[..., int]) -> LabelingFunction:
+    def __call__(self, f: Callable[..., Label]) -> LabelingFunction:
         """Wrap a function to create a ``LabelingFunction``.
 
         Parameters

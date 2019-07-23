@@ -1,8 +1,6 @@
 from typing import Tuple
 
-# NB: don't include pyspark in requirements.txt to avoid
-# overwriting existing system Spark install
-import scipy.sparse as sparse
+import numpy as np
 from pyspark import RDD
 
 from snorkel.types import DataPoint
@@ -20,7 +18,7 @@ class SparkLFApplier(BaseLFApplier):
     ``test/labeling/apply/lf_applier_spark_test_script.py``.
     """
 
-    def apply(self, data_points: RDD) -> sparse.csr_matrix:
+    def apply(self, data_points: RDD) -> np.ndarray:
         """Label PySpark RDD of data points with LFs.
 
         Parameters
@@ -30,8 +28,8 @@ class SparkLFApplier(BaseLFApplier):
 
         Returns
         -------
-        sparse.csr_matrix
-            Sparse matrix of labels emitted by LFs
+        np.ndarray
+            Matrix of labels emitted by LFs
         """
 
         def map_fn(args: Tuple[DataPoint, int]) -> RowData:

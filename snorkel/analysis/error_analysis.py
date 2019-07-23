@@ -1,10 +1,9 @@
 from collections import defaultdict
-from typing import Dict, DefaultDict, List, Tuple
+from typing import DefaultDict, Dict, List, Tuple
 
 import numpy as np
 
 from .utils import to_int_label_array
-
 
 Coord = Tuple[int, int]
 

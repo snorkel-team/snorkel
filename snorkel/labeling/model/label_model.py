@@ -10,6 +10,7 @@ import torch.optim as optim
 from snorkel.analysis.utils import probs_to_preds, set_seed
 from snorkel.classification.scorer import Scorer
 from snorkel.classification.utils import recursive_merge_dicts
+from snorkel.labeling.analysis import lf_coverages
 from snorkel.labeling.model.graph_utils import get_clique_tree
 from snorkel.labeling.model.lm_defaults import lm_default_config
 from snorkel.labeling.model.logger import Logger
@@ -282,11 +283,6 @@ class LabelModel(nn.Module):
     def get_accuracies(self) -> np.ndarray:
         """Return the vector of LF accuracies.
 
-        Parameters
-        ----------
-        L
-            An [n,m] matrix with values in {0,1,...,k}
-
         Returns
         -------
         np.ndarray
@@ -305,8 +301,7 @@ class LabelModel(nn.Module):
             cps = self._get_conditional_probs(source=i)[1:, :]
             accs[i] = np.diag(cps @ self.P.numpy()).sum()
 
-        coverage = np.mean(np.asarray(self.L_train) != 0, axis=0)
-        return np.clip(accs / coverage, 0.01, 1.0)
+        return np.clip(accs / self.coverage, 0.01, 1.0)
 
     def predict_proba(self, L: np.ndarray) -> np.ndarray:
         r"""Return label probabilities P(Y | \lambda).
@@ -625,7 +620,7 @@ class LabelModel(nn.Module):
         self._set_class_balance(class_balance, Y_dev)
         self._set_constants(L_shift)
         self._create_tree()
-        self.L_train = L_train
+        self.coverage = lf_coverages(L_train)
 
         # Compute O and initialize params
         if self.config["verbose"]:  # pragma: no cover

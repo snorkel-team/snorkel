@@ -54,14 +54,17 @@ def probs_to_preds(
     >>> probs_to_preds(np.array([[0.8, 0.1, 0.1]]))
     array([1])
     """
-    n, k = probs.shape
+    num_datapoints, num_classes = probs.shape
     if k <= 1:
-        raise ValueError(f"probs must have at least 2 columns. Instead, got {k}.")
+        raise ValueError(
+            f"probs must have probabilities for at least 2 classes. "
+            f"Instead, got {num_classes} classes."
+        )
 
-    Y_pred = np.zeros(n)
+    Y_pred = np.zeros(num_datapoints)
     diffs = np.abs(probs - probs.max(axis=1).reshape(-1, 1))
 
-    for i in range(n):
+    for i in range(num_datapoints):
         max_idxs = np.where(diffs[i, :] < tol)[0]
         if len(max_idxs) == 1:
             Y_pred[i] = max_idxs[0] + 1

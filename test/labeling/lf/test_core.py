@@ -1,6 +1,7 @@
 import pickle
 import unittest
 from types import SimpleNamespace
+from typing import List
 
 from snorkel.labeling.lf import LabelingFunction, labeling_function
 from snorkel.labeling.preprocess import preprocessor
@@ -18,16 +19,12 @@ def returns_none(x: DataPoint) -> DataPoint:
     return None
 
 
-def f(x):
-    if x.num > 42:
-        return 0
-    return None
+def f(x: DataPoint) -> int:
+    return 0 if x.num > 42 else -1
 
 
-def g(x, db):
-    if x.num in db:
-        return 0
-    return None
+def g(x: DataPoint, db: List[int]) -> int:
+    return 0 if x.num in db else -1
 
 
 class TestLabelingFunction(unittest.TestCase):
@@ -35,7 +32,7 @@ class TestLabelingFunction(unittest.TestCase):
         x_43 = SimpleNamespace(num=43)
         x_19 = SimpleNamespace(num=19)
         self.assertEqual(lf(x_43), 0)
-        self.assertIsNone(lf(x_19))
+        self.assertEqual(lf(x_19), -1)
 
     def _run_lf_raise(self, lf: LabelingFunction) -> None:
         x_none = SimpleNamespace(num=None)
@@ -44,7 +41,7 @@ class TestLabelingFunction(unittest.TestCase):
 
     def _run_lf_no_raise(self, lf: LabelingFunction) -> None:
         x_none = SimpleNamespace(num=None)
-        self.assertIsNone(lf(x_none))
+        self.assertEqual(lf(x_none), -1)
 
     def test_labeling_function(self) -> None:
         lf = LabelingFunction(name="my_lf", f=f)
@@ -69,7 +66,7 @@ class TestLabelingFunction(unittest.TestCase):
         x_2 = SimpleNamespace(num=2)
         self.assertEqual(lf(x_43), 0)
         self.assertEqual(lf(x_6), 0)
-        self.assertIsNone(lf(x_2))
+        self.assertEqual(lf(x_2), -1)
 
     def test_labeling_function_returns_none(self) -> None:
         lf = LabelingFunction(name="my_lf", f=f, preprocessors=[square, returns_none])
@@ -86,10 +83,8 @@ class TestLabelingFunction(unittest.TestCase):
 
     def test_labeling_function_decorator(self) -> None:
         @labeling_function()
-        def lf(x):
-            if x.num > 42:
-                return 0
-            return None
+        def lf(x: DataPoint) -> int:
+            return 0 if x.num > 42 else -1
 
         self.assertIsInstance(lf, LabelingFunction)
         self.assertEqual(lf.name, "lf")
@@ -98,10 +93,8 @@ class TestLabelingFunction(unittest.TestCase):
 
     def test_labeling_function_decorator_args(self) -> None:
         @labeling_function(name="my_lf", fault_tolerant=True)
-        def lf(x):
-            if x.num > 42:
-                return 0
-            return None
+        def lf(x: DataPoint) -> int:
+            return 0 if x.num > 42 else -1
 
         self.assertIsInstance(lf, LabelingFunction)
         self.assertEqual(lf.name, "my_lf")

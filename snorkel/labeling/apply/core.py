@@ -61,7 +61,7 @@ def apply_lfs_to_data_point(
     labels = []
     for j, lf in enumerate(lfs):
         y = lf(x)
-        if y is not None:
+        if y >= 0:
             labels.append((index, j, y))
     return labels
 

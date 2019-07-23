@@ -1,5 +1,6 @@
 import unittest
 from types import SimpleNamespace
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -30,18 +31,18 @@ class SquareHitTracker:
 
 
 @labeling_function()
-def f(x):
-    return 0 if x.num > 42 else None
+def f(x: DataPoint) -> int:
+    return 0 if x.num > 42 else -1
 
 
 @labeling_function(preprocessors=[square])
-def fp(x):
-    return 0 if x.num_squared > 42 else None
+def fp(x: DataPoint) -> int:
+    return 0 if x.num_squared > 42 else -1
 
 
 @labeling_function(resources=dict(db=[3, 6, 9]))
-def g(x, db):
-    return 0 if x.num in db else None
+def g(x: DataPoint, db: List[int]) -> int:
+    return 0 if x.num in db else -1
 
 
 DATA = [3, 43, 12, 9, 3]
@@ -75,8 +76,8 @@ class TestLFApplier(unittest.TestCase):
             return x
 
         @labeling_function(preprocessors=[square_memoize])
-        def fp_memoized(x):
-            return 0 if x.num_squared > 42 else None
+        def fp_memoized(x: DataPoint) -> int:
+            return 0 if x.num_squared > 42 else -1
 
         applier = LFApplier([f, fp_memoized])
         L = applier.apply(data_points)
@@ -106,8 +107,8 @@ class TestPandasApplier(unittest.TestCase):
             return x
 
         @labeling_function(preprocessors=[square_memoize])
-        def fp_memoized(x):
-            return 0 if x.num_squared > 42 else None
+        def fp_memoized(x: DataPoint) -> int:
+            return 0 if x.num_squared > 42 else -1
 
         df = pd.DataFrame(dict(num=DATA))
         applier = PandasLFApplier([f, fp_memoized])
@@ -119,12 +120,12 @@ class TestPandasApplier(unittest.TestCase):
         spacy = SpacyPreprocessor(text_field="text", doc_field="doc")
 
         @labeling_function(preprocessors=[spacy])
-        def first_is_name(x):
-            return 0 if x.doc[0].pos_ == "PROPN" else None
+        def first_is_name(x: DataPoint) -> int:
+            return 0 if x.doc[0].pos_ == "PROPN" else -1
 
         @labeling_function(preprocessors=[spacy])
-        def has_verb(x):
-            return 0 if sum(t.pos_ == "VERB" for t in x.doc) > 0 else None
+        def has_verb(x: DataPoint) -> int:
+            return 0 if sum(t.pos_ == "VERB" for t in x.doc) > 0 else -1
 
         df = pd.DataFrame(dict(text=TEXT_DATA))
         applier = PandasLFApplier([first_is_name, has_verb])
@@ -136,12 +137,12 @@ class TestPandasApplier(unittest.TestCase):
         spacy.memoize = True
 
         @labeling_function(preprocessors=[spacy])
-        def first_is_name(x):
-            return 0 if x.doc[0].pos_ == "PROPN" else None
+        def first_is_name(x: DataPoint) -> int:
+            return 0 if x.doc[0].pos_ == "PROPN" else -1
 
         @labeling_function(preprocessors=[spacy])
-        def has_verb(x):
-            return 0 if sum(t.pos_ == "VERB" for t in x.doc) > 0 else None
+        def has_verb(x: DataPoint) -> int:
+            return 0 if sum(t.pos_ == "VERB" for t in x.doc) > 0 else -1
 
         df = pd.DataFrame(dict(text=TEXT_DATA))
         applier = PandasLFApplier([first_is_name, has_verb])
@@ -172,8 +173,8 @@ class TestDaskApplier(unittest.TestCase):
             return x
 
         @labeling_function(preprocessors=[square_memoize])
-        def fp_memoized(x):
-            return 0 if x.num_squared > 42 else None
+        def fp_memoized(x: DataPoint) -> int:
+            return 0 if x.num_squared > 42 else -1
 
         df = pd.DataFrame(dict(num=DATA))
         df = dd.from_pandas(df, npartitions=2)
@@ -186,12 +187,12 @@ class TestDaskApplier(unittest.TestCase):
         spacy = SpacyPreprocessor(text_field="text", doc_field="doc")
 
         @labeling_function(preprocessors=[spacy])
-        def first_is_name(x):
-            return 0 if x.doc[0].pos_ == "PROPN" else None
+        def first_is_name(x: DataPoint) -> int:
+            return 0 if x.doc[0].pos_ == "PROPN" else -1
 
         @labeling_function(preprocessors=[spacy])
-        def has_verb(x):
-            return 0 if sum(t.pos_ == "VERB" for t in x.doc) > 0 else None
+        def has_verb(x: DataPoint) -> int:
+            return 0 if sum(t.pos_ == "VERB" for t in x.doc) > 0 else -1
 
         df = pd.DataFrame(dict(text=TEXT_DATA))
         df = dd.from_pandas(df, npartitions=2)
@@ -205,12 +206,12 @@ class TestDaskApplier(unittest.TestCase):
         spacy.memoize = True
 
         @labeling_function(preprocessors=[spacy])
-        def first_is_name(x):
-            return 0 if x.doc[0].pos_ == "PROPN" else None
+        def first_is_name(x: DataPoint) -> int:
+            return 0 if x.doc[0].pos_ == "PROPN" else -1
 
         @labeling_function(preprocessors=[spacy])
-        def has_verb(x):
-            return 0 if sum(t.pos_ == "VERB" for t in x.doc) > 0 else None
+        def has_verb(x: DataPoint) -> int:
+            return 0 if sum(t.pos_ == "VERB" for t in x.doc) > 0 else -1
 
         df = pd.DataFrame(dict(text=TEXT_DATA))
         df = dd.from_pandas(df, npartitions=2)

@@ -1,4 +1,5 @@
 import unittest
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -18,18 +19,18 @@ def square(x: Row) -> Row:
 
 
 @labeling_function()
-def f(x):
-    return 0 if x.num > 42 else None
+def f(x: DataPoint) -> int:
+    return 0 if x.num > 42 else -1
 
 
 @labeling_function(preprocessors=[square])
-def fp(x):
-    return 0 if x.num_squared > 42 else None
+def fp(x: DataPoint) -> int:
+    return 0 if x.num_squared > 42 else -1
 
 
 @labeling_function(resources=dict(db=[3, 6, 9]))
-def g(x, db):
-    return 0 if x.num in db else None
+def g(x: DataPoint, db: List[int]) -> int:
+    return 0 if x.num in db else -1
 
 
 DATA = [3, 43, 12, 9, 3]
@@ -74,8 +75,8 @@ class TestSparkApplier(unittest.TestCase):
             return Row(num=x.num, num_squared=x.num ** 2)
 
         @labeling_function(preprocessors=[square_memoize])
-        def fp_memoized(x):
-            return 0 if x.num_squared > 42 else None
+        def fp_memoized(x: DataPoint) -> int:
+            return 0 if x.num_squared > 42 else -1
 
         df = pd.DataFrame(dict(num=DATA))
         rdd = sql.createDataFrame(df).rdd

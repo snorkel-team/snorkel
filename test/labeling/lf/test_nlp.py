@@ -15,9 +15,9 @@ def combine_text(x: DataPoint) -> DataPoint:
     return x
 
 
-def has_person_mention(x):
+def has_person_mention(x: DataPoint) -> int:
     person_ents = [ent for ent in x.doc.ents if ent.label_ == "PERSON"]
-    return 0 if len(person_ents) > 0 else None
+    return 0 if len(person_ents) > 0 else -1
 
 
 class TestNLPLabelingFunction(unittest.TestCase):
@@ -25,7 +25,7 @@ class TestNLPLabelingFunction(unittest.TestCase):
         x = SimpleNamespace(
             num=8, title="Great film!", article="The movie is really great!"
         )
-        self.assertIsNone(lf(x))
+        self.assertEqual(lf(x), -1)
         x = SimpleNamespace(num=8, title="Nice movie!", article="Jane Doe acted well.")
         self.assertEqual(lf(x), 0)
 
@@ -56,9 +56,9 @@ class TestNLPLabelingFunction(unittest.TestCase):
 
     def test_nlp_labeling_function_decorator(self) -> None:
         @nlp_labeling_function(preprocessors=[combine_text])
-        def has_person_mention(x):
+        def has_person_mention(x: DataPoint) -> int:
             person_ents = [ent for ent in x.doc.ents if ent.label_ == "PERSON"]
-            return 0 if len(person_ents) > 0 else None
+            return 0 if len(person_ents) > 0 else -1
 
         self.assertIsInstance(has_person_mention, NLPLabelingFunction)
         self.assertEqual(has_person_mention.name, "has_person_mention")
@@ -70,8 +70,8 @@ class TestNLPLabelingFunction(unittest.TestCase):
         )
 
         @nlp_labeling_function(preprocessors=[combine_text])
-        def lf2(x):
-            return 0 if len(x.doc) < 9 else None
+        def lf2(x: DataPoint) -> int:
+            return 0 if len(x.doc) < 9 else -1
 
         lf._nlp_config.nlp.reset_cache()
         self.assertEqual(len(lf._nlp_config.nlp._cache), 0)
@@ -88,6 +88,6 @@ class TestNLPLabelingFunction(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "different parameters"):
 
             @nlp_labeling_function()
-            def has_person_mention(x):
+            def has_person_mention(x: DataPoint) -> int:
                 person_ents = [ent for ent in x.doc.ents if ent.label_ == "PERSON"]
-                return 0 if len(person_ents) > 0 else None
+                return 0 if len(person_ents) > 0 else -1

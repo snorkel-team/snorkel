@@ -31,7 +31,7 @@ def apply_lfs_to_data_point(x: DataPoint, lfs: List[LabelingFunction]) -> Pandas
     labels = []
     for j, lf in enumerate(lfs):
         y = lf(x)
-        if y is not None:
+        if y >= 0:
             labels.append((j, y))
     return labels
 

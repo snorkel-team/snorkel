@@ -5,19 +5,8 @@ import torch
 from snorkel.classification.utils import (
     collect_flow_outputs_by_suffix,
     list_to_tensor,
-    merge_config,
     pad_batch,
 )
-from snorkel.types import Config
-
-
-class FooConfig(Config):
-    a: float = 0.5
-
-
-class BarConfig(Config):
-    a: int = 1
-    foo_config: FooConfig = FooConfig()  # type: ignore
 
 
 class UtilsTest(unittest.TestCase):
@@ -125,12 +114,6 @@ class UtilsTest(unittest.TestCase):
                 padded_batch, torch.Tensor([[1, 2, 2, 3], [4, 5, 6, 0], [7, 8, 9, 0]])
             )
         )
-
-    def test_merge_config(self):
-        config_updates = {"a": 2, "foo_config": {"a": 0.75}}
-        bar_config = merge_config(BarConfig(), config_updates)
-        self.assertEqual(bar_config.a, 2)
-        self.assertEqual(bar_config.foo_config.a, 0.75)
 
     def test_collect_flow_outputs_by_suffix(self):
         flow_dict = {

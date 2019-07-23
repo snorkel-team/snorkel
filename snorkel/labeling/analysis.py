@@ -17,6 +17,11 @@ class LFAnalysis:
     L
         Label matrix where L_{i,j} is the label given by the jth LF to the ith
         candidate (using -1 for abstain)
+
+    Attributes
+    ----------
+    L
+        See above.
     """
 
     def __init__(self, L: np.ndarray) -> None:

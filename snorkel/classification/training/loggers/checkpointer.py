@@ -35,7 +35,7 @@ class CheckpointerConfig(Config):
         If True, clear all checkpoints besides the best so far.
     """
 
-    checkpoint_dir: Optional[str] = None
+    checkpoint_dir: str = "checkpoints"
     checkpoint_factor: int = 1
     checkpoint_metric: str = "model/all/train/loss:min"
     checkpoint_task_metrics: Optional[List[str]] = None
@@ -88,18 +88,19 @@ class Checkpointer:
         if self.checkpoint_freq <= 0:
             raise ValueError(
                 f"Invalid checkpoint freq {self.checkpoint_freq}, "
-                f"must be greater 0."
+                f"must be greater than 0."
             )
 
         logging.info(
-            f"Save checkpoints at {self.checkpoint_dir} every "
+            f"Save checkpoints at '{self.checkpoint_dir}' every "
             f"{self.checkpoint_freq} {self.checkpoint_unit}."
         )
 
-        logging.info(
-            f"No checkpoints will be saved before {self.checkpoint_runway} "
-            f"{self.checkpoint_unit}."
-        )
+        if self.checkpoint_runway > 0:
+            logging.info(
+                f"No checkpoints will be saved before {self.checkpoint_runway} "
+                f"{self.checkpoint_unit}."
+            )
 
         self.best_metric_dict: Dict[str, float] = {}
 
@@ -205,6 +206,12 @@ class Checkpointer:
         if len(split_checkpoint_metric) != 4:
             raise ValueError(
                 "checkpoint_metric must be formatted 'task/dataset/split/metric:mode'."
+            )
+
+        if self.config.checkpoint_runway < 0:
+            raise ValueError(
+                f"Invalid checkpoint_runway {self.config.checkpoint_runway}, "
+                f"must be greater than 0."
             )
 
     def _make_metric_map(

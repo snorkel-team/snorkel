@@ -95,18 +95,20 @@ class TrainerTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             more_config = {
                 "checkpointing": True,
-                "checkpointer_config": {"checkpoint_dir": None},
+                "checkpointer_config": {"checkpoint_dir": temp_dir},
                 "log_writer_config": {"log_dir": temp_dir},
             }
             trainer = Trainer(**base_config, **more_config, logging=True)
             trainer.train_model(model, [dataloaders[0]])
             self.assertIsNotNone(trainer.checkpointer)
-            self.assertEqual(
-                trainer.checkpointer.checkpoint_dir, trainer.log_writer.log_dir
-            )
 
+            broken_config = {
+                "checkpointing": True,
+                "checkpointer_config": {"checkpoint_dir": None},
+                "log_writer_config": {"log_dir": temp_dir},
+            }
             with self.assertRaisesRegex(ValueError, "Checkpointing is on but"):
-                trainer = Trainer(**base_config, **more_config, logging=False)
+                trainer = Trainer(**base_config, **broken_config, logging=False)
                 trainer.train_model(model, [dataloaders[0]])
 
     def test_log_writer_init(self):

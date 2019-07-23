@@ -76,6 +76,10 @@ class TestLogManager(unittest.TestCase):
         load_model = checkpointer.load_best_model(model)
         self.assertEqual(model, load_model)
 
+    def test_bad_checkpoint_runway(self) -> None:
+        with self.assertRaisesRegex(ValueError, "checkpoint_runway"):
+            Checkpointer(**log_manager_config, checkpoint_runway=-1)
+
     def test_no_checkpoint_dir(self) -> None:
         with self.assertRaisesRegex(ValueError, "no checkpoint_dir"):
             Checkpointer(**log_manager_config, checkpoint_dir=None)

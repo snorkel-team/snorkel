@@ -20,8 +20,9 @@ def f(x):
 class UtilsTest(unittest.TestCase):
     def test_add_slice_labels(self):
         # Create dummy data
+        # Given slicing function f(), we expect the first two entries to be active
         x = torch.Tensor([0.1, 0.2, 0.3, 0.4, 0.5])
-        y = torch.Tensor([2, 1, 1, 2, 1]).long()
+        y = torch.Tensor([0, 1, 1, 0, 1]).long()
         dataset = DictDataset(
             name="TestData", split="train", X_dict={"data": x}, Y_dict={"TestTask": y}
         )
@@ -52,7 +53,7 @@ class UtilsTest(unittest.TestCase):
 
         # Ensure "ind" contains mask
         self.assertEqual(
-            labelsets["TestTask_slice:f_ind"].numpy().tolist(), [1, 1, 2, 2, 2]
+            labelsets["TestTask_slice:f_ind"].numpy().tolist(), [1, 1, 0, 0, 0]
         )
         self.assertEqual(
             labelsets["TestTask_slice:base_ind"].numpy().tolist(), [1, 1, 1, 1, 1]
@@ -60,12 +61,12 @@ class UtilsTest(unittest.TestCase):
 
         # Ensure "pred" contains masked elements
         self.assertEqual(
-            labelsets["TestTask_slice:f_pred"].numpy().tolist(), [2, 1, 0, 0, 0]
+            labelsets["TestTask_slice:f_pred"].numpy().tolist(), [0, 1, -1, -1, -1]
         )
         self.assertEqual(
-            labelsets["TestTask_slice:base_pred"].numpy().tolist(), [2, 1, 1, 2, 1]
+            labelsets["TestTask_slice:base_pred"].numpy().tolist(), [0, 1, 1, 0, 1]
         )
-        self.assertEqual(labelsets["TestTask"].numpy().tolist(), [2, 1, 1, 2, 1])
+        self.assertEqual(labelsets["TestTask"].numpy().tolist(), [0, 1, 1, 0, 1])
 
     def test_convert_to_slice_tasks(self):
         task_name = "TestTask"

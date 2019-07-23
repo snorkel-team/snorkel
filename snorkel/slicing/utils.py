@@ -37,10 +37,12 @@ def add_slice_labels(
     Y_dict: Dict[str, np.ndarray] = dataloader.dataset.Y_dict  # type: ignore
     labels = Y_dict[base_task.name]
     for i, slice_name in enumerate(slice_names):
-
-        # Convert labels
+        # Gather ind labels
         ind_labels = torch.LongTensor(slice_labels[:, i])  # type: ignore
-        pred_labels = ind_labels * labels
+
+        # Mask out "inactive" pred_labels as specified by ind_labels
+        pred_labels = labels.clone()
+        pred_labels[~ind_labels.byte()] = -1
 
         ind_task_name = f"{base_task.name}_slice:{slice_name}_ind"
         pred_task_name = f"{base_task.name}_slice:{slice_name}_pred"

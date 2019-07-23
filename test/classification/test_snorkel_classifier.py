@@ -84,10 +84,10 @@ class ClassifierTest(unittest.TestCase):
         )
 
     def test_empty_batch(self):
-        # Make the first BATCH_SIZE labels 0 so that one batch will have no labels
+        # Make the first BATCH_SIZE labels -1 so that one batch will have no labels
         dataset = create_dataloader("task1", shuffle=False).dataset
         for i in range(BATCH_SIZE):
-            dataset.Y_dict["task1"][i] = 0
+            dataset.Y_dict["task1"][i] = -1
         model = SnorkelClassifier([self.task1])
         loss_dict, count_dict = model.calculate_loss(dataset.X_dict, dataset.Y_dict)
         self.assertEqual(count_dict["task1"], NUM_EXAMPLES - BATCH_SIZE)

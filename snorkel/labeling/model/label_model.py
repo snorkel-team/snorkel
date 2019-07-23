@@ -732,6 +732,11 @@ class LabelModel(nn.Module):
         set_seed(self.train_config.seed)
 
         L_shift = L_train + 1  # convert to {0, 1, ..., k}
+        if L_shift.max() > self.cardinality:
+            raise ValueError(
+                f"L_train has cardinality {L_shift.max()}, cardinality={self.cardinality} passed in."
+            )
+
         self._set_class_balance(class_balance, Y_dev)
         self._set_constants(L_shift)
         self._create_tree()

@@ -35,7 +35,7 @@ class CheckpointerConfig(Config):
         If True, clear all checkpoints besides the best so far.
     """
 
-    checkpoint_dir: Optional[str] = None
+    checkpoint_dir: str = "checkpoints"
     checkpoint_factor: int = 1
     checkpoint_metric: str = "model/all/train/loss:min"
     checkpoint_task_metrics: Optional[List[str]] = None
@@ -62,6 +62,7 @@ class Checkpointer:
         self, counter_unit: str, evaluation_freq: float, **kwargs: Any
     ) -> None:
         self.config = CheckpointerConfig(**kwargs)
+        self._validate_config()
 
         # Pull out checkpoint settings
         self.checkpoint_unit = counter_unit
@@ -70,9 +71,6 @@ class Checkpointer:
         self.checkpoint_runway = self.config.checkpoint_runway
         self.checkpoint_factor = self.config.checkpoint_factor
         self.checkpoint_condition_met = False
-
-        if self.checkpoint_dir is None:
-            raise ValueError("Checkpointing is on but no checkpoint_dir was specified.")
 
         # Collect all metrics to checkpoint
         self.checkpoint_metric = self._make_metric_map([self.config.checkpoint_metric])
@@ -90,18 +88,19 @@ class Checkpointer:
         if self.checkpoint_freq <= 0:
             raise ValueError(
                 f"Invalid checkpoint freq {self.checkpoint_freq}, "
-                f"must be greater 0."
+                f"must be greater than 0."
             )
 
         logging.info(
-            f"Save checkpoints at {self.checkpoint_dir} every "
+            f"Save checkpoints at '{self.checkpoint_dir}' every "
             f"{self.checkpoint_freq} {self.checkpoint_unit}."
         )
 
-        logging.info(
-            f"No checkpoints will be saved before {self.checkpoint_runway} "
-            f"{self.checkpoint_unit}."
-        )
+        if self.checkpoint_runway > 0:
+            logging.info(
+                f"No checkpoints will be saved before {self.checkpoint_runway} "
+                f"{self.checkpoint_unit}."
+            )
 
         self.best_metric_dict: Dict[str, float] = {}
 
@@ -198,6 +197,19 @@ class Checkpointer:
             model.load(best_model_path)
 
         return model
+
+    def _validate_config(self) -> None:
+        split_checkpoint_metric = self.config.checkpoint_metric.split("/")
+        if len(split_checkpoint_metric) != 4:
+            raise ValueError(
+                "checkpoint_metric must be formatted 'task/dataset/split/metric:mode'."
+            )
+
+        if self.config.checkpoint_runway < 0:
+            raise ValueError(
+                f"Invalid checkpoint_runway {self.config.checkpoint_runway}, "
+                f"must be greater than or equal to 0."
+            )
 
     def _make_metric_map(
         self, metric_mode_iter: Optional[Iterable[str]]

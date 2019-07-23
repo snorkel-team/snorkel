@@ -88,6 +88,12 @@ class MetricsTest(unittest.TestCase):
         score = metric_score(golds, preds, probs=None, metric="f1")
         self.assertAlmostEqual(score, 0.4)
 
+        # Test Multiclass F1
+        golds = np.array([0, 0, 1, 1, 2])
+        preds = np.array([1, 1, 0, 1, 2])
+        score = metric_score(golds, preds, probs=None, metric="f1")
+        self.assertAlmostEqual(score, 0.4)
+
     def test_fbeta(self):
         golds = np.array([0, 0, 0, 0, 1])
         preds = np.array([1, 1, 0, 0, 1])

@@ -22,8 +22,8 @@ from snorkel.classification.training import (
     TensorBoardWriter,
 )
 from snorkel.classification.training.schedulers import batch_schedulers
-from snorkel.classification.utils import merge_config
 from snorkel.types import Config
+from snorkel.utils.config_utils import merge_config
 from snorkel.utils.lr_schedulers import LRSchedulerConfig
 from snorkel.utils.optimizers import OptimizerConfig
 

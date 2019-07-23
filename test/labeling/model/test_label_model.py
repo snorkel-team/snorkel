@@ -312,19 +312,21 @@ class TestLabelModelAdvanced(unittest.TestCase):
         """Set constants for the tests."""
         self.m = 10  # Number of LFs
         self.n = 10000  # Number of data points
-        self.k = 2  # Number of classes
+        self.cardinality = 2  # Number of classes
 
     def test_label_model(self) -> None:
         """Test the LabelModel's estimate of P and Y."""
         np.random.seed(123)
-        P, Y, L = generate_simple_label_matrix(self.n, self.m, self.k)
+        P, Y, L = generate_simple_label_matrix(self.n, self.m, self.cardinality)
 
         # Train LabelModel
-        label_model = LabelModel(cardinality=self.k, verbose=False)
+        label_model = LabelModel(cardinality=self.cardinality, verbose=False)
         label_model.train_model(L, lr=0.01, l2=0.0, n_epochs=100)
 
         # Test estimated LF conditional probabilities
-        P_lm = label_model._get_conditional_probs().reshape((self.m, self.k + 1, -1))
+        P_lm = label_model._get_conditional_probs().reshape(
+            (self.m, self.cardinality + 1, -1)
+        )
         np.testing.assert_array_almost_equal(P, P_lm, decimal=2)
 
         # Test predicted labels

@@ -47,7 +47,7 @@ class SingleTaskTreeDepsGenerator:
         self,
         n,
         m,
-        k=2,
+        cardinality=2,
         class_balance=None,
         theta_range=(0, 1.5),
         edge_prob=0.0,
@@ -56,7 +56,7 @@ class SingleTaskTreeDepsGenerator:
     ):
         self.n = n
         self.m = m
-        self.k = k
+        self.cardinality = cardinality
 
         # Generate correlation structure: edges self.E, parents dict self.parent
         self._generate_edges(edge_prob)
@@ -66,7 +66,7 @@ class SingleTaskTreeDepsGenerator:
 
         # Generate class balance self.p
         if class_balance is None:
-            self.p = np.full(k, 1 / k)
+            self.p = np.full(self.cardinality, 1 / self.cardinality)
         else:
             self.p = class_balance
 
@@ -96,7 +96,7 @@ class SingleTaskTreeDepsGenerator:
         self.theta = defaultdict(float)
         for i in range(self.m):
             t_min, t_max = min(theta_range), max(theta_range)
-            self.theta[i] = (t_max - t_min) * random(self.k + 1) + t_min
+            self.theta[i] = (t_max - t_min) * random(self.cardinality + 1) + t_min
 
         # Choose random weights for the edges
         te_min, te_max = min(theta_edge_range), max(theta_edge_range)
@@ -123,7 +123,7 @@ class SingleTaskTreeDepsGenerator:
             - a class-conditional LF accuracy parameter \theta_{i|y}
             - a symmetric LF correlation paramter \theta_{i,j}
         """
-        Z = np.sum([self._P(i, _li, j, lj, y) for _li in range(self.k + 1)])
+        Z = np.sum([self._P(i, _li, j, lj, y) for _li in range(self.cardinality + 1)])
         return self._P(i, li, j, lj, y) / Z
 
     def _generate_label_matrix(self):
@@ -131,16 +131,20 @@ class SingleTaskTreeDepsGenerator:
         self.L = np.zeros((self.n, self.m))
         self.Y = np.zeros(self.n, dtype=np.int64)
         for i in range(self.n):
-            y = choice(self.k, p=self.p) + 1  # Note that y \in {1,...,k}
+            y = choice(self.cardinality, p=self.p) + 1  # Note that y \in {1,...,k}
             self.Y[i] = y
             for j in range(self.m):
                 p_j = self.parent.get(j, 0)
                 prob_y = self.P_conditional(j, y, p_j, self.L[i, p_j], y)
                 prob_0 = self.P_conditional(j, 0, p_j, self.L[i, p_j], y)
-                p = np.ones(self.k + 1) * (1 - prob_y - prob_0) / (self.k - 1)
+                p = (
+                    np.ones(self.cardinality + 1)
+                    * (1 - prob_y - prob_0)
+                    / (self.cardinality - 1)
+                )
                 p[0] = prob_0
                 p[y] = prob_y
-                self.L[i, j] = choice(self.k + 1, p=p)
+                self.L[i, j] = choice(self.cardinality + 1, p=p)
 
     def _get_conditional_probs(self):
         """Compute the true clique conditional probabilities P(\lC | Y) by
@@ -152,11 +156,11 @@ class SingleTaskTreeDepsGenerator:
         TODO: Can compute these exactly if we want to implement that.
         """
         # TODO: Extend to higher-order cliques again
-        self.c_probs = np.zeros((self.m * (self.k + 1), self.k))
-        for y in range(1, self.k + 1):
+        self.c_probs = np.zeros((self.m * (self.cardinality + 1), self.cardinality))
+        for y in range(1, self.cardinality + 1):
             Ly = self.L[self.Y == y]
-            for ly in range(self.k + 1):
-                self.c_probs[ly :: (self.k + 1), y - 1] = (
+            for ly in range(self.cardinality + 1):
+                self.c_probs[ly :: (self.cardinality + 1), y - 1] = (
                     np.where(Ly == ly, 1, 0).sum(axis=0) / Ly.shape[0]
                 )
 

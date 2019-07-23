@@ -72,7 +72,7 @@ class LabelingConvergenceTest(unittest.TestCase):
         # Create raw data
         cls.N_TRAIN = 1500
 
-        cls.k = 2
+        cls.cardinality = 2
         cls.df_train = create_data(cls.N_TRAIN)
 
     @pytest.mark.complex
@@ -90,7 +90,7 @@ class LabelingConvergenceTest(unittest.TestCase):
         self.assertEqual(L_train.shape, (self.N_TRAIN, len(labeling_functions)))
 
         # Train LabelModel
-        label_model = LabelModel(cardinality=self.k, verbose=False)
+        label_model = LabelModel(cardinality=self.cardinality, verbose=False)
         label_model.train_model(L_train, lr=0.01, l2=0.0, n_epochs=100)
         Y_lm = label_model.predict_proba(L_train).argmax(axis=1) + 1
         Y = self.df_train.y

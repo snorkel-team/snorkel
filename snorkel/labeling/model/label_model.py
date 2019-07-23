@@ -647,32 +647,27 @@ class LabelModel(nn.Module):
                 raise ValueError(f"warmup_steps much greater or equal than 0.")
             warmup_unit = self.train_config.lr_scheduler_config.warmup_unit
             if warmup_unit == "epochs":
-                self.warmup_steps = int(warmup_steps * self.n_batches_per_epoch)
-            elif warmup_unit == "batches":
                 self.warmup_steps = int(warmup_steps)
             else:
-                raise ValueError(
-                    f"warmup_unit must be 'batches' or 'epochs', but {warmup_unit} found."
-                )
+                raise ValueError("LabelModel does not support any warmup_unit other than 'epochs'.")
+
             linear_warmup_func = lambda x: x / self.warmup_steps
             warmup_scheduler = optim.lr_scheduler.LambdaLR(  # type: ignore
                 self.optimizer, linear_warmup_func
             )
-            if self.verbose:
-                print(f"Warmup {self.warmup_steps} batches.")
+            if self.config.verbose:  # pragma: no cover
+                print(f"Warmup {self.warmup_steps} steps.")
+
         elif self.train_config.lr_scheduler_config.warmup_percentage:
             warmup_percentage = self.train_config.lr_scheduler_config.warmup_percentage
-            self.warmup_steps = int(
-                warmup_percentage
-                * self.train_config.n_epochs
-                * self.n_batches_per_epoch
-            )
+            self.warmup_steps = int(warmup_percentage * self.train_config.n_epochs)
             linear_warmup_func = lambda x: x / self.warmup_steps
             warmup_scheduler = optim.lr_scheduler.LambdaLR(  # type: ignore
                 self.optimizer, linear_warmup_func
             )
-            if self.verbose:
-                print(f"Warmup {self.warmup_steps} batches.")
+            if self.config.verbose:  # pragma: no cover
+                print(f"Warmup {self.warmup_steps} steps.")
+
         else:
             warmup_scheduler = None
             self.warmup_steps = 0

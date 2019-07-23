@@ -6,6 +6,7 @@ from typing import List
 import numpy as np
 import pytest
 import torch.nn as nn
+import torch.optim as optim
 
 from snorkel.labeling.model.label_model import LabelModel, TrainConfig
 from snorkel.synthetic.synthetic_data import generate_simple_label_matrix
@@ -284,6 +285,55 @@ class LabelModelTest(unittest.TestCase):
         label_model.load(save_path)
         shutil.rmtree(dir_path)
 
+    def test_optimizer_init(self):
+        L = np.array([[0, -1, 0], [0, 1, 0]])
+        label_model = LabelModel()
+
+        label_model.fit(L, optimizer="sgd", n_epochs=1)
+        self.assertIsInstance(label_model.optimizer, optim.SGD)
+
+        label_model.fit(L, optimizer="adam", n_epochs=1)
+        self.assertIsInstance(label_model.optimizer, optim.Adam)
+
+        label_model.fit(L, optimizer="adamax", n_epochs=1)
+        self.assertIsInstance(label_model.optimizer, optim.Adamax)
+
+        with self.assertRaisesRegex(ValueError, "Unrecognized optimizer"):
+            label_model.fit(L, optimizer="bad_optimizer", n_epochs=1)
+
+    def test_scheduler_init(self):
+        L = np.array([[0, -1, 0], [0, 1, 0]])
+        label_model = LabelModel()
+
+        label_model.fit(L, lr_scheduler="constant", n_epochs=1)
+        self.assertIsNone(label_model.lr_scheduler)
+
+        label_model.fit(L, lr_scheduler="linear", n_epochs=1)
+        self.assertIsInstance(label_model.lr_scheduler, optim.lr_scheduler.LambdaLR)
+
+        label_model.fit(L, lr_scheduler="exponential", n_epochs=1)
+        self.assertIsInstance(label_model.lr_scheduler, optim.lr_scheduler.ExponentialLR)
+
+        label_model.fit(L, lr_scheduler="step", n_epochs=1)
+        self.assertIsInstance(label_model.lr_scheduler, optim.lr_scheduler.StepLR)
+
+    def test_warmup(self):
+        L = np.array([[0, -1, 0], [0, 1, 0]])
+        label_model = LabelModel()
+
+        lr_scheduler_config = {"warmup_steps": 3, "warmup_unit": "epochs"}
+        label_model.fit(L, lr_scheduler_config=lr_scheduler_config, n_epochs=5)
+        self.assertEqual(label_model.warmup_steps, 3)
+
+        lr_scheduler_config = {"warmup_percentage": 3 / 5}
+        label_model.fit(L, lr_scheduler_config=lr_scheduler_config, n_epochs=5)
+        self.assertEqual(label_model.warmup_steps, 3)
+
+        with self.assertRaisesRegex(ValueError, "LabelModel does not support"):
+            lr_scheduler_config = {"warmup_steps": 1, "warmup_unit": "batches"}
+            label_model.fit(L, lr_scheduler_config=lr_scheduler_config)
+
+
 
 @pytest.mark.complex
 class TestLabelModelAdvanced(unittest.TestCase):
@@ -302,7 +352,7 @@ class TestLabelModelAdvanced(unittest.TestCase):
 
         # Train LabelModel
         label_model = LabelModel(cardinality=self.cardinality, verbose=False)
-        label_model.fit(L, n_epochs=100, optimizer_config={"lr": 0.01})
+        label_model.fit(L, n_epochs=200, optimizer_config={"lr": 0.01}, seed=123)
 
         # Test estimated LF conditional probabilities
         P_lm = label_model._get_conditional_probs().reshape(

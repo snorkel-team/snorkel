@@ -62,6 +62,7 @@ class Checkpointer:
         self, counter_unit: str, evaluation_freq: float, **kwargs: Any
     ) -> None:
         self.config = CheckpointerConfig(**kwargs)
+        self._validate_config()
 
         # Pull out checkpoint settings
         self.checkpoint_unit = counter_unit
@@ -70,9 +71,6 @@ class Checkpointer:
         self.checkpoint_runway = self.config.checkpoint_runway
         self.checkpoint_factor = self.config.checkpoint_factor
         self.checkpoint_condition_met = False
-
-        if self.checkpoint_dir is None:
-            raise ValueError("Checkpointing is on but no checkpoint_dir was specified.")
 
         # Collect all metrics to checkpoint
         self.checkpoint_metric = self._make_metric_map([self.config.checkpoint_metric])
@@ -198,6 +196,16 @@ class Checkpointer:
             model.load(best_model_path)
 
         return model
+
+    def _validate_config(self) -> None:
+        if self.config.checkpoint_dir is None:
+            raise ValueError("Checkpointing is on but no checkpoint_dir was specified.")
+
+        split_checkpoint_metric = self.config.checkpoint_metric.split("/")
+        if len(split_checkpoint_metric) != 4:
+            raise ValueError(
+                "checkpoint_metric must be formatted 'task/dataset/split/metric:mode'."
+            )
 
     def _make_metric_map(
         self, metric_mode_iter: Optional[Iterable[str]]

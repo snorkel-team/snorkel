@@ -423,7 +423,7 @@ class LabelModel(nn.Module):
         -------
         >>> L = np.array([[0, 0, -1], [1, 1, -1], [0, 0, -1]])
         >>> label_model = LabelModel(verbose=False)
-        >>> label_model.fit(L, seed=123)
+        >>> label_model.fit(L)
         >>> label_model.predict(L)
         array([0, 1, 0])
         """
@@ -463,7 +463,7 @@ class LabelModel(nn.Module):
         -------
         >>> L = np.array([[1, 1, -1], [0, 0, -1], [1, 1, -1]])
         >>> label_model = LabelModel(verbose=False)
-        >>> label_model.fit(L, seed=123)
+        >>> label_model.fit(L)
         >>> label_model.score(L, Y=np.array([1, 1, 1]))
         {'accuracy': 0.6666666666666666}
         >>> label_model.score(L, Y=np.array([1, 1, 1]), metrics=["f1"])

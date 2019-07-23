@@ -44,10 +44,10 @@ class MetricsTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "1d np.array"):
             to_int_label_array(X, flatten_vector=True)
 
-    def test_pred_to_prob(self):
+    def test_preds_to_probs(self):
         np.testing.assert_array_equal(preds_to_probs(PREDS, 2), PREDS_ROUND)
 
-    def test_prob_to_pred(self):
+    def test_probs_to_preds(self):
         np.testing.assert_array_equal(probs_to_preds(PROBS), PREDS)
 
         # abtains with ties
@@ -87,6 +87,10 @@ class MetricsTest(unittest.TestCase):
         # check invalid policy
         with self.assertRaisesRegex(ValueError, "policy not recognized"):
             preds = probs_to_preds(probs, tie_break_policy="negative")
+
+        # check invalid input
+        with self.assertRaisesRegex(ValueError, "probs must have at least 2"):
+            preds = probs_to_preds(np.array([[0.33], [0.33]]))
 
     def test_filter_labels(self):
         golds = np.array([0, 1, 1, 2, 2])

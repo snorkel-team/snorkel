@@ -55,6 +55,9 @@ def probs_to_preds(
     array([1])
     """
     n, k = probs.shape
+    if k <= 1:
+        raise ValueError(f"probs must have at least 2 columns. Instead, got {k}.")
+
     Y_pred = np.zeros(n)
     diffs = np.abs(probs - probs.max(axis=1).reshape(-1, 1))
 

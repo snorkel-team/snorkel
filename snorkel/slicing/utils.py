@@ -2,10 +2,8 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 import torch
-from scipy.sparse import csr_matrix
 from torch import nn
 
-from snorkel.analysis.utils import convert_labels
 from snorkel.classification.data import DictDataLoader
 from snorkel.classification.scorer import Scorer
 from snorkel.classification.snorkel_classifier import Operation, Task
@@ -16,7 +14,7 @@ from .modules.slice_combiner import SliceCombinerModule
 def add_slice_labels(
     dataloader: DictDataLoader,
     base_task: Task,
-    slice_labels: csr_matrix,
+    slice_labels: np.ndarray,
     slice_names: List[str],
 ) -> None:
     """Modify a dataloader in-place, adding labels for slice tasks.
@@ -33,18 +31,18 @@ def add_slice_labels(
         A list of slice names corresponding to columns of ``slice_labels``
     """
 
-    slice_labels = slice_labels.toarray()
     slice_labels, slice_names = _add_base_slice(slice_labels, slice_names)
     assert slice_labels.shape[1] == len(slice_names)
 
     Y_dict: Dict[str, np.ndarray] = dataloader.dataset.Y_dict  # type: ignore
     labels = Y_dict[base_task.name]
     for i, slice_name in enumerate(slice_names):
+        # Gather ind labels
+        ind_labels = torch.LongTensor(slice_labels[:, i])  # type: ignore
 
-        # Convert labels
-        indicators = torch.LongTensor(slice_labels[:, i])  # type: ignore
-        ind_labels = convert_labels(indicators, source="onezero", target="categorical")
-        pred_labels = indicators * labels
+        # Mask out "inactive" pred_labels as specified by ind_labels
+        pred_labels = labels.clone()
+        pred_labels[~ind_labels.byte()] = -1
 
         ind_task_name = f"{base_task.name}_slice:{slice_name}_ind"
         pred_task_name = f"{base_task.name}_slice:{slice_name}_pred"

@@ -1,9 +1,7 @@
 from typing import Any
 
 import numpy as np
-import scipy.sparse as sparse
 
-from snorkel.analysis.utils import to_int_label_array
 from snorkel.labeling.model.label_model import LabelModel
 
 
@@ -18,7 +16,7 @@ class BaselineVoter(LabelModel):
         Parameters
         ----------
         balance
-            A [1, k] array of class probabilities
+            A [k] array of class probabilities
         """
         pass
 
@@ -28,12 +26,12 @@ class RandomVoter(BaselineVoter):
 
     Example
     -------
-    >>> L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+    >>> L = np.array([[0, 0, -1], [-1, 0, 1], [1, -1, 0]])
     >>> random_voter = RandomVoter()
     >>> predictions = random_voter.predict_proba(L)
     """
 
-    def predict_proba(self, L: sparse.spmatrix) -> np.ndarray:
+    def predict_proba(self, L: np.ndarray) -> np.ndarray:
         """
         Assign random votes to the data points.
 
@@ -49,7 +47,7 @@ class RandomVoter(BaselineVoter):
 
         Example
         -------
-        >>> L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+        >>> L = np.array([[0, 0, -1], [-1, 0, 1], [1, -1, 0]])
         >>> random_voter = RandomVoter()
         >>> predictions = random_voter.predict_proba(L)
         """
@@ -72,11 +70,11 @@ class MajorityClassVoter(LabelModel):
         Parameters
         ----------
         balance
-            A [1, k] array of class probabilities
+            A [k] array of class probabilities
         """
-        self.balance = np.array(balance)
+        self.balance = balance
 
-    def predict_proba(self, L: sparse.spmatrix) -> np.ndarray:
+    def predict_proba(self, L: np.ndarray) -> np.ndarray:
         """Predict probabilities using majority class.
 
         Assign majority class vote to each datapoint.
@@ -95,9 +93,9 @@ class MajorityClassVoter(LabelModel):
 
         Example
         -------
-        >>> L = np.array([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+        >>> L = np.array([[0, 0, -1], [-1, 0, 1], [1, -1, 0]])
         >>> maj_class_voter = MajorityClassVoter()
-        >>> maj_class_voter.train_model(balance=[0.8, 0.2])
+        >>> maj_class_voter.train_model(balance=np.array([0.8, 0.2]))
         >>> maj_class_voter.predict_proba(L)
         array([[1., 0.],
                [1., 0.],
@@ -115,7 +113,7 @@ class MajorityClassVoter(LabelModel):
 class MajorityLabelVoter(BaselineVoter):
     """Majority vote label model."""
 
-    def predict_proba(self, L: sparse.spmatrix) -> np.ndarray:
+    def predict_proba(self, L: np.ndarray) -> np.ndarray:
         """Predict probabilities using majority vote.
 
         Assign vote by calculating majority vote across all labeling functions.
@@ -133,22 +131,20 @@ class MajorityLabelVoter(BaselineVoter):
 
         Example
         -------
-        >>> L = sparse.csr_matrix([[1, 1, 0], [0, 1, 2], [2, 0, 1]])
+        >>> L = np.array([[0, 0, -1], [-1, 0, 1], [1, -1, 0]])
         >>> maj_voter = MajorityLabelVoter()
         >>> maj_voter.predict_proba(L)
         array([[1. , 0. ],
                [0.5, 0.5],
                [0.5, 0.5]])
         """
-        L = L.todense()
-        L = to_int_label_array(L, flatten_vector=False)
         n, m = L.shape
         Y_p = np.zeros((n, self.cardinality))
         for i in range(n):
             counts = np.zeros(self.cardinality)
             for j in range(m):
-                if L[i, j]:
-                    counts[L[i, j] - 1] += 1
+                if L[i, j] != -1:
+                    counts[L[i, j]] += 1
             Y_p[i, :] = np.where(counts == max(counts), 1, 0)
         Y_p /= Y_p.sum(axis=1).reshape(-1, 1)
         return Y_p

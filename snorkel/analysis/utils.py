@@ -1,6 +1,6 @@
 import hashlib
 import random
-from typing import Dict, List, Optional, Union
+from typing import Dict, List
 
 import numpy as np
 import torch
@@ -20,12 +20,12 @@ def _hash(i: int) -> int:
 
 
 def probs_to_preds(
-    probs: np.ndarray, tie_break_policy: Optional[str] = "random", tol: float = 1e-5
+    probs: np.ndarray, tie_break_policy: str = "random", tol: float = 1e-5
 ) -> np.ndarray:
     """Convert an array of probabilistic labels into an array of predictions.
 
     Policies to break ties include:
-    "abstain": return an abstain vote (0)
+    "abstain": return an abstain vote (-1)
     "true-random": randomly choose among the tied options
     "random": randomly choose among tied option using deterministic hash
 
@@ -37,22 +37,21 @@ def probs_to_preds(
         A [num_datapoints, num_classes] array of probabilistic labels such that each
         row sums to 1.
     tie_break_policy
-        Policy to break ties when converting probabilistic labels to predictions, by default 'abstain'
+        Policy to break ties when converting probabilistic labels to predictions
     tol
-        The minimum difference among probabilities to be considered a tie, by deafult 1e-5
-
+        The minimum difference among probabilities to be considered a tie
 
     Returns
     -------
     np.ndarray
-        A [n] array of predictions (integers in [1, ..., num_classes])
+        A [n] array of predictions (integers in [0, ..., num_classes - 1])
 
     Examples
     --------
     >>> probs_to_preds(np.array([[0.5, 0.5, 0.5]]), tie_break_policy="abstain")
-    array([0])
+    array([-1])
     >>> probs_to_preds(np.array([[0.8, 0.1, 0.1]]))
-    array([1])
+    array([0])
     """
     num_datapoints, num_classes = probs.shape
     if num_classes <= 1:
@@ -61,20 +60,20 @@ def probs_to_preds(
             f"Instead, got {num_classes} classes."
         )
 
-    Y_pred = np.zeros(num_datapoints)
+    Y_pred = np.empty(num_datapoints)
     diffs = np.abs(probs - probs.max(axis=1).reshape(-1, 1))
 
     for i in range(num_datapoints):
         max_idxs = np.where(diffs[i, :] < tol)[0]
         if len(max_idxs) == 1:
-            Y_pred[i] = max_idxs[0] + 1
+            Y_pred[i] = max_idxs[0]
         # Deal with "tie votes" according to the specified policy
         elif tie_break_policy == "random":
-            Y_pred[i] = max_idxs[_hash(i) % len(max_idxs)] + 1
+            Y_pred[i] = max_idxs[_hash(i) % len(max_idxs)]
         elif tie_break_policy == "true-random":
-            Y_pred[i] = np.random.choice(max_idxs) + 1
+            Y_pred[i] = np.random.choice(max_idxs)
         elif tie_break_policy == "abstain":
-            Y_pred[i] = 0
+            Y_pred[i] = -1
         else:
             raise ValueError(
                 f"tie_break_policy={tie_break_policy} policy not recognized."
@@ -96,7 +95,9 @@ def preds_to_probs(preds: np.ndarray, num_classes: int) -> np.ndarray:
         A [num_datapoints, num_classes] array of probabilistic labels with probability
         of 1.0 in the column corresponding to the prediction
     """
-    return np.eye(num_classes)[preds.squeeze() - 1]
+    if np.any(preds < 0):
+        raise ValueError("Could not convert abstained vote to probability")
+    return np.eye(num_classes)[preds.squeeze()]
 
 
 def to_int_label_array(X: np.ndarray, flatten_vector: bool = True) -> np.ndarray:
@@ -134,56 +135,13 @@ def to_int_label_array(X: np.ndarray, flatten_vector: bool = True) -> np.ndarray
     return X
 
 
-def convert_labels(
-    Y: Optional[Union[np.ndarray, torch.Tensor]], source: str, target: str
-) -> Union[np.ndarray, torch.Tensor]:
-    """Convert a matrix from one label type convention to another.
-
-    The conventions are:
-
-    "categorical": [0: abstain, 1: positive, 2: negative]
-    "plusminus": [0: abstain, 1: positive, -1: negative]
-    "onezero": [0: negative, 1: positive]
-
-    Parameters
-    ----------
-    Y
-        A np.ndarray or torch.Tensor of labels (ints) using source convention
-    source
-        The convention the labels are currently expressed in
-    target
-        The convention to convert the labels to
-
-    Returns
-    -------
-    Union[np.ndarray, torch.Tensor]
-        An np.ndarray or torch.Tensor of labels (ints) using the target convention
-
-    Raises
-    ------
-    ValueError
-        Incorrect input array format
-    """
-    if Y is None:
-        return Y
-    if isinstance(Y, np.ndarray):
-        Y = Y.copy()
-    elif isinstance(Y, torch.Tensor):
-        Y = Y.clone()
-    else:
-        raise ValueError("Unrecognized label data type.")
-    negative_map = {"categorical": 2, "plusminus": -1, "onezero": 0}
-    Y[Y == negative_map[source]] = negative_map[target]
-    return Y
-
-
 def filter_labels(
     label_dict: Dict[str, np.ndarray], filter_dict: Dict[str, List[int]]
 ) -> Dict[str, np.ndarray]:
     """Filter out examples from arrays based on specified labels to filter.
 
     The most common use of this method is to remove examples whose gold label is
-    unknown (marked with a 0) or examples whose predictions were abstains (also 0)
+    unknown (marked with a -1) or examples whose predictions were abstains (also -1)
     before calculating metrics.
 
     NB: If an example matches the filter criteria for any label set, it will be removed
@@ -206,16 +164,16 @@ def filter_labels(
 
     Example
     -------
-    >>> golds = np.array([0, 1, 1, 2, 2])
-    >>> preds = np.array([1, 1, 1, 2, 0])
+    >>> golds = np.array([-1, 0, 0, 1, 0])
+    >>> preds = np.array([0, 0, 0, 1, -1])
     >>> filtered = filter_labels(
     ...     label_dict={"golds": golds, "preds": preds},
-    ...     filter_dict={"golds": [0], "preds": [0]}
+    ...     filter_dict={"golds": [-1], "preds": [-1]}
     ... )
     >>> filtered["golds"]
-    array([1, 1, 2])
+    array([0, 0, 1])
     >>> filtered["preds"]
-    array([1, 1, 2])
+    array([0, 0, 1])
     """
     masks = []
     for label_name, filter_values in filter_dict.items():
@@ -247,5 +205,4 @@ def _get_mask(label_array: np.ndarray, filter_values: List[int]) -> np.ndarray:
     mask = np.ones_like(label_array).astype(bool)
     for value in filter_values:
         mask *= np.where(label_array != value, 1, 0).astype(bool)
-
     return mask

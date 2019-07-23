@@ -141,25 +141,25 @@ class SlicingConvergenceTest(unittest.TestCase):
         # Train
         # NOTE: Needs more epochs to convergence with more heads
         trainer = Trainer(
-            optimizer_config={"lr": 0.001}, n_epochs=110, progress_bar=False
+            optimizer_config={"lr": 0.001}, n_epochs=80, progress_bar=False
         )
         trainer.train_model(model, dataloaders)
         scores = model.score(dataloaders)
 
         # Confirm reasonably high slice scores
-        self.assertGreater(scores["task/TestData/valid/f1"], 0.95)
-        self.assertGreater(scores["task_slice:f_pred/TestData/valid/f1"], 0.95)
-        self.assertGreater(scores["task_slice:f_ind/TestData/valid/f1"], 0.95)
-        self.assertGreater(scores["task_slice:g_pred/TestData/train/f1"], 0.95)
-        self.assertGreater(scores["task_slice:g_ind/TestData/train/f1"], 0.95)
-        self.assertGreater(scores["task_slice:base_pred/TestData/valid/f1"], 0.95)
+        self.assertGreater(scores["task/TestData/valid/f1"], 0.9)
+        self.assertGreater(scores["task_slice:f_pred/TestData/valid/f1"], 0.9)
+        self.assertGreater(scores["task_slice:f_ind/TestData/valid/f1"], 0.9)
+        self.assertGreater(scores["task_slice:g_pred/TestData/train/f1"], 0.9)
+        self.assertGreater(scores["task_slice:g_ind/TestData/train/f1"], 0.9)
+        self.assertGreater(scores["task_slice:base_pred/TestData/valid/f1"], 0.9)
         # base_ind is trivial: all labels are positive
         self.assertEqual(scores["task_slice:base_ind/TestData/valid/f1"], 1.0)
 
 
 def create_data(n: int) -> pd.DataFrame:
     X = np.random.random((n, 2)) * 2 - 1
-    Y = (X[:, 0] > X[:, 1] + 0.25).astype(int) + 1
+    Y = (X[:, 0] < X[:, 1] + 0.25).astype(int)
 
     df = pd.DataFrame({"x1": X[:, 0], "x2": X[:, 1], "y": Y})
     return df

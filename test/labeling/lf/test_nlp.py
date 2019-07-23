@@ -17,8 +17,7 @@ def combine_text(x: DataPoint) -> DataPoint:
 
 def has_person_mention(x: DataPoint) -> int:
     person_ents = [ent for ent in x.doc.ents if ent.label_ == "PERSON"]
-    print(x.doc.ents)
-    return 1 if len(person_ents) > 0 else 0
+    return 0 if len(person_ents) > 0 else -1
 
 
 class TestNLPLabelingFunction(unittest.TestCase):
@@ -26,9 +25,9 @@ class TestNLPLabelingFunction(unittest.TestCase):
         x = SimpleNamespace(
             num=8, title="Great film!", article="The movie is really great!"
         )
-        self.assertEqual(lf(x), 0)
+        self.assertEqual(lf(x), -1)
         x = SimpleNamespace(num=8, title="Nice movie!", article="Jane Doe acted well.")
-        self.assertEqual(lf(x), 1)
+        self.assertEqual(lf(x), 0)
 
     def test_nlp_labeling_function(self) -> None:
         lf = NLPLabelingFunction(
@@ -59,7 +58,7 @@ class TestNLPLabelingFunction(unittest.TestCase):
         @nlp_labeling_function(preprocessors=[combine_text])
         def has_person_mention(x: DataPoint) -> int:
             person_ents = [ent for ent in x.doc.ents if ent.label_ == "PERSON"]
-            return 1 if len(person_ents) > 0 else 0
+            return 0 if len(person_ents) > 0 else -1
 
         self.assertIsInstance(has_person_mention, NLPLabelingFunction)
         self.assertEqual(has_person_mention.name, "has_person_mention")
@@ -72,7 +71,7 @@ class TestNLPLabelingFunction(unittest.TestCase):
 
         @nlp_labeling_function(preprocessors=[combine_text])
         def lf2(x: DataPoint) -> int:
-            return 1 if len(x.doc) < 9 else 0
+            return 0 if len(x.doc) < 9 else -1
 
         lf._nlp_config.nlp.reset_cache()
         self.assertEqual(len(lf._nlp_config.nlp._cache), 0)
@@ -91,4 +90,4 @@ class TestNLPLabelingFunction(unittest.TestCase):
             @nlp_labeling_function()
             def has_person_mention(x: DataPoint) -> int:
                 person_ents = [ent for ent in x.doc.ents if ent.label_ == "PERSON"]
-                return 1 if len(person_ents) > 0 else 0
+                return 0 if len(person_ents) > 0 else -1

@@ -1,8 +1,8 @@
 from functools import partial
 from typing import Union
 
+import numpy as np
 import pandas as pd
-import scipy.sparse as sparse
 from dask import dataframe as dd
 from dask.distributed import Client
 
@@ -20,7 +20,7 @@ class DaskLFApplier(BaseLFApplier):
     For more information, see https://docs.dask.org/en/stable/dataframe.html
     """
 
-    def apply(self, df: dd, scheduler: Scheduler = "processes") -> sparse.csr_matrix:
+    def apply(self, df: dd, scheduler: Scheduler = "processes") -> np.ndarray:
         """Label Dask DataFrame of data points with LFs.
 
         Parameters
@@ -34,8 +34,8 @@ class DaskLFApplier(BaseLFApplier):
 
         Returns
         -------
-        sparse.csr_matrix
-            Sparse matrix of labels emitted by LFs
+        np.ndarray
+            Matrix of labels emitted by LFs
         """
         apply_fn = partial(apply_lfs_to_data_point, lfs=self._lfs)
         map_fn = df.map_partitions(lambda p_df: p_df.apply(apply_fn, axis=1))
@@ -53,7 +53,7 @@ class PandasParallelLFApplier(DaskLFApplier):
 
     def apply(  # type: ignore
         self, df: pd.DataFrame, n_parallel: int = 2, scheduler: Scheduler = "processes"
-    ) -> sparse.csr_matrix:
+    ) -> np.ndarray:
         """Label Pandas DataFrame of data points with LFs in parallel using Dask.
 
         Parameters
@@ -72,8 +72,8 @@ class PandasParallelLFApplier(DaskLFApplier):
 
         Returns
         -------
-        sparse.csr_matrix
-            Sparse matrix of labels emitted by LFs
+        np.ndarray
+            Matrix of labels emitted by LFs
         """
         if n_parallel < 2:
             raise ValueError(

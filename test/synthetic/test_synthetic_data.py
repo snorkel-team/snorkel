@@ -3,7 +3,7 @@ from typing import Optional
 
 import numpy as np
 
-from snorkel.labeling.analysis import lf_empirical_probs
+from snorkel.labeling.analysis import LFAnalysis
 from snorkel.synthetic.synthetic_data import generate_simple_label_matrix
 
 
@@ -31,7 +31,7 @@ class TestGenerateSimpleLabelMatrix(unittest.TestCase):
         """
         np.random.seed(123)
         P, Y, L = generate_simple_label_matrix(self.n, self.m, k)
-        P_emp = lf_empirical_probs(L, Y, k=k)
+        P_emp = LFAnalysis(L).lf_empirical_probs(Y, k=k)
         np.testing.assert_array_almost_equal(P, P_emp, decimal=decimal)
 
     def test_generate_L(self) -> None:

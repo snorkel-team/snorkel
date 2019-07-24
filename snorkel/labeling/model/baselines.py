@@ -8,7 +8,7 @@ from snorkel.labeling.model.label_model import LabelModel
 class BaselineVoter(LabelModel):
     """Parent baseline label model class with method train_model()."""
 
-    def train_model(self, *args: Any, **kwargs: Any) -> None:
+    def fit(self, *args: Any, **kwargs: Any) -> None:
         """Train majority class model.
 
         Set class balance for majority class label model.
@@ -60,7 +60,7 @@ class RandomVoter(BaselineVoter):
 class MajorityClassVoter(LabelModel):
     """Majority class label model."""
 
-    def train_model(  # type: ignore
+    def fit(  # type: ignore
         self, balance: np.ndarray, *args: Any, **kwargs: Any
     ) -> None:
         """Train majority class model.

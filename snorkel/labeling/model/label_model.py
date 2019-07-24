@@ -339,7 +339,7 @@ class LabelModel(nn.Module):
         -------
         >>> L = np.array([[1, 1, 1], [1, 1, -1], [-1, 0, 0], [0, 0, 0]])
         >>> label_model = LabelModel(verbose=False)
-        >>> label_model.fit(L)
+        >>> label_model.fit(L, lr=0.01)
         >>> np.around(label_model.get_accuracies(), 2)
         array([0.99, 0.99, 0.99])
         """
@@ -365,12 +365,13 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        >>> L = np.array([[0, 0, -1], [1, 1, -1], [0, 0, -1]])
+        >>> L = np.array([[1, 1, 1], [1, 1, -1], [-1, 0, 0], [0, 0, 0]])
         >>> label_model = LabelModel(verbose=False)
-        >>> label_model.fit(L)
+        >>> label_model.fit(L, lr=0.01)
         >>> np.around(label_model.predict_proba(L), 1)
-        array([[1., 0.],
+        array([[0., 1.],
                [0., 1.],
+               [1., 0.],
                [1., 0.]])
         """
         L_shift = L + 1  # convert to {0, 1, ..., k}

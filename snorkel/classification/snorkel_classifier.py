@@ -21,7 +21,7 @@ import torch.nn as nn
 from snorkel.analysis.utils import probs_to_preds
 from snorkel.classification.data import DictDataLoader
 from snorkel.classification.scorer import Scorer
-from snorkel.classification.utils import move_to_device
+from snorkel.classification.utils import get_active_mask, move_to_device
 from snorkel.types import Config
 
 from .task import Operation, Task
@@ -255,14 +255,8 @@ class SnorkelClassifier(nn.Module):
 
         # Calculate loss for each task
         for task_name, Y in Y_dict.items():
-
-            # Select the active samples
-            if len(Y.size()) == 1:
-                active = Y.detach() != -1
-            else:
-                active = torch.any(Y.detach() != -1, dim=1)
-
             # Only calculate the loss when active example exists
+            active = get_active_mask(Y)
             if active.any():
                 count_dict[task_name] = active.sum().item()
 
@@ -277,7 +271,7 @@ class SnorkelClassifier(nn.Module):
     @torch.no_grad()
     def _calculate_probs(
         self, X_dict: Dict[str, Any], task_names: Iterable[str]
-    ) -> Dict[str, Iterable[torch.Tensor]]:
+    ) -> Dict[str, torch.Tensor]:
         """Calculate the probabilities for each task.
 
         Parameters
@@ -289,7 +283,7 @@ class SnorkelClassifier(nn.Module):
 
         Returns
         -------
-        Dict[str, Iterable[torch.Tensor]]
+        Dict
             A dictionary mapping task name to probabilities
         """
 
@@ -300,7 +294,7 @@ class SnorkelClassifier(nn.Module):
         outputs = self.forward(X_dict, task_names)
 
         for task_name in task_names:
-            prob_dict[task_name] = self.output_funcs[task_name](outputs).cpu().numpy()
+            prob_dict[task_name] = self.output_funcs[task_name](outputs)
 
         return prob_dict
 
@@ -330,8 +324,13 @@ class SnorkelClassifier(nn.Module):
         for batch_num, (X_batch_dict, Y_batch_dict) in enumerate(dataloader):
             prob_batch_dict = self._calculate_probs(X_batch_dict, Y_batch_dict.keys())
             for task_name, Y in Y_batch_dict.items():
-                prob_dict_list[task_name].extend(prob_batch_dict[task_name])
-                gold_dict_list[task_name].extend(Y.cpu().numpy())
+                # Filter out inactive probs and golds
+                active = get_active_mask(Y)
+                probs = prob_batch_dict[task_name][active].cpu().numpy()
+                prob_dict_list[task_name].extend(probs)
+
+                golds = Y[active].cpu().numpy()
+                gold_dict_list[task_name].extend(golds)
 
         gold_dict: Dict[str, np.ndarray] = {}
         prob_dict: Dict[str, np.ndarray] = {}

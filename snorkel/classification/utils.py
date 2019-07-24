@@ -75,6 +75,34 @@ def pad_batch(
     return padded_batch, mask_batch
 
 
+def get_active_mask(Y: torch.Tensor) -> torch.Tensor:
+    """Return a mask of the active samples given some label Tensor Y.
+
+    Parameters
+    ----------
+    Y
+        Dimension N labels, where -1 indicates an abstain
+
+    Returns
+    -------
+    Tensor
+        Dimension N mask indicating "active" samples
+
+    Example
+    -------
+    ```
+    >>> Y = torch.LongTensor([-1, -1, 0, 1, 1])
+    >>> get_active_mask(Y)
+    tensor([0, 0, 1, 1, 1], dtype=torch.uint8)
+    ```
+    """
+    if len(Y.size()) == 1:
+        active = Y.detach() != -1
+    else:
+        active = torch.any(Y.detach() != -1, dim=1)
+    return active
+
+
 def merge_config(config: Config, config_updates: Dict[str, Any]) -> Config:
     """Merge a (potentially nested) dict of kwargs into a config (NamedTuple).
 

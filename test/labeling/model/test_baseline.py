@@ -23,7 +23,7 @@ class BaselineModelTest(unittest.TestCase):
     def test_majority_class_vote(self):
         L = np.array([[0, 1, 0], [1, 1, 0], [1, 1, 0], [-1, -1, 1]])
         mc_voter = MajorityClassVoter()
-        mc_voter.train_model(balance=np.array([0.8, 0.2]))
+        mc_voter.fit(balance=np.array([0.8, 0.2]))
         Y_p = mc_voter.predict_proba(L)
 
         Y_p_true = np.array([[1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [1.0, 0.0]])

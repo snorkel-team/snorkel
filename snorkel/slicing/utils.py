@@ -44,8 +44,8 @@ def add_slice_labels(
         pred_labels = labels.clone()
         pred_labels[~ind_labels.byte()] = -1
 
-        ind_task_name = f"{base_task.name}_slice:{slice_name}_ind"
-        pred_task_name = f"{base_task.name}_slice:{slice_name}_pred"
+        ind_task_name = f"{base_task.name}:slice_{slice_name}_ind"
+        pred_task_name = f"{base_task.name}:slice_{slice_name}_pred"
 
         # Update dataloaders
         Y_dict[ind_task_name] = ind_labels
@@ -114,7 +114,7 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
     # Create slice indicator tasks
     for slice_name in slice_names:
 
-        ind_task_name = f"{base_task.name}_slice:{slice_name}_ind"
+        ind_task_name = f"{base_task.name}:slice_{slice_name}_ind"
         ind_head_module_name = f"{ind_task_name}_head"
         # Indicator head always predicts "in the slice or not", so is always binary
         ind_head_module = nn.Linear(neck_size, 2)
@@ -147,7 +147,7 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
     shared_pred_head_module = nn.Linear(neck_size, base_task_cardinality)
     for slice_name in slice_names:
 
-        pred_task_name = f"{base_task.name}_slice:{slice_name}_pred"
+        pred_task_name = f"{base_task.name}:slice_{slice_name}_pred"
 
         pred_head_module_name = f"{pred_task_name}_head"
         pred_transform_module_name = f"{pred_task_name}_transform"

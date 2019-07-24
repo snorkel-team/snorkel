@@ -95,8 +95,8 @@ class SlicingConvergenceTest(unittest.TestCase):
 
         # Confirm near perfect scores
         self.assertGreater(scores["task/TestData/valid/accuracy"], 0.95)
-        self.assertGreater(scores["task_slice:h_pred/TestData/valid/accuracy"], 0.95)
-        self.assertGreater(scores["task_slice:h_ind/TestData/valid/f1"], 0.95)
+        self.assertGreater(scores["task:slice_h_pred/TestData/valid/accuracy"], 0.95)
+        self.assertGreater(scores["task:slice_h_ind/TestData/valid/f1"], 0.95)
 
         # Calculate/check train/val loss
         train_dataset = dataloaders[0].dataset
@@ -148,13 +148,13 @@ class SlicingConvergenceTest(unittest.TestCase):
 
         # Confirm reasonably high slice scores
         self.assertGreater(scores["task/TestData/valid/f1"], 0.9)
-        self.assertGreater(scores["task_slice:f_pred/TestData/valid/f1"], 0.9)
-        self.assertGreater(scores["task_slice:f_ind/TestData/valid/f1"], 0.9)
-        self.assertGreater(scores["task_slice:g_pred/TestData/train/f1"], 0.9)
-        self.assertGreater(scores["task_slice:g_ind/TestData/train/f1"], 0.9)
-        self.assertGreater(scores["task_slice:base_pred/TestData/valid/f1"], 0.9)
+        self.assertGreater(scores["task:slice_f_pred/TestData/valid/f1"], 0.9)
+        self.assertGreater(scores["task:slice_f_ind/TestData/valid/f1"], 0.9)
+        self.assertGreater(scores["task:slice_g_pred/TestData/train/f1"], 0.9)
+        self.assertGreater(scores["task:slice_g_ind/TestData/train/f1"], 0.9)
+        self.assertGreater(scores["task:slice_base_pred/TestData/valid/f1"], 0.9)
         # base_ind is trivial: all labels are positive
-        self.assertEqual(scores["task_slice:base_ind/TestData/valid/f1"], 1.0)
+        self.assertEqual(scores["task:slice_base_ind/TestData/valid/f1"], 1.0)
 
 
 def create_data(n: int) -> pd.DataFrame:

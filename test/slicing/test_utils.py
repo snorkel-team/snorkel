@@ -45,26 +45,26 @@ class UtilsTest(unittest.TestCase):
         # Ensure that all the fields are present
         labelsets = dataloader.dataset.Y_dict
         self.assertIn("TestTask", labelsets)
-        self.assertIn("TestTask_slice:base_ind", labelsets)
-        self.assertIn("TestTask_slice:base_pred", labelsets)
-        self.assertIn("TestTask_slice:f_ind", labelsets)
-        self.assertIn("TestTask_slice:f_pred", labelsets)
+        self.assertIn("TestTask:slice_base_ind", labelsets)
+        self.assertIn("TestTask:slice_base_pred", labelsets)
+        self.assertIn("TestTask:slice_f_ind", labelsets)
+        self.assertIn("TestTask:slice_f_pred", labelsets)
         self.assertEqual(len(labelsets), 5)
 
         # Ensure "ind" contains mask
         self.assertEqual(
-            labelsets["TestTask_slice:f_ind"].numpy().tolist(), [1, 1, 0, 0, 0]
+            labelsets["TestTask:slice_f_ind"].numpy().tolist(), [1, 1, 0, 0, 0]
         )
         self.assertEqual(
-            labelsets["TestTask_slice:base_ind"].numpy().tolist(), [1, 1, 1, 1, 1]
+            labelsets["TestTask:slice_base_ind"].numpy().tolist(), [1, 1, 1, 1, 1]
         )
 
         # Ensure "pred" contains masked elements
         self.assertEqual(
-            labelsets["TestTask_slice:f_pred"].numpy().tolist(), [0, 1, -1, -1, -1]
+            labelsets["TestTask:slice_f_pred"].numpy().tolist(), [0, 1, -1, -1, -1]
         )
         self.assertEqual(
-            labelsets["TestTask_slice:base_pred"].numpy().tolist(), [0, 1, 1, 0, 1]
+            labelsets["TestTask:slice_base_pred"].numpy().tolist(), [0, 1, 1, 0, 1]
         )
         self.assertEqual(labelsets["TestTask"].numpy().tolist(), [0, 1, 1, 0, 1])
 
@@ -81,8 +81,8 @@ class UtilsTest(unittest.TestCase):
 
         # Check for 2 tasks (pred + ind) per slice, accounting for base slice
         for slice_name in slice_names + ["base"]:
-            self.assertIn(f"{task_name}_slice:{slice_name}_pred", slice_task_names)
-            self.assertIn(f"{task_name}_slice:{slice_name}_ind", slice_task_names)
+            self.assertIn(f"{task_name}:slice_{slice_name}_pred", slice_task_names)
+            self.assertIn(f"{task_name}:slice_{slice_name}_ind", slice_task_names)
 
         self.assertEqual(len(slice_tasks), 2 * (len(slice_names) + 1) + 1)
 

@@ -96,7 +96,7 @@ def _f1_score(golds: np.ndarray, preds: np.ndarray) -> float:
         return skmetrics.f1_score(golds, preds)
     else:
         raise ValueError(
-            "f1 not supported for multiclass. Try f1_micro aor f1_macro instead."
+            "f1 not supported for multiclass. Try f1_micro or f1_macro instead."
         )
 
 

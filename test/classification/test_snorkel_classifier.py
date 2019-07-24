@@ -98,6 +98,15 @@ class ClassifierTest(unittest.TestCase):
         # deterministic random tie breaking alternates predicted labels
         self.assertEqual(metrics["task1/dataset/train/accuracy"], 0.4)
 
+    def test_empty_score(self):
+        dataloader = create_dataloader("task1", shuffle=False)
+        for i in range(NUM_EXAMPLES):
+            dataloader.dataset.Y_dict["task1"][i] = -1
+
+        model = SnorkelClassifier([self.task1])
+        with self.assertRaisesRegexp(ValueError, "Cannot score empty labels"):
+            metrics = model.score([dataloader])
+
     def test_save_load(self):
         fd, checkpoint_path = tempfile.mkstemp()
 

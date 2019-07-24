@@ -53,6 +53,11 @@ def probs_to_preds(
     >>> probs_to_preds(np.array([[0.8, 0.1, 0.1]]))
     array([0])
     """
+
+    # Handle empty probs 
+    if probs.shape == (0,):
+        return probs.astype(np.int)
+
     num_datapoints, num_classes = probs.shape
     if num_classes <= 1:
         raise ValueError(

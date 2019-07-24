@@ -326,6 +326,7 @@ class SnorkelClassifier(nn.Module):
             for task_name, Y in Y_batch_dict.items():
                 # Filter out inactive probs and golds
                 active = get_active_mask(Y)
+
                 probs = prob_batch_dict[task_name][active].cpu().numpy()
                 prob_dict_list[task_name].extend(probs)
 

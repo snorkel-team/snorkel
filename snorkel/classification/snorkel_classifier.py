@@ -322,16 +322,23 @@ class SnorkelClassifier(nn.Module):
         prob_dict_list: Dict[str, List[torch.Tensor]] = defaultdict(list)
 
         for batch_num, (X_batch_dict, Y_batch_dict) in enumerate(dataloader):
-            prob_batch_dict = self._calculate_probs(X_batch_dict, Y_batch_dict.keys())
-            for task_name, Y in Y_batch_dict.items():
+            labels_to_tasks = self._get_labels_to_tasks(Y_batch_dict.keys())
+            prob_batch_dict = self._calculate_probs(
+                X_batch_dict, labels_to_tasks.values()
+            )
+            for label_name, Y in Y_batch_dict.items():
+                task_name = labels_to_tasks[label_name]
+
                 # Filter out inactive probs and golds
                 active = get_active_mask(Y)
 
+                # Gather the output from the appropriate task
                 probs = prob_batch_dict[task_name][active].cpu().numpy()
-                prob_dict_list[task_name].extend(probs)
-
                 golds = Y[active].cpu().numpy()
-                gold_dict_list[task_name].extend(golds)
+
+                # Assign the results to the appropriate label
+                prob_dict_list[label_name].extend(probs)
+                gold_dict_list[label_name].extend(golds)
 
         gold_dict: Dict[str, np.ndarray] = {}
         prob_dict: Dict[str, np.ndarray] = {}
@@ -351,6 +358,31 @@ class SnorkelClassifier(nn.Module):
             results["preds"] = pred_dict
 
         return results
+
+    def _get_labels_to_tasks(self, label_names: Iterable[str]) -> Dict[str, str]:
+        """Return a map of label names to task names.
+
+        If label_name corresponds to a task_name in self.task_flows, return that name.
+        Else, check if the label_name matches convention: {base_task}:{metadata} 
+        and return base_task.
+        """
+        labels_to_tasks = {}
+        for label_name in label_names:
+            if label_name in self.task_flows:
+                # label_name maps directly to a task
+                labels_to_tasks[label_name] = label_name
+            else:
+                # Assuming convention of base_task:metadata, assign label to base_task
+                split_label_name = label_name.split(":")
+                if len(split_label_name) != 2:
+                    raise ValueError(
+                        f"{label_name} in Y_dict must map to one of "
+                        f"{self.task_flows.keys()} or match the convention "
+                        "'base_task:slice_name'."
+                    )
+
+                labels_to_tasks[label_name] = split_label_name[0]
+        return labels_to_tasks
 
     @torch.no_grad()
     def score(self, dataloaders: List["DictDataLoader"]) -> Dict[str, float]:
@@ -374,11 +406,15 @@ class SnorkelClassifier(nn.Module):
 
         for dataloader in dataloaders:
             results = self.predict(dataloader, return_preds=True)
-            for task_name in results["golds"].keys():
+            label_names = results["golds"].keys()
+            labels_to_tasks = self._get_labels_to_tasks(label_names)
+            for label_name in label_names:
+                task_name = labels_to_tasks[label_name]
+                # Use the scorer for a task on appropriate set of labels
                 metric_scores = self.scorers[task_name].score(
-                    results["golds"][task_name],
-                    results["preds"][task_name],
-                    results["probs"][task_name],
+                    results["golds"][label_name],
+                    results["preds"][label_name],
+                    results["probs"][label_name],
                 )
                 for metric_name, metric_value in metric_scores.items():
                     # Type ignore statements are necessary because the DataLoader class
@@ -386,7 +422,7 @@ class SnorkelClassifier(nn.Module):
                     # the class of Dataset, and it doesn't know about name and split.
                     identifier = "/".join(
                         [
-                            task_name,
+                            label_name,
                             dataloader.dataset.name,  # type: ignore
                             dataloader.dataset.split,  # type: ignore
                             metric_name,

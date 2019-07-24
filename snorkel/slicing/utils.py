@@ -16,6 +16,8 @@ def add_slice_labels(
     base_task: Task,
     slice_labels: np.ndarray,
     slice_names: List[str],
+    include_base: bool = True,
+    include_ind: bool = True,
 ) -> None:
     """Modify a dataloader in-place, adding labels for slice tasks.
 
@@ -29,9 +31,15 @@ def add_slice_labels(
         A [num_examples x num_slices] slice matrix (output of SFApplier)
     slice_names
         A list of slice names corresponding to columns of ``slice_labels``
+    include_base
+        A bool indicating whether to replicate labels for the base task
+    include_ind
+        A bool indicating whether to include indicator labels in the data loader
     """
 
-    slice_labels, slice_names = _add_base_slice(slice_labels, slice_names)
+    if include_base:
+        slice_labels, slice_names = _add_base_slice(slice_labels, slice_names)
+
     assert slice_labels.shape[1] == len(slice_names)
 
     Y_dict: Dict[str, np.ndarray] = dataloader.dataset.Y_dict  # type: ignore
@@ -48,7 +56,8 @@ def add_slice_labels(
         pred_task_name = f"{base_task.name}:slice_{slice_name}_pred"
 
         # Update dataloaders
-        Y_dict[ind_task_name] = ind_labels
+        if include_ind:
+            Y_dict[ind_task_name] = ind_labels
         Y_dict[pred_task_name] = pred_labels
 
 

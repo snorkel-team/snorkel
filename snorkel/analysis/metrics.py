@@ -91,6 +91,23 @@ def _roc_auc_score(golds: np.ndarray, probs: np.ndarray) -> float:
     return skmetrics.roc_auc_score(golds, probs[:, 0])
 
 
+def _f1_score(golds: np.ndarray, preds: np.ndarray) -> float:
+    if golds.max() <= 1:
+        return skmetrics.f1_score(golds, preds)
+    else:
+        raise ValueError(
+            "f1 not supported for multiclass. Try f1_micro or f1_macro instead."
+        )
+
+
+def _f1_micro_score(golds: np.ndarray, preds: np.ndarray) -> float:
+    return skmetrics.f1_score(golds, preds, average="micro")
+
+
+def _f1_macro_score(golds: np.ndarray, preds: np.ndarray) -> float:
+    return skmetrics.f1_score(golds, preds, average="macro")
+
+
 # See https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics
 # for details on the definitions and available kwargs for all metrics from scikit-learn
 METRICS = {
@@ -98,7 +115,9 @@ METRICS = {
     "coverage": Metric(_coverage_score, ["preds"]),
     "precision": Metric(skmetrics.precision_score),
     "recall": Metric(skmetrics.recall_score),
-    "f1": Metric(skmetrics.f1_score),
+    "f1": Metric(_f1_score, ["golds", "preds"]),
+    "f1_micro": Metric(_f1_micro_score, ["golds", "preds"]),
+    "f1_macro": Metric(_f1_macro_score, ["golds", "preds"]),
     "fbeta": Metric(skmetrics.fbeta_score),
     "matthews_corrcoef": Metric(skmetrics.matthews_corrcoef),
     "roc_auc": Metric(_roc_auc_score, ["golds", "probs"]),

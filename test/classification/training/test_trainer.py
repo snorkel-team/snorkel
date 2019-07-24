@@ -161,6 +161,10 @@ class TrainerTest(unittest.TestCase):
             trainer.train_model(model, [dataloaders[0]])
 
     def test_scheduler_init(self):
+        trainer = Trainer(**base_config, lr_scheduler="constant")
+        trainer.train_model(model, [dataloaders[0]])
+        self.assertIsNone(trainer.lr_scheduler)
+
         trainer = Trainer(**base_config, lr_scheduler="linear")
         trainer.train_model(model, [dataloaders[0]])
         self.assertIsInstance(trainer.lr_scheduler, optim.lr_scheduler.LambdaLR)

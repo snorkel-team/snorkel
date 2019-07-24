@@ -1,10 +1,7 @@
-import copy
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import torch
-
-from snorkel.types import Config
 
 TensorCollection = Union[torch.Tensor, dict, list, tuple]
 
@@ -74,7 +71,7 @@ def pad_batch(
 
     return padded_batch, mask_batch
 
-
+  
 def get_active_mask(Y: torch.Tensor) -> torch.Tensor:
     """Return a mask of the active samples given some label Tensor Y.
 
@@ -101,99 +98,6 @@ def get_active_mask(Y: torch.Tensor) -> torch.Tensor:
     else:
         active = torch.any(Y.detach() != -1, dim=1)
     return active
-
-
-def merge_config(config: Config, config_updates: Dict[str, Any]) -> Config:
-    """Merge a (potentially nested) dict of kwargs into a config (NamedTuple).
-
-    Parameters
-    ----------
-    config
-        An instantiated Config to update
-    config_updates
-        A potentially nested dict of settings to update in the Config
-
-    Returns
-    -------
-    Config
-        The updated Config
-
-    Example
-    -------
-    ```
-    config_updates = {
-        "n_epochs": 5,
-        "optimizer_config": {
-            "lr": 0.001,
-        }
-    }
-    trainer_config = merge_config(TrainerConfig(), config_updates)
-    ```
-    """
-    for key, value in config_updates.items():
-        if isinstance(value, dict):
-            config_updates[key] = merge_config(getattr(config, key), value)
-    return config._replace(**config_updates)
-
-
-def recursive_merge_dicts(
-    x: dict, y: dict, misses: str = "report", verbose: Optional[int] = None
-) -> dict:
-    """Merge dictionary y into a copy of x."""
-
-    def recurse(x: dict, y: dict, misses: str = "report", verbose: int = 1) -> bool:
-        found = True
-        for k, v in y.items():
-            found = False
-            if k in x:
-                found = True
-                if isinstance(x[k], dict):
-                    if not isinstance(v, dict):
-                        msg = f"Attempted to overwrite dict {k} with " f"non-dict: {v}"
-                        raise ValueError(msg)
-                    # If v is {}, set x[k] = {} instead of recursing on empty dict
-                    # Otherwise, recurse on the items in v
-                    if v:
-                        recurse(x[k], v, misses, verbose)
-                    else:
-                        x[k] = v
-                else:
-                    if x[k] == v:
-                        msg = f"Reaffirming {k}={x[k]}"
-                    else:
-                        msg = f"Overwriting {k}={x[k]} to {k}={v}"
-                        x[k] = v
-                    if verbose > 1 and k != "verbose":
-                        print(msg)
-            else:
-                for kx, vx in x.items():
-                    if isinstance(vx, dict):
-                        found = recurse(vx, {k: v}, misses="ignore", verbose=verbose)
-                    if found:
-                        break
-            if not found:
-                msg = f'Could not find kwarg "{k}" in destination dict.'
-                if misses == "insert":
-                    x[k] = v
-                    if verbose > 1:
-                        print(f"Added {k}={v} from second dict to first")
-                elif misses == "exception":
-                    raise ValueError(msg)
-                elif misses == "report":
-                    print(msg)
-                else:
-                    pass
-        return found
-
-    # If verbose is not provided, look for an value in y first, then x
-    # (Do this because 'verbose' kwarg is often inside one or both of x and y)
-    if verbose is None:
-        verbose = y.get("verbose", x.get("verbose", 1))
-        assert isinstance(verbose, int)
-
-    z = copy.deepcopy(x)
-    recurse(z, y, misses, verbose)
-    return z
 
 
 def move_to_device(

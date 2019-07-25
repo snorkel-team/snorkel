@@ -81,6 +81,9 @@ class MetricsTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "probs must have probabilities"):
             preds = probs_to_preds(np.array([[0.33], [0.33]]))
 
+        # check empty probs edge case
+        self.assertEqual(len(probs_to_preds(np.array([]))), 0)
+
     def test_filter_labels(self):
         golds = np.array([-1, 0, 0, 1, 1])
         preds = np.array([0, 0, 1, 1, -1])

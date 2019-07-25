@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 
 from snorkel.analysis.metrics import metric_score
+from snorkel.analysis.utils import preds_to_probs
 
 
 class MetricsTest(unittest.TestCase):
@@ -131,7 +132,7 @@ class MetricsTest(unittest.TestCase):
 
     def test_roc_auc(self):
         golds = np.array([0, 0, 0, 0, 1])
-        probs = np.array([[1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
+        probs = preds_to_probs(golds, 2)
         probs_nonbinary = np.array(
             [
                 [1.0, 0.0, 0.0],
@@ -143,10 +144,10 @@ class MetricsTest(unittest.TestCase):
         )
 
         roc_auc = metric_score(golds, preds=None, probs=probs, metric="roc_auc")
-        self.assertAlmostEqual(roc_auc, 0.0)
+        self.assertAlmostEqual(roc_auc, 1.0)
         probs = np.fliplr(probs)
         roc_auc = metric_score(golds, preds=None, probs=probs, metric="roc_auc")
-        self.assertAlmostEqual(roc_auc, 1.0)
+        self.assertAlmostEqual(roc_auc, 0.0)
 
         with self.assertRaisesRegex(
             ValueError, "Metric roc_auc is currently only defined for binary"

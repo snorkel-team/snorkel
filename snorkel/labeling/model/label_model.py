@@ -371,7 +371,7 @@ class LabelModel(nn.Module):
         >>> np.around(label_model.predict_proba(L), 1)
         array([[1., 0.],
                [0., 1.],
-               [0., 1.0]])
+               [0., 1.]])
         """
         L_shift = L + 1  # convert to {0, 1, ..., k}
         self._set_constants(L_shift)

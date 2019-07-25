@@ -83,6 +83,32 @@ class ClassifierTest(unittest.TestCase):
             np.array([0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0]),
         )
 
+    def test_predict_rerouted_label(self):
+        """Label name task:other_label should reroute to task if not in task_flow."""
+        task = create_task("task", module_suffixes=["A", "A"])
+        model = SnorkelClassifier([task])
+
+        # Create dataloader with two labelsets
+        X = torch.FloatTensor([[i, i] for i in range(NUM_EXAMPLES)])
+        Y = torch.ones(NUM_EXAMPLES, 1).long()
+        dataset = DictDataset(
+            name="dataset",
+            split="train",
+            X_dict={"data": X},
+            Y_dict={"task:other_label": Y},
+        )
+        dataloader = DictDataLoader(dataset, batch_size=BATCH_SIZE)
+
+        results = model.predict(dataloader)
+        self.assertEqual(sorted(list(results.keys())), ["golds", "probs"])
+        self.assertIn("task:other_label", results["golds"])
+        self.assertIn("task:other_label", results["probs"])
+        self.assertNotIn("task", results["golds"])
+        self.assertNotIn("task", results["probs"])
+        np.testing.assert_array_equal(
+            results["probs"]["task:other_label"], np.ones((NUM_EXAMPLES, 2)) * 0.5
+        )
+
     def test_empty_batch(self):
         # Make the first BATCH_SIZE labels -1 so that one batch will have no labels
         dataset = create_dataloader("task1", shuffle=False).dataset

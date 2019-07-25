@@ -7,7 +7,6 @@ import torch.nn as nn
 import torch.optim as optim
 
 from snorkel.classification.data import DictDataLoader, DictDataset
-from snorkel.classification.scorer import Scorer
 from snorkel.classification.snorkel_classifier import Operation, SnorkelClassifier, Task
 from snorkel.classification.training import Trainer
 from snorkel.classification.training.loggers import LogWriter, TensorBoardWriter
@@ -47,12 +46,7 @@ def create_task(task_name, module_suffixes=("", "")):
 
     task_flow = [op1, op2]
 
-    task = Task(
-        name=task_name,
-        module_pool=module_pool,
-        task_flow=task_flow,
-        scorer=Scorer(metrics=["accuracy"]),
-    )
+    task = Task(name=task_name, module_pool=module_pool, task_flow=task_flow)
 
     return task
 

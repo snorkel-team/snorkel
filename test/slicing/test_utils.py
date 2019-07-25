@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 
 from snorkel.classification.data import DictDataLoader, DictDataset
-from snorkel.classification.scorer import Scorer
 from snorkel.classification.snorkel_classifier import Operation, Task
 from snorkel.slicing.apply import PandasSFApplier
 from snorkel.slicing.sf import slicing_function
@@ -122,10 +121,5 @@ def create_dummy_task(task_name):
         ),
     ]
 
-    task = Task(
-        name=task_name,
-        module_pool=module_pool,
-        task_flow=task_flow,
-        scorer=Scorer(metrics=["accuracy"]),
-    )
+    task = Task(name=task_name, module_pool=module_pool, task_flow=task_flow)
     return task

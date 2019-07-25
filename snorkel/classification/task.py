@@ -97,7 +97,7 @@ class Task:
         name: str,
         module_pool: nn.ModuleDict,
         task_flow: List[Operation],
-        scorer: Scorer,
+        scorer: Scorer = Scorer(metrics=["accuracy"]),
         loss_func: Optional[Callable[..., torch.Tensor]] = None,
         output_func: Optional[Callable[..., torch.Tensor]] = None,
     ) -> None:

@@ -54,7 +54,7 @@ def probs_to_preds(
     array([0])
     """
 
-    # Handle empty probs 
+    # Handle empty probs
     if probs.shape == (0,):
         return probs.astype(np.int)
 

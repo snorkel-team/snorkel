@@ -71,7 +71,7 @@ def pad_batch(
 
     return padded_batch, mask_batch
 
-  
+
 def get_active_mask(Y: torch.Tensor) -> torch.Tensor:
     """Return a mask of the active samples given some label Tensor Y.
 

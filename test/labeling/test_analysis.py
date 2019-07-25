@@ -18,6 +18,10 @@ L = [
 Y = [0, 1, 2, 0, 1, 2]
 
 
+def f(x):
+    return -1
+
+
 class TestAnalysis(unittest.TestCase):
     def setUp(self) -> None:
         self.lfa = LFAnalysis(np.array(L))
@@ -106,10 +110,6 @@ class TestAnalysis(unittest.TestCase):
 
         est_accs = [1, 0, 1, 1, 1, 0.5]
         names = list("abcdef")
-
-        def f(x):
-            return -1
-
         lfs = [LabelingFunction(s, f) for s in names]
         lfa = LFAnalysis(np.array(L), lfs)
         df = lfa.lf_summary(self.Y, est_accs=est_accs)
@@ -127,3 +127,7 @@ class TestAnalysis(unittest.TestCase):
             }
         ).set_index(pd.Index(names))
         pd.testing.assert_frame_equal(df.round(6), df_expected.round(6))
+
+    def test_wrong_number_of_lfs(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Number of LFs"):
+            LFAnalysis(np.array(L), [LabelingFunction(s, f) for s in "ab"])

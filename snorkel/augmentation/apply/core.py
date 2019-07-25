@@ -88,13 +88,17 @@ class TFApplier(BaseTFApplier):
                 batch_transformed.extend(self._apply_policy_to_data_point(x))
             yield batch_transformed
 
-    def apply(self, data_points: DataPoints) -> List[DataPoint]:
+    def apply(
+        self, data_points: DataPoints, progress_bar: bool = True
+    ) -> List[DataPoint]:
         """Augment a list of data points using TFs and policy.
 
         Parameters
         ----------
         data_points
             List containing data points to be transformed
+        progress_bar
+            Display a progress bar?
 
         Returns
         -------
@@ -102,6 +106,7 @@ class TFApplier(BaseTFApplier):
             List of data points in augmented data set
         """
         x_transformed: List[DataPoint] = []
-        for x in tqdm(data_points):
+        gen = tqdm(data_points) if progress_bar else data_points
+        for x in gen:
             x_transformed.extend(self._apply_policy_to_data_point(x))
         return x_transformed

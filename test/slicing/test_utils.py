@@ -122,9 +122,5 @@ def create_dummy_task(task_name):
         ),
     ]
 
-    task = Task(
-        name=task_name,
-        module_pool=module_pool,
-        task_flow=task_flow,
-    )
+    task = Task(name=task_name, module_pool=module_pool, task_flow=task_flow)
     return task

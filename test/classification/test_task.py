@@ -28,11 +28,7 @@ class TaskTest(unittest.TestCase):
             ),
         ]
 
-        task = Task(
-            name=TASK_NAME,
-            module_pool=module_pool,
-            task_flow=task_flow,
-        )
+        task = Task(name=TASK_NAME, module_pool=module_pool, task_flow=task_flow)
 
         # Task has no functionality on its own
         # Here we only confirm that the object was initialized

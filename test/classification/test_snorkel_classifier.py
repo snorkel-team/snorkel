@@ -165,11 +165,7 @@ def create_task(task_name, module_suffixes=("", "")):
 
     task_flow = [op0, op1]
 
-    task = Task(
-        name=task_name,
-        module_pool=module_pool,
-        task_flow=task_flow,
-    )
+    task = Task(name=task_name, module_pool=module_pool, task_flow=task_flow)
 
     return task
 

@@ -64,6 +64,14 @@ class TestNLPLabelingFunction(unittest.TestCase):
         self.assertEqual(has_person_mention.name, "has_person_mention")
         self._run_lf(has_person_mention)
 
+    def test_nlp_labeling_function_decorator_no_parens(self) -> None:
+        with self.assertRaisesRegex(ValueError, "missing parentheses"):
+
+            @nlp_labeling_function
+            def has_person_mention(x: DataPoint) -> int:
+                person_ents = [ent for ent in x.doc.ents if ent.label_ == "PERSON"]
+                return 0 if len(person_ents) > 0 else -1
+
     def test_nlp_labeling_function_shared_cache(self) -> None:
         lf = NLPLabelingFunction(
             name="my_lf", f=has_person_mention, preprocessors=[combine_text]

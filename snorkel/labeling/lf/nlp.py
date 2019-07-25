@@ -3,7 +3,7 @@ from typing import Any, Callable, List, Mapping, NamedTuple, Optional
 from snorkel.labeling.preprocess import BasePreprocessor
 from snorkel.labeling.preprocess.nlp import EN_CORE_WEB_SM, SpacyPreprocessor
 
-from .core import LabelingFunction
+from .core import LabelingFunction, labeling_function
 
 
 class SpacyPreprocessorParameters(NamedTuple):
@@ -156,7 +156,7 @@ class NLPLabelingFunction(LabelingFunction):
         )
 
 
-class nlp_labeling_function:
+class nlp_labeling_function(labeling_function):
     """Decorator to define an NLPLabelingFunction object from a function.
 
     Parameters
@@ -191,10 +191,7 @@ class nlp_labeling_function:
         disable: Optional[List[str]] = None,
         memoize: bool = True,
     ) -> None:
-        self.name = name
-        self.resources = resources
-        self.preprocessors = preprocessors
-        self.fault_tolerant = fault_tolerant
+        super().__init__(name, resources, preprocessors, fault_tolerant)
         self.text_field = text_field
         self.doc_field = doc_field
         self.language = language

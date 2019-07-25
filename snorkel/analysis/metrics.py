@@ -73,7 +73,7 @@ def metric_score(
     func, label_names = METRICS[metric]
     for label_name in label_names:
         if label_dict[label_name] is None:
-            raise ValueError("Metric {metric} requires access to {label_name}.")
+            raise ValueError(f"Metric {metric} requires access to {label_name}.")
 
     label_sets = [label_dict[label_name] for label_name in label_names]
     return func(*label_sets, **kwargs)
@@ -88,7 +88,7 @@ def _roc_auc_score(golds: np.ndarray, probs: np.ndarray) -> float:
         raise ValueError(
             "Metric roc_auc is currently only defined for binary problems."
         )
-    return skmetrics.roc_auc_score(golds, probs[:, 0])
+    return skmetrics.roc_auc_score(golds, probs[:, 1])
 
 
 def _f1_score(golds: np.ndarray, preds: np.ndarray) -> float:

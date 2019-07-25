@@ -8,6 +8,8 @@ from sklearn.metrics import confusion_matrix
 
 from snorkel.analysis.utils import to_int_label_array
 
+from .lf import LabelingFunction
+
 
 class LFAnalysis:
     """Run analyses on LFs using label matrix.
@@ -24,9 +26,12 @@ class LFAnalysis:
         See above.
     """
 
-    def __init__(self, L: np.ndarray) -> None:
+    def __init__(
+        self, L: np.ndarray, lfs: Optional[List[LabelingFunction]] = None
+    ) -> None:
         self.L = L
         self._L_sparse = sparse.csr_matrix(L + 1)
+        self._lf_names = None if lfs is None else [lf.name for lf in lfs]
 
     def _covered_data_points(self) -> np.ndarray:
         """Get indicator vector z where z_i = 1 if x_i is labeled by at least one LF."""
@@ -300,10 +305,7 @@ class LFAnalysis:
         return P
 
     def lf_summary(
-        self,
-        Y: Optional[np.ndarray] = None,
-        lf_names: Optional[Union[List[str], List[int]]] = None,
-        est_accs: Optional[np.ndarray] = None,
+        self, Y: Optional[np.ndarray] = None, est_accs: Optional[np.ndarray] = None
     ) -> DataFrame:
         """Create a pandas DataFrame with the various per-LF statistics.
 
@@ -323,9 +325,11 @@ class LFAnalysis:
             Summary statistics for each LF
         """
         n, m = self.L.shape
-        if lf_names is not None:
+        lf_names: Union[List[str], List[int]]
+        if self._lf_names is not None:
             col_names = ["j"]
             d = {"j": list(range(m))}
+            lf_names = self._lf_names
         else:
             lf_names = list(range(m))
             col_names = []

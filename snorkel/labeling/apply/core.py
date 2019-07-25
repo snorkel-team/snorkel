@@ -33,9 +33,11 @@ class BaseLFApplier:
         self._lfs = lfs
 
     def _matrix_from_row_data(self, labels: List[RowData]) -> np.ndarray:
-        row, col, data = zip(*chain.from_iterable(labels))
         L = np.zeros((len(labels), len(self._lfs)), dtype=int) - 1
-        L[row, col] = data
+        # NB: this check will short-circuit, so ok for large L
+        if any(map(len, labels)):
+            row, col, data = zip(*chain.from_iterable(labels))
+            L[row, col] = data
         return L
 
 

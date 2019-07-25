@@ -7,7 +7,6 @@ import torch.nn as nn
 import torch.optim as optim
 
 from snorkel.classification.data import DictDataLoader, DictDataset
-from snorkel.classification.scorer import Scorer
 from snorkel.classification.snorkel_classifier import Operation, SnorkelClassifier, Task
 from snorkel.classification.training import Trainer
 from snorkel.classification.training.loggers import LogWriter, TensorBoardWriter

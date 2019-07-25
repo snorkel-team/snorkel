@@ -7,7 +7,6 @@ import torch
 import torch.nn as nn
 
 from snorkel.classification.data import DictDataLoader, DictDataset
-from snorkel.classification.scorer import Scorer
 from snorkel.classification.snorkel_classifier import Operation, SnorkelClassifier, Task
 
 NUM_EXAMPLES = 10

@@ -7,7 +7,6 @@ import torch
 import torch.nn as nn
 
 from snorkel.classification.data import DictDataLoader, DictDataset
-from snorkel.classification.scorer import Scorer
 from snorkel.classification.snorkel_classifier import Operation, SnorkelClassifier, Task
 
 NUM_EXAMPLES = 10
@@ -165,12 +164,7 @@ def create_task(task_name, module_suffixes=("", "")):
 
     task_flow = [op0, op1]
 
-    task = Task(
-        name=task_name,
-        module_pool=module_pool,
-        task_flow=task_flow,
-        scorer=Scorer(metrics=["accuracy"]),
-    )
+    task = Task(name=task_name, module_pool=module_pool, task_flow=task_flow)
 
     return task
 

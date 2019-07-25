@@ -2,7 +2,6 @@ import unittest
 
 import torch.nn as nn
 
-from snorkel.classification.scorer import Scorer
 from snorkel.classification.snorkel_classifier import Operation, Task
 
 TASK_NAME = "TestTask"
@@ -28,12 +27,7 @@ class TaskTest(unittest.TestCase):
             ),
         ]
 
-        task = Task(
-            name=TASK_NAME,
-            module_pool=module_pool,
-            task_flow=task_flow,
-            scorer=Scorer(metrics=["accuracy"]),
-        )
+        task = Task(name=TASK_NAME, module_pool=module_pool, task_flow=task_flow)
 
         # Task has no functionality on its own
         # Here we only confirm that the object was initialized

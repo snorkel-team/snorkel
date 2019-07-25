@@ -92,6 +92,7 @@ def get_active_mask(Y: torch.Tensor) -> torch.Tensor:
     >>> get_active_mask(Y)
     tensor([0, 0, 1, 1, 1], dtype=torch.uint8)
     ```
+
     """
     if len(Y.size()) == 1:
         active = Y.detach() != -1

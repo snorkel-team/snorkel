@@ -131,7 +131,7 @@ class ClassifierTest(unittest.TestCase):
 
         model = SnorkelClassifier([self.task1])
         with self.assertRaisesRegexp(ValueError, "Cannot score empty labels"):
-            metrics = model.score([dataloader])
+            model.score([dataloader])
 
     def test_save_load(self):
         fd, checkpoint_path = tempfile.mkstemp()

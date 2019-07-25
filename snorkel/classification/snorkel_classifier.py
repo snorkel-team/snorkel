@@ -363,7 +363,7 @@ class SnorkelClassifier(nn.Module):
         """Return a map of label names to task names.
 
         If label_name corresponds to a task_name in self.task_flows, return that name.
-        Else, check if the label_name matches convention: {base_task}:{metadata} 
+        Else, check if the label_name matches convention: {base_task}:{metadata}
         and return base_task.
         """
         labels_to_tasks = {}
@@ -387,6 +387,10 @@ class SnorkelClassifier(nn.Module):
     @torch.no_grad()
     def score(self, dataloaders: List["DictDataLoader"]) -> Dict[str, float]:
         """Calculate scores for the provided DictDataLoaders.
+
+        For label names that do not correspond directly to a task name:
+            If label_name is follows convention: "{base_task}:{other_label}"
+            Then evaluate label on base_task.
 
         Parameters
         ----------

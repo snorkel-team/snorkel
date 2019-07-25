@@ -9,6 +9,8 @@ import pandas as pd
 
 from snorkel.types import DataPoint, FieldMap
 
+MapFunction = Callable[[DataPoint], Optional[DataPoint]]
+
 
 def get_parameters(
     f: Callable[..., Any], allow_args: bool = False, allow_kwargs: bool = False
@@ -291,7 +293,7 @@ class LambdaMapper(BaseMapper):
     def __init__(
         self,
         name: str,
-        f: Callable[[DataPoint], Optional[DataPoint]],
+        f: MapFunction,
         pre: Optional[List[BaseMapper]] = None,
         memoize: bool = False,
     ) -> None:
@@ -309,10 +311,14 @@ class lambda_mapper:
     -------
     >>> @lambda_mapper()
     ... def concatenate_text(x):
-    ...     x.article = f"{title} {body}"
+    ...     x.article = f"{x.title} {x.body}"
     ...     return x
     >>> isinstance(concatenate_text, LambdaMapper)
     True
+    >>> from types import SimpleNamespace
+    >>> x = SimpleNamespace(title="my title", body="my text")
+    >>> concatenate_text(x).article
+    'my title my text'
 
     Parameters
     ----------
@@ -335,11 +341,13 @@ class lambda_mapper:
         pre: Optional[List[BaseMapper]] = None,
         memoize: bool = False,
     ) -> None:
+        if callable(name):
+            raise ValueError("Looks like this decorator is missing parentheses!")
         self.name = name
         self.pre = pre
         self.memoize = memoize
 
-    def __call__(self, f: Callable[[DataPoint], Optional[DataPoint]]) -> LambdaMapper:
+    def __call__(self, f: MapFunction) -> LambdaMapper:
         """Wrap a function to create a ``LambdaMapper``.
 
         Parameters

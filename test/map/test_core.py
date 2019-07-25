@@ -328,6 +328,14 @@ class TestMapperCore(unittest.TestCase):
         self.assertEqual(x8_mapped.double_num_squared, 128)
         self.assertEqual(square_hit_tracker.n_hits, 3)
 
+    def test_mapper_decorator_no_parens(self) -> None:
+        with self.assertRaisesRegex(ValueError, "missing parentheses"):
+
+            @lambda_mapper
+            def square(x: DataPoint) -> DataPoint:
+                x.num_squared = x.num ** 2
+                return x
+
     def test_mapper_with_args_kwargs(self) -> None:
         with self.assertRaises(ValueError):
             MapperWithArgs("my_mapper")

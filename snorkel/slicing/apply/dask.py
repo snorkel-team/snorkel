@@ -1,4 +1,7 @@
-from snorkel.labeling.apply.dask import DaskLFApplier, PandasParallelLFApplier
+from snorkel.labeling.apply.dask import (  # pragma: no cover
+    DaskLFApplier,
+    PandasParallelLFApplier,
+)
 
 
 class DaskSFApplier(DaskLFApplier):  # pragma: no cover

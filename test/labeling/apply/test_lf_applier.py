@@ -45,6 +45,11 @@ def g(x: DataPoint, db: List[int]) -> int:
     return 0 if x.num in db else -1
 
 
+@labeling_function()
+def h(x: DataPoint) -> int:
+    return -1
+
+
 DATA = [3, 43, 12, 9, 3]
 L_EXPECTED = np.array([[-1, 0], [0, -1], [-1, -1], [-1, 0], [-1, 0]])
 L_PREPROCESS_EXPECTED = np.array([[-1, -1], [0, 0], [-1, 0], [-1, 0], [-1, -1]])
@@ -83,6 +88,12 @@ class TestLFApplier(unittest.TestCase):
         L = applier.apply(data_points)
         np.testing.assert_equal(L, L_PREPROCESS_EXPECTED)
         self.assertEqual(square_hit_tracker.n_hits, 4)
+
+    def test_lf_applier_no_labels(self) -> None:
+        data_points = [SimpleNamespace(num=num) for num in DATA]
+        applier = LFApplier([h, h])
+        L = applier.apply(data_points)
+        np.testing.assert_equal(L, -1)
 
 
 class TestPandasApplier(unittest.TestCase):

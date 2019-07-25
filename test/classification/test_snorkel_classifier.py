@@ -109,6 +109,18 @@ class ClassifierTest(unittest.TestCase):
             results["probs"]["task:other_label"], np.ones((NUM_EXAMPLES, 2)) * 0.5
         )
 
+        # Now, test malformed version
+        Y = torch.ones(NUM_EXAMPLES, 1).long()
+        dataset = DictDataset(
+            name="dataset",
+            split="train",
+            X_dict={"data": X},
+            Y_dict={"task:other_label:bad!": Y},
+        )
+        dataloader = DictDataLoader(dataset, batch_size=BATCH_SIZE)
+        with self.assertRaisesRegex(ValueError, "Y_dict must map to one of"):
+            model.predict(dataloader)
+
     def test_empty_batch(self):
         # Make the first BATCH_SIZE labels -1 so that one batch will have no labels
         dataset = create_dataloader("task1", shuffle=False).dataset
@@ -130,7 +142,7 @@ class ClassifierTest(unittest.TestCase):
             dataloader.dataset.Y_dict["task1"][i] = -1
 
         model = SnorkelClassifier([self.task1])
-        with self.assertRaisesRegexp(ValueError, "Cannot score empty labels"):
+        with self.assertRaisesRegex(ValueError, "Cannot score empty labels"):
             model.score([dataloader])
 
     def test_save_load(self):

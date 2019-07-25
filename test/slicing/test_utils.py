@@ -40,6 +40,25 @@ class UtilsTest(unittest.TestCase):
         dataloader = DictDataLoader(dataset)
 
         dummy_task = create_dummy_task(task_name="TestTask")
+
+        # Don't include base or ind labels at first
+        add_slice_labels(
+            dataloader,
+            dummy_task,
+            S,
+            slice_names,
+            include_base=False,
+            include_ind=False,
+        )
+        labelsets = dataloader.dataset.Y_dict
+        self.assertIn("TestTask", labelsets)
+        self.assertIn("TestTask:slice_f_pred", labelsets)
+        self.assertNotIn("TestTask:slice_base_ind", labelsets)
+        self.assertNotIn("TestTask:slice_base_pred", labelsets)
+        self.assertNotIn("TestTask:slice_f_ind", labelsets)
+        self.assertEqual(len(labelsets), 2)
+
+        # Now, include everything
         add_slice_labels(dataloader, dummy_task, S, slice_names)
 
         # Ensure that all the fields are present

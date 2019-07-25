@@ -4,6 +4,7 @@ import torch
 
 from snorkel.classification.utils import (
     collect_flow_outputs_by_suffix,
+    get_active_mask,
     list_to_tensor,
     pad_batch,
 )
@@ -114,6 +115,17 @@ class UtilsTest(unittest.TestCase):
                 padded_batch, torch.Tensor([[1, 2, 2, 3], [4, 5, 6, 0], [7, 8, 9, 0]])
             )
         )
+
+    def test_get_active_mask(self):
+        mask = get_active_mask(torch.LongTensor([-1, -1, 0, 1, 1]))
+        self.assertTrue(torch.equal(mask, torch.ByteTensor([0, 0, 1, 1, 1])))
+
+        # Test edge cases with 1 element
+        mask = get_active_mask(torch.LongTensor([1]))
+        self.assertTrue(torch.equal(mask, torch.ByteTensor([1])))
+
+        mask = get_active_mask(torch.LongTensor([-1]))
+        self.assertTrue(torch.equal(mask, torch.ByteTensor([0])))
 
     def test_collect_flow_outputs_by_suffix(self):
         flow_dict = {

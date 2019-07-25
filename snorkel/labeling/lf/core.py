@@ -108,6 +108,10 @@ class labeling_function:
     ...     return 0 if x.a > 42 else -1
     >>> f
     LabelingFunction f, Preprocessors: []
+    >>> from types import SimpleNamespace
+    >>> x = SimpleNamespace(a=90, b=12)
+    >>> f(x)
+    0
 
     >>> @labeling_function(name="my_lf")
     ... def g(x):
@@ -123,6 +127,8 @@ class labeling_function:
         preprocessors: Optional[List[BasePreprocessor]] = None,
         fault_tolerant: bool = False,
     ) -> None:
+        if callable(name):
+            raise ValueError("Looks like this decorator is missing parentheses!")
         self.name = name
         self.resources = resources
         self.preprocessors = preprocessors

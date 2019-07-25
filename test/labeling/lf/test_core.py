@@ -100,3 +100,10 @@ class TestLabelingFunction(unittest.TestCase):
         self.assertEqual(lf.name, "my_lf")
         self._run_lf(lf)
         self._run_lf_no_raise(lf)
+
+    def test_labeling_function_decorator_no_parens(self) -> None:
+        with self.assertRaisesRegex(ValueError, "missing parentheses"):
+
+            @labeling_function
+            def lf(x: DataPoint) -> int:
+                return 0 if x.num > 42 else -1

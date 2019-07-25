@@ -169,7 +169,6 @@ def create_task(task_name, module_suffixes=("", "")):
         name=task_name,
         module_pool=module_pool,
         task_flow=task_flow,
-        scorer=Scorer(metrics=["accuracy"]),
     )
 
     return task

@@ -32,7 +32,6 @@ class TaskTest(unittest.TestCase):
             name=TASK_NAME,
             module_pool=module_pool,
             task_flow=task_flow,
-            scorer=Scorer(metrics=["accuracy"]),
         )
 
         # Task has no functionality on its own

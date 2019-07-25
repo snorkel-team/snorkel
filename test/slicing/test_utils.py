@@ -126,6 +126,5 @@ def create_dummy_task(task_name):
         name=task_name,
         module_pool=module_pool,
         task_flow=task_flow,
-        scorer=Scorer(metrics=["accuracy"]),
     )
     return task

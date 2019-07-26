@@ -139,7 +139,7 @@ class Trainer:
         )
         self.name = name if name is not None else type(self).__name__
 
-    def train_model(
+    def fit(
         self, model: SnorkelClassifier, dataloaders: List["DictDataLoader"]
     ) -> None:
         """Train a SnorkelClassifier.

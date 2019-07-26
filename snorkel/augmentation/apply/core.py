@@ -106,7 +106,6 @@ class TFApplier(BaseTFApplier):
             List of data points in augmented data set
         """
         x_transformed: List[DataPoint] = []
-        gen = tqdm(data_points) if progress_bar else data_points
-        for x in gen:
+        for x in tqdm(data_points, disable=(not progress_bar)):
             x_transformed.extend(self._apply_policy_to_data_point(x))
         return x_transformed

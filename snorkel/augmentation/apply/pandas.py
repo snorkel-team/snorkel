@@ -60,7 +60,6 @@ class PandasTFApplier(BaseTFApplier):
             Pandas DataFrame of data points in augmented data set
         """
         x_transformed: List[pd.Series] = []
-        gen = tqdm(df.iterrows(), total=len(df)) if progress_bar else df.iterrows()
-        for _, x in gen:
+        for _, x in tqdm(df.iterrows(), total=len(df), disable=(not progress_bar)):
             x_transformed.extend(self._apply_policy_to_data_point(x))
         return pd.concat(x_transformed, axis=1).T

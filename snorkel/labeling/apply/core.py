@@ -89,9 +89,6 @@ class LFApplier(BaseLFApplier):
             Matrix of labels emitted by LFs
         """
         labels = []
-        gen = enumerate(data_points)
-        if progress_bar:
-            gen = tqdm(gen)
-        for i, x in gen:
+        for i, x in tqdm(enumerate(data_points), disable=(not progress_bar)):
             labels.append(apply_lfs_to_data_point(x, i, self._lfs))
         return self._matrix_from_row_data(labels)

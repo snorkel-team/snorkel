@@ -53,13 +53,15 @@ class PandasLFApplier(BaseLFApplier):
     For large datasets, consider ``DaskLFApplier`` or ``SparkLFApplier``.
     """
 
-    def apply(self, df: DataFrame) -> np.ndarray:
+    def apply(self, df: DataFrame, progress_bar: bool = True) -> np.ndarray:
         """Label Pandas DataFrame of data points with LFs.
 
         Parameters
         ----------
         df
             Pandas DataFrame containing data points to be labeled by LFs
+        progress_bar
+            Display a progress bar?
 
         Returns
         -------
@@ -67,7 +69,10 @@ class PandasLFApplier(BaseLFApplier):
             Matrix of labels emitted by LFs
         """
         apply_fn = partial(apply_lfs_to_data_point, lfs=self._lfs)
-        tqdm.pandas()
-        labels = df.progress_apply(apply_fn, axis=1)
+        call_fn = df.apply
+        if progress_bar:
+            tqdm.pandas()
+            call_fn = df.progress_apply
+        labels = call_fn(apply_fn, axis=1)
         labels_with_index = rows_to_triplets(labels)
         return self._matrix_from_row_data(labels_with_index)

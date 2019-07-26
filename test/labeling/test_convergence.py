@@ -76,7 +76,7 @@ class LabelingConvergenceTest(unittest.TestCase):
             + [get_negative_labeling_function(divisor) for divisor in range(2, 9)]
         )
         applier = PandasLFApplier(labeling_functions)
-        L_train = applier.apply(self.df_train)
+        L_train = applier.apply(self.df_train, progress_bar=False)
 
         self.assertEqual(L_train.shape, (self.N_TRAIN, len(labeling_functions)))
 

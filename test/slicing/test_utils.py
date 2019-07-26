@@ -34,7 +34,7 @@ class UtilsTest(unittest.TestCase):
         slicing_functions = [f]
         slice_names = [sf.name for sf in slicing_functions]
         applier = PandasSFApplier(slicing_functions)
-        S = applier.apply(df)
+        S = applier.apply(df, progress_bar=False)
 
         dataloader = DictDataLoader(dataset)
 

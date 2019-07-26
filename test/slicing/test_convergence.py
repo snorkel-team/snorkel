@@ -72,8 +72,8 @@ class SlicingConvergenceTest(unittest.TestCase):
         slicing_functions = [h]  # high coverage slice
         slice_names = [sf.name for sf in slicing_functions]
         applier = PandasSFApplier(slicing_functions)
-        S_train = applier.apply(self.df_train)
-        S_valid = applier.apply(self.df_valid)
+        S_train = applier.apply(self.df_train, progress_bar=False)
+        S_valid = applier.apply(self.df_valid, progress_bar=False)
 
         self.assertEqual(S_train.shape, (self.N_TRAIN, len(slicing_functions)))
         self.assertEqual(S_valid.shape, (self.N_VALID, len(slicing_functions)))
@@ -125,8 +125,8 @@ class SlicingConvergenceTest(unittest.TestCase):
         slicing_functions = [f, g]  # low-coverage slices
         slice_names = [sf.name for sf in slicing_functions]
         applier = PandasSFApplier(slicing_functions)
-        S_train = applier.apply(self.df_train)
-        S_valid = applier.apply(self.df_valid)
+        S_train = applier.apply(self.df_train, progress_bar=False)
+        S_valid = applier.apply(self.df_valid, progress_bar=False)
 
         # Add slice labels
         add_slice_labels(dataloaders[0], base_task, S_train, slice_names)

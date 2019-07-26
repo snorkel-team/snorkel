@@ -44,13 +44,15 @@ class PandasTFApplier(BaseTFApplier):
                 batch_transformed = []
         yield pd.concat(batch_transformed, axis=1).T
 
-    def apply(self, df: pd.DataFrame) -> pd.DataFrame:
+    def apply(self, df: pd.DataFrame, progress_bar: bool = True) -> pd.DataFrame:
         """Augment a Pandas DataFrame of data points using TFs and policy.
 
         Parameters
         ----------
         df
             Pandas DataFrame containing data points to be transformed
+        progress_bar
+            Display a progress bar?
 
         Returns
         -------
@@ -58,6 +60,6 @@ class PandasTFApplier(BaseTFApplier):
             Pandas DataFrame of data points in augmented data set
         """
         x_transformed: List[pd.Series] = []
-        for _, x in tqdm(df.iterrows(), total=len(df)):
+        for _, x in tqdm(df.iterrows(), total=len(df), disable=(not progress_bar)):
             x_transformed.extend(self._apply_policy_to_data_point(x))
         return pd.concat(x_transformed, axis=1).T

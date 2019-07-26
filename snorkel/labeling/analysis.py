@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from itertools import product
 from typing import List, Optional, Union
 
@@ -8,6 +9,8 @@ from sklearn.metrics import confusion_matrix
 
 from snorkel.analysis.utils import to_int_label_array
 
+from .lf import LabelingFunction
+
 
 class LFAnalysis:
     """Run analyses on LFs using label matrix.
@@ -17,6 +20,13 @@ class LFAnalysis:
     L
         Label matrix where L_{i,j} is the label given by the jth LF to the ith
         candidate (using -1 for abstain)
+    lfs
+        Labeling functions used to generate ``L``
+
+    Raises
+    ------
+    ValueError
+        If number of LFs and number of LF matrix columns differ
 
     Attributes
     ----------
@@ -24,9 +34,19 @@ class LFAnalysis:
         See above.
     """
 
-    def __init__(self, L: np.ndarray) -> None:
+    def __init__(
+        self, L: np.ndarray, lfs: Optional[List[LabelingFunction]] = None
+    ) -> None:
         self.L = L
         self._L_sparse = sparse.csr_matrix(L + 1)
+        self._lf_names = None
+        if lfs is not None:
+            if len(lfs) != self._L_sparse.shape[1]:
+                raise ValueError(
+                    f"Number of LFs ({len(lfs)}) and number of "
+                    f"LF matrix columns ({self._L_sparse.shape[1]}) are different"
+                )
+            self._lf_names = [lf.name for lf in lfs]
 
     def _covered_data_points(self) -> np.ndarray:
         """Get indicator vector z where z_i = 1 if x_i is labeled by at least one LF."""
@@ -300,10 +320,7 @@ class LFAnalysis:
         return P
 
     def lf_summary(
-        self,
-        Y: Optional[np.ndarray] = None,
-        lf_names: Optional[Union[List[str], List[int]]] = None,
-        est_accs: Optional[np.ndarray] = None,
+        self, Y: Optional[np.ndarray] = None, est_accs: Optional[np.ndarray] = None
     ) -> DataFrame:
         """Create a pandas DataFrame with the various per-LF statistics.
 
@@ -312,8 +329,6 @@ class LFAnalysis:
         Y
             [n] or [n, 1] np.ndarray of gold labels. If provided, the empirical accuracy
             for each LF will be calculated.
-        lf_names
-            Name of each LF. If None, indices are used.
         est_accs
             Learned accuracies for each LF
 
@@ -323,23 +338,21 @@ class LFAnalysis:
             Summary statistics for each LF
         """
         n, m = self.L.shape
-        if lf_names is not None:
-            col_names = ["j"]
-            d = {"j": list(range(m))}
+        lf_names: Union[List[str], List[int]]
+        d: OrderedDict[str, Series] = OrderedDict()
+        if self._lf_names is not None:
+            d["j"] = list(range(m))
+            lf_names = self._lf_names
         else:
             lf_names = list(range(m))
-            col_names = []
-            d = {}
 
         # Default LF stats
-        col_names.extend(["Polarity", "Coverage", "Overlaps", "Conflicts"])
         d["Polarity"] = Series(data=self.lf_polarities(), index=lf_names)
         d["Coverage"] = Series(data=self.lf_coverages(), index=lf_names)
         d["Overlaps"] = Series(data=self.lf_overlaps(), index=lf_names)
         d["Conflicts"] = Series(data=self.lf_conflicts(), index=lf_names)
 
         if Y is not None:
-            col_names.extend(["Correct", "Incorrect", "Emp. Acc."])
             confusions = [confusion_matrix(Y, self.L[:, i])[1:, 1:] for i in range(m)]
             corrects = [np.diagonal(conf).sum() for conf in confusions]
             incorrects = [
@@ -351,7 +364,6 @@ class LFAnalysis:
             d["Emp. Acc."] = Series(data=accs, index=lf_names)
 
         if est_accs is not None:
-            col_names.append("Learned Acc.")
             d["Learned Acc."] = Series(est_accs, index=lf_names)
 
-        return DataFrame(data=d, index=lf_names)[col_names]
+        return DataFrame(data=d, index=lf_names)

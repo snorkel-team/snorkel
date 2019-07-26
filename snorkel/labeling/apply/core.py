@@ -75,13 +75,15 @@ class LFApplier(BaseLFApplier):
     useful for testing.
     """
 
-    def apply(self, data_points: DataPoints) -> np.ndarray:
+    def apply(self, data_points: DataPoints, progress_bar: bool = True) -> np.ndarray:
         """Label list of data points with LFs.
 
         Parameters
         ----------
         data_points
             List of data points to be labeled by LFs
+        progress_bar
+            Display a progress bar?
 
         Returns
         -------
@@ -89,6 +91,6 @@ class LFApplier(BaseLFApplier):
             Matrix of labels emitted by LFs
         """
         labels = []
-        for i, x in tqdm(enumerate(data_points)):
+        for i, x in tqdm(enumerate(data_points), disable=(not progress_bar)):
             labels.append(apply_lfs_to_data_point(x, i, self._lfs))
         return self._matrix_from_row_data(labels)

@@ -140,7 +140,7 @@ class LabelModelTest(unittest.TestCase):
                     )
 
         label_model = LabelModel(cardinality=2)
-        label_model.fit(L, n_epochs=1000)
+        label_model.fit(L, n_epochs=1000, seed=123)
 
         accs = label_model.get_accuracies()
         for i in range(len(accs)):

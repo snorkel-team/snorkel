@@ -62,13 +62,15 @@ class TestLFApplier(unittest.TestCase):
     def test_lf_applier(self) -> None:
         data_points = [SimpleNamespace(num=num) for num in DATA]
         applier = LFApplier([f, g])
-        L = applier.apply(data_points)
+        L = applier.apply(data_points, progress_bar=False)
+        np.testing.assert_equal(L, L_EXPECTED)
+        L = applier.apply(data_points, progress_bar=True)
         np.testing.assert_equal(L, L_EXPECTED)
 
     def test_lf_applier_preprocessor(self) -> None:
         data_points = [SimpleNamespace(num=num) for num in DATA]
         applier = LFApplier([f, fp])
-        L = applier.apply(data_points)
+        L = applier.apply(data_points, progress_bar=False)
         np.testing.assert_equal(L, L_PREPROCESS_EXPECTED)
 
     def test_lf_applier_preprocessor_memoized(self) -> None:
@@ -85,7 +87,7 @@ class TestLFApplier(unittest.TestCase):
             return 0 if x.num_squared > 42 else -1
 
         applier = LFApplier([f, fp_memoized])
-        L = applier.apply(data_points)
+        L = applier.apply(data_points, progress_bar=False)
         np.testing.assert_equal(L, L_PREPROCESS_EXPECTED)
         self.assertEqual(square_hit_tracker.n_hits, 4)
 
@@ -100,13 +102,15 @@ class TestPandasApplier(unittest.TestCase):
     def test_lf_applier_pandas(self) -> None:
         df = pd.DataFrame(dict(num=DATA))
         applier = PandasLFApplier([f, g])
-        L = applier.apply(df)
+        L = applier.apply(df, progress_bar=False)
+        np.testing.assert_equal(L, L_EXPECTED)
+        L = applier.apply(df, progress_bar=True)
         np.testing.assert_equal(L, L_EXPECTED)
 
     def test_lf_applier_pandas_preprocessor(self) -> None:
         df = pd.DataFrame(dict(num=DATA))
         applier = PandasLFApplier([f, fp])
-        L = applier.apply(df)
+        L = applier.apply(df, progress_bar=False)
         np.testing.assert_equal(L, L_PREPROCESS_EXPECTED)
 
     def test_lf_applier_pandas_preprocessor_memoized(self) -> None:
@@ -123,7 +127,7 @@ class TestPandasApplier(unittest.TestCase):
 
         df = pd.DataFrame(dict(num=DATA))
         applier = PandasLFApplier([f, fp_memoized])
-        L = applier.apply(df)
+        L = applier.apply(df, progress_bar=False)
         np.testing.assert_equal(L, L_PREPROCESS_EXPECTED)
         self.assertEqual(square_hit_tracker.n_hits, 4)
 
@@ -140,7 +144,7 @@ class TestPandasApplier(unittest.TestCase):
 
         df = pd.DataFrame(dict(text=TEXT_DATA))
         applier = PandasLFApplier([first_is_name, has_verb])
-        L = applier.apply(df)
+        L = applier.apply(df, progress_bar=False)
         np.testing.assert_equal(L, L_TEXT_EXPECTED)
 
     def test_lf_applier_pandas_spacy_preprocessor_memoized(self) -> None:
@@ -157,7 +161,7 @@ class TestPandasApplier(unittest.TestCase):
 
         df = pd.DataFrame(dict(text=TEXT_DATA))
         applier = PandasLFApplier([first_is_name, has_verb])
-        L = applier.apply(df)
+        L = applier.apply(df, progress_bar=False)
         np.testing.assert_equal(L, L_TEXT_EXPECTED)
         self.assertEqual(len(spacy._cache), 2)
 

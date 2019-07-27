@@ -32,7 +32,7 @@ def error_buckets(
     """
     buckets: DefaultDict[Tuple[int, int], List[int]] = defaultdict(list)
     golds = to_int_label_array(golds)
-    preds = to_int_label_array(preds)
+    preds = to_int_label_array(preds, flatten_vector=True)
     for i, (l, y) in enumerate(zip(preds, golds)):
         buckets[(l, y)].append(i)
     return dict(buckets)

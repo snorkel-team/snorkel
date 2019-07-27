@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 
-def filter_unlabeled(
+def filter_unlabeled_dataframe(
     X: pd.DataFrame, y: np.ndarray, L: np.ndarray
 ) -> Tuple[pd.DataFrame, np.ndarray]:
     """Filter out examples not covered by any labeling function.
@@ -12,7 +12,7 @@ def filter_unlabeled(
     Parameters
     ----------
     X
-        Data points
+        Data points in a Pandas DataFrame.
     y
         Matrix of probabilities output by label model's predict_proba method.
     L
@@ -25,5 +25,5 @@ def filter_unlabeled(
     np.ndarray
         Probabilities matrix for data points labeled by at least one LF in L.
     """
-    mask = L.max(axis=1) != -1
+    mask = (L != -1).any(axis=1)
     return X.iloc[mask], y[mask]

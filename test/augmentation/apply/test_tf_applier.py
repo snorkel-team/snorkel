@@ -158,6 +158,7 @@ class TestPandasTFApplier(unittest.TestCase):
         applier = PandasTFApplier([square], policy)
         df_augmented = applier.apply(df, progress_bar=False)
         df_expected = pd.DataFrame(dict(num=[1, 16, 81]), index=[0, 1, 2])
+        self.assertEqual(df_augmented.num.dtype, "int64")
         pd.testing.assert_frame_equal(df_augmented, df_expected)
         pd.testing.assert_frame_equal(df, self._get_x_df())
 
@@ -176,6 +177,7 @@ class TestPandasTFApplier(unittest.TestCase):
         df_expected = pd.DataFrame(
             dict(num=[1, 1, 1, 2, 16, 16, 3, 81, 81]), index=[0, 0, 0, 1, 1, 1, 2, 2, 2]
         )
+        self.assertEqual(df_augmented.num.dtype, "int64")
         pd.testing.assert_frame_equal(df_augmented, df_expected)
         pd.testing.assert_frame_equal(df, self._get_x_df())
 
@@ -189,6 +191,7 @@ class TestPandasTFApplier(unittest.TestCase):
         df_expected = pd.DataFrame(
             dict(num=[1, 1, 1, 2, 3, 81, 81]), index=[0, 0, 0, 1, 2, 2, 2]
         )
+        self.assertEqual(df_augmented.num.dtype, "int64")
         pd.testing.assert_frame_equal(df_augmented, df_expected)
         pd.testing.assert_frame_equal(df, self._get_x_df())
 
@@ -213,6 +216,7 @@ class TestPandasTFApplier(unittest.TestCase):
         gen = applier.apply_generator(df, batch_size=2)
         df_expected = [make_df([1, 1, 16, 16], [0, 0, 1, 1]), make_df([81, 81], [2, 2])]
         for df_batch, df_batch_expected in zip(gen, df_expected):
+            self.assertEqual(df_batch.num.dtype, "int64")
             pd.testing.assert_frame_equal(df_batch, df_batch_expected)
         pd.testing.assert_frame_equal(df, self._get_x_df())
 

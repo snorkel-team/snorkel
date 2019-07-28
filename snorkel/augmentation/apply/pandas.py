@@ -42,7 +42,7 @@ class PandasTFApplier(BaseTFApplier):
             if (i + 1) % batch_size == 0:
                 yield pd.concat(batch_transformed, axis=1).T
                 batch_transformed = []
-        yield pd.concat(batch_transformed, axis=1).T
+        yield pd.concat(batch_transformed, axis=1).T.infer_objects()
 
     def apply(self, df: pd.DataFrame, progress_bar: bool = True) -> pd.DataFrame:
         """Augment a Pandas DataFrame of data points using TFs and policy.
@@ -62,4 +62,4 @@ class PandasTFApplier(BaseTFApplier):
         x_transformed: List[pd.Series] = []
         for _, x in tqdm(df.iterrows(), total=len(df), disable=(not progress_bar)):
             x_transformed.extend(self._apply_policy_to_data_point(x))
-        return pd.concat(x_transformed, axis=1).T
+        return pd.concat(x_transformed, axis=1).T.infer_objects()

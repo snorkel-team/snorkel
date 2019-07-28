@@ -118,14 +118,14 @@ class Task:
 
 
 def ce_loss(
-    module_name: str, outputs: Outputs, Y: torch.Tensor, active: torch.Tensor
+    op_name: str, outputs: Outputs, Y: torch.Tensor, active: torch.Tensor
 ) -> torch.Tensor:
     """Calculate cross-entropy loss for the outputs of the specified module.
 
     Parameters
     ----------
-    module_name
-        The name of the module whose output should be used for calculating loss
+    op_name
+        The name of the operation whose output should be used for calculating loss
     outputs
         The dictionary of operation outputs
     Y
@@ -140,16 +140,16 @@ def ce_loss(
     """
     # Subtract 1 from hard labels in Y to account for Snorkel reserving the label 0 for
     # abstains while F.cross_entropy() expects 0-indexed labels
-    return F.cross_entropy(outputs[module_name][0][active], (Y.view(-1))[active])
+    return F.cross_entropy(outputs[op_name][0][active], (Y.view(-1))[active])
 
 
-def softmax(module_name: str, outputs: Outputs) -> torch.Tensor:
+def softmax(op_name: str, outputs: Outputs) -> torch.Tensor:
     """Calculate the softmax of the outputs of the specified module.
 
     Parameters
     ----------
-    module_name
-        The name of the module whose output should be used for calculating loss
+    op_name
+        The name of the operation whose output should be used for calculating loss
     outputs
         The dictionary of operation outputs
 
@@ -158,4 +158,4 @@ def softmax(module_name: str, outputs: Outputs) -> torch.Tensor:
     torch.Tensor
         The probabilities resulting from the softmax calculation
     """
-    return F.softmax(outputs[module_name][0], dim=1)
+    return F.softmax(outputs[op_name][0], dim=1)

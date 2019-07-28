@@ -31,6 +31,7 @@ def modify_in_place(x: DataPoint) -> DataPoint:
 
 
 DATA = [1, 2, 3]
+STR_DATA = ["x", "y", "z"]
 DATA_IN_PLACE_EXPECTED = [(1 + i // 3) if i % 3 == 0 else 0 for i in range(9)]
 
 
@@ -147,25 +148,32 @@ class TestPandasTFApplier(unittest.TestCase):
     def _get_x_df(self):
         return pd.DataFrame(dict(num=DATA))
 
+    def _get_x_df_with_str(self):
+        return pd.DataFrame(dict(num=DATA, strs=STR_DATA))
+
     def _get_x_df_dict(self):
         return pd.DataFrame(dict(d=get_data_dict()))
 
     def test_tf_applier_pandas(self):
-        df = self._get_x_df()
+        df = self._get_x_df_with_str()
         policy = RandomPolicy(
             1, sequence_length=2, n_per_original=1, keep_original=False
         )
         applier = PandasTFApplier([square], policy)
         df_augmented = applier.apply(df, progress_bar=False)
-        df_expected = pd.DataFrame(dict(num=[1, 16, 81]), index=[0, 1, 2])
+        df_expected = pd.DataFrame(
+            dict(num=[1, 16, 81], strs=STR_DATA), index=[0, 1, 2]
+        )
         self.assertEqual(df_augmented.num.dtype, "int64")
         pd.testing.assert_frame_equal(df_augmented, df_expected)
-        pd.testing.assert_frame_equal(df, self._get_x_df())
+        pd.testing.assert_frame_equal(df, self._get_x_df_with_str())
 
         df_augmented = applier.apply(df, progress_bar=True)
-        df_expected = pd.DataFrame(dict(num=[1, 16, 81]), index=[0, 1, 2])
+        df_expected = pd.DataFrame(
+            dict(num=[1, 16, 81], strs=STR_DATA), index=[0, 1, 2]
+        )
         pd.testing.assert_frame_equal(df_augmented, df_expected)
-        pd.testing.assert_frame_equal(df, self._get_x_df())
+        pd.testing.assert_frame_equal(df, self._get_x_df_with_str())
 
     def test_tf_applier_pandas_keep_original(self):
         df = self._get_x_df()
@@ -208,17 +216,25 @@ class TestPandasTFApplier(unittest.TestCase):
         pd.testing.assert_frame_equal(df, self._get_x_df_dict())
 
     def test_tf_applier_pandas_generator(self):
-        df = self._get_x_df()
+        df = self._get_x_df_with_str()
         policy = RandomPolicy(
             1, sequence_length=2, n_per_original=2, keep_original=False
         )
         applier = PandasTFApplier([square], policy)
         gen = applier.apply_generator(df, batch_size=2)
-        df_expected = [make_df([1, 1, 16, 16], [0, 0, 1, 1]), make_df([81, 81], [2, 2])]
+        df_expected = [
+            pd.DataFrame(
+                {"num": [1, 1, 16, 16], "strs": ["x", "x", "y", "y"]},
+                index=[0, 0, 1, 1],
+            ),
+            pd.DataFrame({"num": [81, 81], "strs": ["z", "z"]}, index=[2, 2]),
+        ]
         for df_batch, df_batch_expected in zip(gen, df_expected):
+            print(f"df_batch: {df_batch}")
+            print(f"df_batch_expected: {df_batch_expected}")
             self.assertEqual(df_batch.num.dtype, "int64")
             pd.testing.assert_frame_equal(df_batch, df_batch_expected)
-        pd.testing.assert_frame_equal(df, self._get_x_df())
+        pd.testing.assert_frame_equal(df, self._get_x_df_with_str())
 
     def test_tf_applier_pandas_keep_original_generator(self):
         df = self._get_x_df()

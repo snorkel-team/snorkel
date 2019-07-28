@@ -40,7 +40,7 @@ class PandasTFApplier(BaseTFApplier):
         for i, (_, x) in enumerate(df.iterrows()):
             batch_transformed.extend(self._apply_policy_to_data_point(x))
             if (i + 1) % batch_size == 0:
-                yield pd.concat(batch_transformed, axis=1).T
+                yield pd.concat(batch_transformed, axis=1).T.infer_objects()
                 batch_transformed = []
         yield pd.concat(batch_transformed, axis=1).T.infer_objects()
 

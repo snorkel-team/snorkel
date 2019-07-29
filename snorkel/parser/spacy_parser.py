@@ -84,7 +84,7 @@ class Spacy(Parser):
         for package in packages:
             if package.lower().replace('-', '_') == name:
                 return True
-            return False
+        return False
 
     @staticmethod
     def model_installed(name):

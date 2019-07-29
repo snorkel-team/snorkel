@@ -75,6 +75,8 @@ def pad_batch(
 def get_active_mask(Y: torch.Tensor) -> torch.Tensor:
     """Return a mask of the active samples given some label Tensor Y.
 
+    A sample is "active" if its corresponding label is not an abstain (with label -1).
+
     Parameters
     ----------
     Y

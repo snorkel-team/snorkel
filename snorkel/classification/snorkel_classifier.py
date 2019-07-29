@@ -389,7 +389,7 @@ class SnorkelClassifier(nn.Module):
         """Calculate scores for the provided DictDataLoaders.
 
         For label names that do not correspond directly to a task name:
-            If label_name is follows convention: "{base_task}:{other_label}"
+            If label_name follows convention: "{base_task}:{other_label}"
             Then evaluate label on base_task.
 
         Parameters

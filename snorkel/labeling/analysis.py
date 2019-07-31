@@ -285,7 +285,7 @@ class LFAnalysis:
             0,
             np.where(self.L == np.vstack([Y] * self.L.shape[1]).T, 1, -1),
         )
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with np.errstate(divide="ignore", invalid="ignore"):
             return np.nan_to_num(0.5 * (X.sum(axis=0) / (self.L != -1).sum(axis=0) + 1))
 
     def lf_empirical_probs(self, Y: np.ndarray, k: int) -> np.ndarray:

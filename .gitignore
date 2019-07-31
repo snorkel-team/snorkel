@@ -124,6 +124,10 @@ dmypy.json
 
 # Editors
 .vscode/
+.code-workspace*
 
 # Dask
 dask-worker-space/
+
+# nohup
+nohup.out

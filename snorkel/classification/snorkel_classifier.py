@@ -396,7 +396,9 @@ class SnorkelClassifier(nn.Module):
 
                 preds = results["preds"][task_name]
                 probs = results["probs"][task_name]
-                metric_scores = self.scorers[task_name].score(golds, preds, probs)
+                metric_scores = self.scorers[task_name].score(
+                    golds=golds, preds=preds, probs=probs
+                )
 
                 for metric_name, metric_value in metric_scores.items():
                     # Type ignore statements are necessary because the DataLoader class

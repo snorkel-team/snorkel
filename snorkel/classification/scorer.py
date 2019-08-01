@@ -20,8 +20,8 @@ class Scorer:
         single score (float) or a dictionary of metric names to scores (if the function
         calculates multiple values, for example). See the unit tests for an example.
     abstain_label
-        The gold label for which examples will be ignored
-
+        The gold label for which examples will be ignored. By default, follow convention
+        that abstains are -1.
 
     Raises
     ------
@@ -47,7 +47,12 @@ class Scorer:
             for metric in metrics:
                 if metric not in METRICS:
                     raise ValueError(f"Unrecognized metric: {metric}")
-            self.metrics = {m: partial(metric_score, metric=m) for m in metrics}
+
+            filter_dict = {"golds": [abstain_label]} if abstain_label else {}
+            self.metrics = {
+                m: partial(metric_score, metric=m, filter_dict=filter_dict)
+                for m in metrics
+            }
         else:
             self.metrics = {}
 
@@ -87,12 +92,6 @@ class Scorer:
 
         for metric_name, metric in self.metrics.items():
             # Filter golds/preds/probs based on abstain_label
-            if self.abstain_label:
-                mask = golds != self.abstain_label
-                golds = golds[mask]
-                preds = preds[mask]
-                probs = probs[mask]
-
             score = metric(golds, preds, probs)
 
             if isinstance(score, dict):

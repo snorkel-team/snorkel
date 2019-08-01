@@ -368,8 +368,6 @@ class SnorkelClassifier(nn.Module):
         remap_labels
             A dict specifying which labels in the dataset's Y_dict (key)
             to remap to a new task (value)
-        kwargs
-            Keyword arguments to pass on to Scorer.score(golds, preds, probs, **kwargs)
 
         Returns
         -------
@@ -393,13 +391,9 @@ class SnorkelClassifier(nn.Module):
 
             for label_name, task_name in eval_dict.items():
                 # Use the original gold labels, which include abstains
-                golds = (
-                    dataloader.dataset.Y_dict[  # type:ignore
-                        label_name
-                    ]
-                    .numpy()
-                    .squeeze()
-                )
+                golds = dataloader.dataset.Y_dict[label_name]  # type:ignore
+                golds = golds.numpy().squeeze()
+
                 preds = results["preds"][task_name]
                 probs = results["probs"][task_name]
                 metric_scores = self.scorers[task_name].score(golds, preds, probs)

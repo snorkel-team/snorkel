@@ -26,6 +26,10 @@ class DatasetTest(unittest.TestCase):
         # Check if the dataset is correctly constructed
         self.assertTrue(torch.equal(dataset[0][0]["data1"], x1[0]))
         self.assertTrue(torch.equal(dataset[0][1]["task1"], y1[0]))
+        self.assertEqual(
+            repr(dataset),
+            "DictDataset(name=new_data, X_keys=['data1'], Y_keys=['task1'])",
+        )
 
     def test_classifier_dataloader(self):
         """Unit test of DictDataLoader"""

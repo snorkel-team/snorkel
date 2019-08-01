@@ -250,8 +250,7 @@ class SnorkelClassifier(nn.Module):
         loss_dict = dict()
         count_dict = dict()
 
-        # Collect the available tasks for this module
-        task_names = [name for name in Y_dict.keys() if name in self.task_flows]
+        task_names = self._get_valid_task_names(Y_dict)
         outputs = self.forward(X_dict, task_names)
 
         # Calculate loss for each task
@@ -330,9 +329,7 @@ class SnorkelClassifier(nn.Module):
         prob_dict_list: Dict[str, List[torch.Tensor]] = defaultdict(list)
 
         for batch_num, (X_batch_dict, Y_batch_dict) in enumerate(dataloader):
-            task_names = [
-                name for name in Y_batch_dict.keys() if name in self.task_flows
-            ]
+            task_names = self._get_valid_task_names(Y_batch_dict)
             prob_batch_dict = self._calculate_probs(X_batch_dict, task_names)
             for task_name in task_names:
                 Y = Y_batch_dict[task_name]
@@ -422,6 +419,10 @@ class SnorkelClassifier(nn.Module):
                     metric_score_dict[identifier] = metric_value
 
         return metric_score_dict
+
+    def _get_valid_task_names(self, Y_dict: Dict[str, torch.Tensor]) -> List[str]:
+        """Given a Y_dict, return a list of task names if appear in the task_flow."""
+        return [name for name in Y_dict.keys() if name in self.task_flows]
 
     def _move_to_device(self) -> None:  # pragma: no cover
         """Move the model to the device specified in the model config."""

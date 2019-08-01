@@ -91,6 +91,33 @@ class ClassifierTest(unittest.TestCase):
         loss_dict, count_dict = model.calculate_loss(dataset.X_dict, dataset.Y_dict)
         self.assertEqual(count_dict["task1"], NUM_EXAMPLES - BATCH_SIZE)
 
+    def test_remapped_labels(self):
+        # Test additional label keys in the Y_dict
+        # Without remapping, model should ignore them
+        task_name = self.task1.name
+        X = torch.FloatTensor([[i, i] for i in range(NUM_EXAMPLES)])
+        Y = torch.ones(NUM_EXAMPLES, 1).long()
+
+        Y_dict = {task_name: Y, "other_task": Y}
+        dataset = DictDataset(
+            name="dataset", split="train", X_dict={"data": X}, Y_dict=Y_dict
+        )
+        dataloader = DictDataLoader(dataset, batch_size=BATCH_SIZE)
+
+        # Test setting without remapping
+        model = SnorkelClassifier([self.task1])
+        loss_dict, count_dict = model.calculate_loss(dataset.X_dict, dataset.Y_dict)
+        self.assertIn("task1", loss_dict)
+
+        results = model.score([dataloader])
+        self.assertIn("task1/dataset/train/accuracy", results)
+        self.assertNotIn("other_task/dataset/train/accuracy", results)
+
+        # Test remapped labelsets
+        results = model.score([dataloader], remap_labels={"other_task": task_name})
+        self.assertIn("task1/dataset/train/accuracy", results)
+        self.assertIn("other_task/dataset/train/accuracy", results)
+
     def test_score(self):
         model = SnorkelClassifier([self.task1])
         metrics = model.score([self.dataloader])

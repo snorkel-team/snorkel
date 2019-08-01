@@ -250,6 +250,7 @@ class SnorkelClassifier(nn.Module):
         loss_dict = dict()
         count_dict = dict()
 
+        # Collect the available tasks for this module
         task_names = [name for name in Y_dict.keys() if name in self.task_flows]
         outputs = self.forward(X_dict, task_names)
 
@@ -359,7 +360,7 @@ class SnorkelClassifier(nn.Module):
 
     @torch.no_grad()
     def score(
-        self, dataloaders: List[DictDataLoader], labels_to_tasks: Dict[str, str] = {}
+        self, dataloaders: List[DictDataLoader], remap_labels: Dict[str, str] = {}
     ) -> Dict[str, float]:
         """Calculate scores for the provided DictDataLoaders.
 
@@ -367,6 +368,9 @@ class SnorkelClassifier(nn.Module):
         ----------
         dataloaders
             A list of DictDataLoaders to calculate scores for
+        remap_labels
+            A dict specifying which labels in the dataset's Y_dict (key)
+            to remap to a new task (value)
         kwargs
             Keyword arguments to pass on to Scorer.score(golds, preds, probs, **kwargs)
 
@@ -388,7 +392,7 @@ class SnorkelClassifier(nn.Module):
             # By default, evaluate each label_name on task with corresponding task_name
             eval_dict = {name: name for name in results["golds"].keys()}
             # Then, override the current results with manually specified mappings
-            eval_dict.update(labels_to_tasks)
+            eval_dict.update(remap_labels)
 
             for label_name, task_name in eval_dict.items():
                 # Use the original gold labels, which include abstains

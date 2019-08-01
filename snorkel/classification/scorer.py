@@ -13,12 +13,15 @@ class Scorer:
     ----------
     metrics
         A list of metric names, all of which are defined in METRICS
-    custom_metric_funcs:
+    custom_metric_funcs
         An optional dictionary mapping the names of custom metrics to the functions
         that produce them. Each custom metric function should accept golds, preds, and
         probs as input (just like the standard metrics in METRICS) and return either a
         single score (float) or a dictionary of metric names to scores (if the function
         calculates multiple values, for example). See the unit tests for an example.
+    abstain_label
+        The gold label for which examples will be ignored
+
 
     Raises
     ------
@@ -36,6 +39,7 @@ class Scorer:
         self,
         metrics: Optional[List[str]] = None,
         custom_metric_funcs: Optional[Mapping[str, Callable[..., float]]] = None,
+        abstain_label: Optional[int] = -1,
     ) -> None:
 
         self.metrics: Dict[str, Callable[..., float]]
@@ -49,6 +53,8 @@ class Scorer:
 
         if custom_metric_funcs is not None:
             self.metrics.update(custom_metric_funcs)
+
+        self.abstain_label = abstain_label
 
     def score(
         self, golds: np.ndarray, preds: np.ndarray, probs: np.ndarray
@@ -80,6 +86,12 @@ class Scorer:
         metric_dict = dict()
 
         for metric_name, metric in self.metrics.items():
+            # Filter golds/preds/probs based on abstain_label
+            if self.abstain_label:
+                mask = golds != self.abstain_label
+                golds = golds[mask]
+                preds = preds[mask]
+                probs = probs[mask]
 
             score = metric(golds, preds, probs)
 

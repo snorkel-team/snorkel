@@ -250,11 +250,12 @@ class SnorkelClassifier(nn.Module):
         loss_dict = dict()
         count_dict = dict()
 
-        task_names = Y_dict.keys()
+        task_names = [name for name in Y_dict.keys() if name in self.task_flows]
         outputs = self.forward(X_dict, task_names)
 
         # Calculate loss for each task
-        for task_name, Y in Y_dict.items():
+        for task_name in task_names:
+            Y = Y_dict[task_name]
 
             # Select the active samples
             if len(Y.size()) == 1:
@@ -328,8 +329,12 @@ class SnorkelClassifier(nn.Module):
         prob_dict_list: Dict[str, List[torch.Tensor]] = defaultdict(list)
 
         for batch_num, (X_batch_dict, Y_batch_dict) in enumerate(dataloader):
-            prob_batch_dict = self._calculate_probs(X_batch_dict, Y_batch_dict.keys())
-            for task_name, Y in Y_batch_dict.items():
+            task_names = [
+                name for name in Y_batch_dict.keys() if name in self.task_flows
+            ]
+            prob_batch_dict = self._calculate_probs(X_batch_dict, task_names)
+            for task_name in task_names:
+                Y = Y_batch_dict[task_name]
                 prob_dict_list[task_name].extend(prob_batch_dict[task_name])
                 gold_dict_list[task_name].extend(Y.cpu().numpy())
 
@@ -353,13 +358,17 @@ class SnorkelClassifier(nn.Module):
         return results
 
     @torch.no_grad()
-    def score(self, dataloaders: List["DictDataLoader"]) -> Dict[str, float]:
+    def score(
+        self, dataloaders: List[DictDataLoader], labels_to_tasks: Dict[str, str] = {}
+    ) -> Dict[str, float]:
         """Calculate scores for the provided DictDataLoaders.
 
         Parameters
         ----------
         dataloaders
             A list of DictDataLoaders to calculate scores for
+        kwargs
+            Keyword arguments to pass on to Scorer.score(golds, preds, probs, **kwargs)
 
         Returns
         -------
@@ -371,22 +380,36 @@ class SnorkelClassifier(nn.Module):
         self.eval()
 
         metric_score_dict = dict()
+        # By default, evaluate all labels on corresponding task of same name
 
         for dataloader in dataloaders:
             results = self.predict(dataloader, return_preds=True)
-            for task_name in results["golds"].keys():
-                metric_scores = self.scorers[task_name].score(
-                    results["golds"][task_name],
-                    results["preds"][task_name],
-                    results["probs"][task_name],
+
+            # By default, evaluate each label_name on task with corresponding task_name
+            eval_dict = {name: name for name in results["golds"].keys()}
+            # Then, override the current results with manually specified mappings
+            eval_dict.update(labels_to_tasks)
+
+            for label_name, task_name in eval_dict.items():
+                # Use the original gold labels, which include abstains
+                golds = (
+                    dataloader.dataset.Y_dict[  # type:ignore
+                        label_name
+                    ]
+                    .numpy()
+                    .squeeze()
                 )
+                preds = results["preds"][task_name]
+                probs = results["probs"][task_name]
+                metric_scores = self.scorers[task_name].score(golds, preds, probs)
+
                 for metric_name, metric_value in metric_scores.items():
                     # Type ignore statements are necessary because the DataLoader class
                     # that DictDataLoader inherits from is what actually sets
                     # the class of Dataset, and it doesn't know about name and split.
                     identifier = "/".join(
                         [
-                            task_name,
+                            label_name,
                             dataloader.dataset.name,  # type: ignore
                             dataloader.dataset.split,  # type: ignore
                             metric_name,

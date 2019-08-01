@@ -91,7 +91,6 @@ class Scorer:
         metric_dict = dict()
 
         for metric_name, metric in self.metrics.items():
-            # Filter golds/preds/probs based on abstain_label
             score = metric(golds, preds, probs)
 
             if isinstance(score, dict):

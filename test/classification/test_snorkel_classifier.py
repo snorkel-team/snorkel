@@ -105,16 +105,22 @@ class ClassifierTest(unittest.TestCase):
         )
         dataloader = DictDataLoader(dataset, batch_size=BATCH_SIZE)
 
-        # Test setting without remapping
         model = SnorkelClassifier([self.task1])
         loss_dict, count_dict = model.calculate_loss(dataset.X_dict, dataset.Y_dict)
         self.assertIn("task1", loss_dict)
 
-        results = model.score([dataloader])
-        self.assertIn("task1/dataset/train/accuracy", results)
-        self.assertNotIn("other_task/dataset/train/accuracy", results)
+        # Test setting without remapping
+        results = model.predict(dataloader)
+        self.assertIn("task1", results["golds"])
+        self.assertNotIn("other_task", results["golds"])
+        scores = model.score([dataloader])
+        self.assertIn("task1/dataset/train/accuracy", scores)
+        self.assertNotIn("other_task/dataset/train/accuracy", scores)
 
         # Test remapped labelsets
+        results = model.predict(dataloader, remap_labels={"other_task": task_name})
+        self.assertIn("task1", results["golds"])
+        self.assertIn("other_task", results["golds"])
         results = model.score([dataloader], remap_labels={"other_task": task_name})
         self.assertIn("task1/dataset/train/accuracy", results)
         self.assertIn("other_task/dataset/train/accuracy", results)

@@ -250,12 +250,12 @@ class SnorkelClassifier(nn.Module):
         loss_dict = dict()
         count_dict = dict()
 
-        task_names = self._get_valid_task_names(Y_dict)
-        outputs = self.forward(X_dict, task_names)
+        labels_to_tasks = self._get_labels_to_tasks(Y_dict.keys())
+        outputs = self.forward(X_dict, task_names=labels_to_tasks.values())
 
         # Calculate loss for each task
-        for task_name in task_names:
-            Y = Y_dict[task_name]
+        for label_name, task_name in labels_to_tasks.items():
+            Y = Y_dict[label_name]
 
             # Select the active samples
             if len(Y.size()) == 1:
@@ -265,9 +265,10 @@ class SnorkelClassifier(nn.Module):
 
             # Only calculate the loss when active example exists
             if active.any():
-                count_dict[task_name] = active.sum().item()
+                # Note: Use label_name as key, but task_name to access model attributes
+                count_dict[label_name] = active.sum().item()
 
-                loss_dict[task_name] = self.loss_funcs[task_name](
+                loss_dict[label_name] = self.loss_funcs[task_name](
                     outputs,
                     move_to_device(Y, self.config.device),
                     move_to_device(active, self.config.device),
@@ -307,7 +308,10 @@ class SnorkelClassifier(nn.Module):
 
     @torch.no_grad()
     def predict(
-        self, dataloader: DictDataLoader, return_preds: bool = False
+        self,
+        dataloader: DictDataLoader,
+        return_preds: bool = False,
+        remap_labels: Dict[str, str] = {},
     ) -> Dict[str, Dict[str, torch.Tensor]]:
         """Calculate probabilities, (optionally) predictions, and pull out gold labels.
 
@@ -317,6 +321,9 @@ class SnorkelClassifier(nn.Module):
             A DictDataLoader to make predictions for
         return_preds
             If True, include predictions in the return dict (not just probabilities)
+        remap_labels
+            A dict specifying which labels in the dataset's Y_dict (key)
+            to remap to a new task (value)
 
         Returns
         -------
@@ -329,12 +336,21 @@ class SnorkelClassifier(nn.Module):
         prob_dict_list: Dict[str, List[torch.Tensor]] = defaultdict(list)
 
         for batch_num, (X_batch_dict, Y_batch_dict) in enumerate(dataloader):
-            task_names = self._get_valid_task_names(Y_batch_dict)
-            prob_batch_dict = self._calculate_probs(X_batch_dict, task_names)
-            for task_name in task_names:
-                Y = Y_batch_dict[task_name]
-                prob_dict_list[task_name].extend(prob_batch_dict[task_name])
-                gold_dict_list[task_name].extend(Y.cpu().numpy())
+            labels_to_tasks = self._get_labels_to_tasks(
+                label_names=Y_batch_dict.keys(), remap_labels=remap_labels
+            )
+
+            prob_batch_dict = self._calculate_probs(
+                X_batch_dict, labels_to_tasks.values()
+            )
+            for label_name in labels_to_tasks.keys():
+                task_name = labels_to_tasks[label_name]
+                Y = Y_batch_dict[label_name]
+
+                # Note: store results under label_name
+                # but retrieve from pre-computed results using task_name
+                prob_dict_list[label_name].extend(prob_batch_dict[task_name])
+                gold_dict_list[label_name].extend(Y.cpu().numpy())
 
         gold_dict: Dict[str, np.ndarray] = {}
         prob_dict: Dict[str, np.ndarray] = {}
@@ -382,22 +398,19 @@ class SnorkelClassifier(nn.Module):
         # By default, evaluate all labels on corresponding task of same name
 
         for dataloader in dataloaders:
-            results = self.predict(dataloader, return_preds=True)
+            results = self.predict(
+                dataloader, return_preds=True, remap_labels=remap_labels
+            )
 
-            # By default, evaluate each label_name on task with corresponding task_name
-            eval_dict = {name: name for name in results["golds"].keys()}
-            # Then, override the current results with manually specified mappings
-            eval_dict.update(remap_labels)
+            labels_to_tasks = self._get_labels_to_tasks(
+                label_names=results["golds"].keys(), remap_labels=remap_labels
+            )
 
-            for label_name, task_name in eval_dict.items():
-                # Use the original gold labels, which include abstains
-                golds = dataloader.dataset.Y_dict[label_name]  # type:ignore
-                golds = golds.numpy().squeeze()
-
-                preds = results["preds"][task_name]
-                probs = results["probs"][task_name]
+            for label_name, task_name in labels_to_tasks.items():
                 metric_scores = self.scorers[task_name].score(
-                    golds=golds, preds=preds, probs=probs
+                    golds=results["golds"][label_name],
+                    preds=results["preds"][label_name],
+                    probs=results["probs"][label_name],
                 )
 
                 for metric_name, metric_value in metric_scores.items():
@@ -416,9 +429,25 @@ class SnorkelClassifier(nn.Module):
 
         return metric_score_dict
 
-    def _get_valid_task_names(self, Y_dict: Dict[str, torch.Tensor]) -> List[str]:
-        """Given a Y_dict, return a list of task names if appear in the task_flow."""
-        return [name for name in Y_dict.keys() if name in self.task_flows]
+    def _get_labels_to_tasks(
+        self, label_names: Iterable[str], remap_labels: Dict[str, str] = {}
+    ) -> Dict[str, str]:
+        """Map each label to its corresponding task outputs based on whether the task is available.
+
+        If remap_labels specified, overrides specific label -> task mappings.
+        """
+        labels_to_tasks = {}
+        for label in label_names:
+            task = remap_labels.get(label, label)
+            if task not in self.task_flows:
+                logging.warning(
+                    f"Label ({label}) does not appear in task flows. Skipping."
+                )
+                continue
+
+            labels_to_tasks[label] = task
+
+        return labels_to_tasks
 
     def _move_to_device(self) -> None:  # pragma: no cover
         """Move the model to the device specified in the model config."""

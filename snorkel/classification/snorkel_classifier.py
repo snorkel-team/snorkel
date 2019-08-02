@@ -338,13 +338,14 @@ class SnorkelClassifier(nn.Module):
         prob_dict_list: Dict[str, List[torch.Tensor]] = defaultdict(list)
 
         labels_to_tasks = self._get_labels_to_tasks(
-            label_names=dataloader.dataset.Y_dict.keys(), remap_labels=remap_labels
+            label_names=dataloader.dataset.Y_dict.keys(),  # type: ignore
+            remap_labels=remap_labels,
         )
         for batch_num, (X_batch_dict, Y_batch_dict) in enumerate(dataloader):
             prob_batch_dict = self._calculate_probs(
                 X_batch_dict, labels_to_tasks.values()
             )
-            for label_name in labels_to_tasks.keys():
+            for label_name in labels_to_tasks:
                 task_name = labels_to_tasks[label_name]
                 Y = Y_batch_dict[label_name]
 
@@ -399,7 +400,7 @@ class SnorkelClassifier(nn.Module):
 
         for dataloader in dataloaders:
             # Construct label to task mapping for evaluation
-            Y_dict = dataloader.dataset.Y_dict
+            Y_dict = dataloader.dataset.Y_dict  # type: ignore
             labels_to_tasks = self._get_labels_to_tasks(
                 label_names=Y_dict.keys(), remap_labels=remap_labels
             )
@@ -408,7 +409,7 @@ class SnorkelClassifier(nn.Module):
             extra_labels = set(Y_dict.keys()).difference(set(labels_to_tasks.keys()))
             if extra_labels:
                 logging.warning(
-                    f"Ignoring extra labels in dataloader ({dataloader.dataset.split}): {extra_labels}"
+                    f"Ignoring extra labels in dataloader ({dataloader.dataset.split}): {extra_labels}"  # type: ignore
                 )
 
             # Obtain predictions

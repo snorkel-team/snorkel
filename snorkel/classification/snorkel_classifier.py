@@ -337,11 +337,10 @@ class SnorkelClassifier(nn.Module):
         gold_dict_list: Dict[str, List[torch.Tensor]] = defaultdict(list)
         prob_dict_list: Dict[str, List[torch.Tensor]] = defaultdict(list)
 
+        labels_to_tasks = self._get_labels_to_tasks(
+            label_names=dataloader.dataset.Y_dict.keys(), remap_labels=remap_labels
+        )
         for batch_num, (X_batch_dict, Y_batch_dict) in enumerate(dataloader):
-            labels_to_tasks = self._get_labels_to_tasks(
-                label_names=Y_batch_dict.keys(), remap_labels=remap_labels
-            )
-
             prob_batch_dict = self._calculate_probs(
                 X_batch_dict, labels_to_tasks.values()
             )
@@ -397,17 +396,27 @@ class SnorkelClassifier(nn.Module):
         self.eval()
 
         metric_score_dict = dict()
-        # By default, evaluate all labels on corresponding task of same name
 
         for dataloader in dataloaders:
+            # Construct label to task mapping for evaluation
+            Y_dict = dataloader.dataset.Y_dict
+            labels_to_tasks = self._get_labels_to_tasks(
+                label_names=Y_dict.keys(), remap_labels=remap_labels
+            )
+
+            # What labels in Y_dict are we ignoring?
+            extra_labels = set(Y_dict.keys()).difference(set(labels_to_tasks.keys()))
+            if extra_labels:
+                logging.warning(
+                    f"Ignoring extra labels in dataloader ({dataloader.dataset.split}): {extra_labels}"
+                )
+
+            # Obtain predictions
             results = self.predict(
                 dataloader, return_preds=True, remap_labels=remap_labels
             )
 
-            labels_to_tasks = self._get_labels_to_tasks(
-                label_names=results["golds"].keys(), remap_labels=remap_labels
-            )
-
+            # Score and record metrics for each set of predictions
             for label_name, task_name in labels_to_tasks.items():
                 metric_scores = self.scorers[task_name].score(
                     golds=results["golds"][label_name],
@@ -438,17 +447,10 @@ class SnorkelClassifier(nn.Module):
 
         If remap_labels specified, overrides specific label -> task mappings.
         """
-        labels_to_tasks = {}
-        for label in label_names:
-            task = remap_labels.get(label, label)
-            if task not in self.task_flows:
-                logging.warning(
-                    f"Label ({label}) does not appear in task flows. Skipping."
-                )
-                continue
-
-            labels_to_tasks[label] = task
-
+        labels_to_tasks = {
+            name: name for name in label_names if name in self.task_flows
+        }
+        labels_to_tasks.update(remap_labels)
         return labels_to_tasks
 
     def _move_to_device(self) -> None:  # pragma: no cover

@@ -143,11 +143,21 @@ class SlicingConvergenceTest(unittest.TestCase):
         scores = model.score(dataloaders)
 
         # Confirm reasonably high slice scores
+        # Check train scores
+        self.assertGreater(scores["task/TestData/train/f1"], 0.9)
+        self.assertGreater(scores["task_slice:f_pred/TestData/train/f1"], 0.9)
+        self.assertGreater(scores["task_slice:f_ind/TestData/train/f1"], 0.9)
+        self.assertGreater(scores["task_slice:g_pred/TestData/train/f1"], 0.9)
+        self.assertGreater(scores["task_slice:g_ind/TestData/train/f1"], 0.9)
+        self.assertGreater(scores["task_slice:base_pred/TestData/train/f1"], 0.9)
+        self.assertEqual(scores["task_slice:base_ind/TestData/train/f1"], 1.0)
+
+        # Check valid scores
         self.assertGreater(scores["task/TestData/valid/f1"], 0.9)
         self.assertGreater(scores["task_slice:f_pred/TestData/valid/f1"], 0.9)
         self.assertGreater(scores["task_slice:f_ind/TestData/valid/f1"], 0.9)
-        self.assertGreater(scores["task_slice:g_pred/TestData/train/f1"], 0.9)
-        self.assertGreater(scores["task_slice:g_ind/TestData/train/f1"], 0.9)
+        self.assertGreater(scores["task_slice:g_pred/TestData/valid/f1"], 0.9)
+        self.assertGreater(scores["task_slice:g_ind/TestData/valid/f1"], 0.9)
         self.assertGreater(scores["task_slice:base_pred/TestData/valid/f1"], 0.9)
         # base_ind is trivial: all labels are positive
         self.assertEqual(scores["task_slice:base_ind/TestData/valid/f1"], 1.0)

@@ -269,9 +269,9 @@ class SnorkelClassifier(nn.Module):
                 count_dict[label_name] = active.sum().item()
 
                 loss_dict[label_name] = self.loss_funcs[task_name](
-                    outputs,
-                    move_to_device(Y, self.config.device),
-                    move_to_device(active, self.config.device),
+                    outputs=outputs,
+                    Y=move_to_device(Y, self.config.device),
+                    active=move_to_device(active, self.config.device),
                 )
 
         return loss_dict, count_dict
@@ -302,7 +302,9 @@ class SnorkelClassifier(nn.Module):
         outputs = self.forward(X_dict, task_names)
 
         for task_name in task_names:
-            prob_dict[task_name] = self.output_funcs[task_name](outputs).cpu().numpy()
+            prob_dict[task_name] = (
+                self.output_funcs[task_name](outputs=outputs).cpu().numpy()
+            )
 
         return prob_dict
 

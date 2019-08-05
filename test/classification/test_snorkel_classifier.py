@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from snorkel.analysis.utils import set_seed
 from snorkel.classification.data import DictDataLoader, DictDataset
 from snorkel.classification.snorkel_classifier import Operation, SnorkelClassifier, Task
 
@@ -91,11 +92,88 @@ class ClassifierTest(unittest.TestCase):
         loss_dict, count_dict = model.calculate_loss(dataset.X_dict, dataset.Y_dict)
         self.assertEqual(count_dict["task1"], NUM_EXAMPLES - BATCH_SIZE)
 
+    def test_remapped_labels(self):
+        # Test additional label keys in the Y_dict
+        # Without remapping, model should ignore them
+        task_name = self.task1.name
+        X = torch.FloatTensor([[i, i] for i in range(NUM_EXAMPLES)])
+        Y = torch.ones(NUM_EXAMPLES, 1).long()
+
+        Y_dict = {task_name: Y, "other_task": Y}
+        dataset = DictDataset(
+            name="dataset", split="train", X_dict={"data": X}, Y_dict=Y_dict
+        )
+        dataloader = DictDataLoader(dataset, batch_size=BATCH_SIZE)
+
+        model = SnorkelClassifier([self.task1])
+        loss_dict, count_dict = model.calculate_loss(dataset.X_dict, dataset.Y_dict)
+        self.assertIn("task1", loss_dict)
+
+        # Test setting without remapping
+        results = model.predict(dataloader)
+        self.assertIn("task1", results["golds"])
+        self.assertNotIn("other_task", results["golds"])
+        scores = model.score([dataloader])
+        self.assertIn("task1/dataset/train/accuracy", scores)
+        self.assertNotIn("other_task/dataset/train/accuracy", scores)
+
+        # Test remapped labelsets
+        results = model.predict(dataloader, remap_labels={"other_task": task_name})
+        self.assertIn("task1", results["golds"])
+        self.assertIn("other_task", results["golds"])
+        results = model.score([dataloader], remap_labels={"other_task": task_name})
+        self.assertIn("task1/dataset/train/accuracy", results)
+        self.assertIn("other_task/dataset/train/accuracy", results)
+
     def test_score(self):
         model = SnorkelClassifier([self.task1])
         metrics = model.score([self.dataloader])
         # deterministic random tie breaking alternates predicted labels
         self.assertEqual(metrics["task1/dataset/train/accuracy"], 0.4)
+
+    def test_score_shuffled(self):
+        # Test scoring with a shuffled dataset
+
+        set_seed(123)
+
+        class SimpleVoter(nn.Module):
+            def forward(self, x):
+                """Set class 0 to -1 if x and 1 otherwise"""
+                mask = x % 2 == 0
+                out = torch.zeros(x.shape[0], 2)
+                out[mask, 0] = 1  # class 0
+                out[~mask, 1] = 1  # class 1
+                return out
+
+        # Create model
+        task_name = "VotingTask"
+        module_name = "simple_voter"
+        module_pool = nn.ModuleDict({module_name: SimpleVoter()})
+        op0 = Operation(
+            module_name=module_name, inputs=[("_input_", "data")], name="op0"
+        )
+        task_flow = [op0]
+        task = Task(name=task_name, module_pool=module_pool, task_flow=task_flow)
+        model = SnorkelClassifier([task])
+
+        # Create dataset
+        y_list = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
+        x_list = [i for i in range(len(y_list))]
+        Y = torch.LongTensor(y_list * 100)
+        X = torch.FloatTensor(x_list * 100)
+        dataset = DictDataset(
+            name="dataset", split="train", X_dict={"data": X}, Y_dict={task_name: Y}
+        )
+
+        # Create dataloaders
+        dataloader = DictDataLoader(dataset, batch_size=2, shuffle=False)
+        scores = model.score([dataloader])
+
+        self.assertEqual(scores["VotingTask/dataset/train/accuracy"], 0.6)
+
+        dataloader_shuffled = DictDataLoader(dataset, batch_size=2, shuffle=True)
+        scores_shuffled = model.score([dataloader_shuffled])
+        self.assertEqual(scores_shuffled["VotingTask/dataset/train/accuracy"], 0.6)
 
     def test_save_load(self):
         fd, checkpoint_path = tempfile.mkstemp()

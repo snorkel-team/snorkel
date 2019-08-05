@@ -250,11 +250,12 @@ class SnorkelClassifier(nn.Module):
         loss_dict = dict()
         count_dict = dict()
 
-        task_names = Y_dict.keys()
-        outputs = self.forward(X_dict, task_names)
+        labels_to_tasks = self._get_labels_to_tasks(Y_dict.keys())
+        outputs = self.forward(X_dict, task_names=labels_to_tasks.values())
 
         # Calculate loss for each task
-        for task_name, Y in Y_dict.items():
+        for label_name, task_name in labels_to_tasks.items():
+            Y = Y_dict[label_name]
 
             # Select the active samples
             if len(Y.size()) == 1:
@@ -264,9 +265,10 @@ class SnorkelClassifier(nn.Module):
 
             # Only calculate the loss when active example exists
             if active.any():
-                count_dict[task_name] = active.sum().item()
+                # Note: Use label_name as key, but task_name to access model attributes
+                count_dict[label_name] = active.sum().item()
 
-                loss_dict[task_name] = self.loss_funcs[task_name](
+                loss_dict[label_name] = self.loss_funcs[task_name](
                     outputs=outputs,
                     Y=move_to_device(Y, self.config.device),
                     active=move_to_device(active, self.config.device),
@@ -308,7 +310,10 @@ class SnorkelClassifier(nn.Module):
 
     @torch.no_grad()
     def predict(
-        self, dataloader: DictDataLoader, return_preds: bool = False
+        self,
+        dataloader: DictDataLoader,
+        return_preds: bool = False,
+        remap_labels: Dict[str, str] = {},
     ) -> Dict[str, Dict[str, torch.Tensor]]:
         """Calculate probabilities, (optionally) predictions, and pull out gold labels.
 
@@ -318,6 +323,9 @@ class SnorkelClassifier(nn.Module):
             A DictDataLoader to make predictions for
         return_preds
             If True, include predictions in the return dict (not just probabilities)
+        remap_labels
+            A dict specifying which labels in the dataset's Y_dict (key)
+            to remap to a new task (value)
 
         Returns
         -------
@@ -329,11 +337,22 @@ class SnorkelClassifier(nn.Module):
         gold_dict_list: Dict[str, List[torch.Tensor]] = defaultdict(list)
         prob_dict_list: Dict[str, List[torch.Tensor]] = defaultdict(list)
 
+        labels_to_tasks = self._get_labels_to_tasks(
+            label_names=dataloader.dataset.Y_dict.keys(),  # type: ignore
+            remap_labels=remap_labels,
+        )
         for batch_num, (X_batch_dict, Y_batch_dict) in enumerate(dataloader):
-            prob_batch_dict = self._calculate_probs(X_batch_dict, Y_batch_dict.keys())
-            for task_name, Y in Y_batch_dict.items():
-                prob_dict_list[task_name].extend(prob_batch_dict[task_name])
-                gold_dict_list[task_name].extend(Y.cpu().numpy())
+            prob_batch_dict = self._calculate_probs(
+                X_batch_dict, labels_to_tasks.values()
+            )
+            for label_name in labels_to_tasks:
+                task_name = labels_to_tasks[label_name]
+                Y = Y_batch_dict[label_name]
+
+                # Note: store results under label_name
+                # but retrieve from pre-computed results using task_name
+                prob_dict_list[label_name].extend(prob_batch_dict[task_name])
+                gold_dict_list[label_name].extend(Y.cpu().numpy())
 
         gold_dict: Dict[str, np.ndarray] = {}
         prob_dict: Dict[str, np.ndarray] = {}
@@ -355,13 +374,18 @@ class SnorkelClassifier(nn.Module):
         return results
 
     @torch.no_grad()
-    def score(self, dataloaders: List["DictDataLoader"]) -> Dict[str, float]:
+    def score(
+        self, dataloaders: List[DictDataLoader], remap_labels: Dict[str, str] = {}
+    ) -> Dict[str, float]:
         """Calculate scores for the provided DictDataLoaders.
 
         Parameters
         ----------
         dataloaders
             A list of DictDataLoaders to calculate scores for
+        remap_labels
+            A dict specifying which labels in the dataset's Y_dict (key)
+            to remap to a new task (value)
 
         Returns
         -------
@@ -375,20 +399,39 @@ class SnorkelClassifier(nn.Module):
         metric_score_dict = dict()
 
         for dataloader in dataloaders:
-            results = self.predict(dataloader, return_preds=True)
-            for task_name in results["golds"].keys():
-                metric_scores = self.scorers[task_name].score(
-                    results["golds"][task_name],
-                    results["preds"][task_name],
-                    results["probs"][task_name],
+            # Construct label to task mapping for evaluation
+            Y_dict = dataloader.dataset.Y_dict  # type: ignore
+            labels_to_tasks = self._get_labels_to_tasks(
+                label_names=Y_dict.keys(), remap_labels=remap_labels
+            )
+
+            # What labels in Y_dict are we ignoring?
+            extra_labels = set(Y_dict.keys()).difference(set(labels_to_tasks.keys()))
+            if extra_labels:
+                logging.warning(
+                    f"Ignoring extra labels in dataloader ({dataloader.dataset.split}): {extra_labels}"  # type: ignore
                 )
+
+            # Obtain predictions
+            results = self.predict(
+                dataloader, return_preds=True, remap_labels=remap_labels
+            )
+
+            # Score and record metrics for each set of predictions
+            for label_name, task_name in labels_to_tasks.items():
+                metric_scores = self.scorers[task_name].score(
+                    golds=results["golds"][label_name],
+                    preds=results["preds"][label_name],
+                    probs=results["probs"][label_name],
+                )
+
                 for metric_name, metric_value in metric_scores.items():
                     # Type ignore statements are necessary because the DataLoader class
                     # that DictDataLoader inherits from is what actually sets
                     # the class of Dataset, and it doesn't know about name and split.
                     identifier = "/".join(
                         [
-                            task_name,
+                            label_name,
                             dataloader.dataset.name,  # type: ignore
                             dataloader.dataset.split,  # type: ignore
                             metric_name,
@@ -397,6 +440,29 @@ class SnorkelClassifier(nn.Module):
                     metric_score_dict[identifier] = metric_value
 
         return metric_score_dict
+
+    def _get_labels_to_tasks(
+        self, label_names: Iterable[str], remap_labels: Dict[str, str] = {}
+    ) -> Dict[str, str]:
+        """Map each label to its corresponding task outputs based on whether the task is available.
+
+        If remap_labels specified, overrides specific label -> task mappings.
+        If a label is mappied to `None`, that key is removed from the mapping.
+        """
+        labels_to_tasks = {}
+        for label in label_names:
+            # If available in task flows, label should map to task of same name
+            if label in self.task_flows:
+                labels_to_tasks[label] = label
+
+            # Override any existing label -> task mappings
+            if label in remap_labels:
+                task = remap_labels.get(label)
+                # Note: task might be manually remapped to None to remove it from the labels_to_tasks
+                if task is not None:
+                    labels_to_tasks[label] = task
+
+        return labels_to_tasks
 
     def _move_to_device(self) -> None:  # pragma: no cover
         """Move the model to the device specified in the model config."""

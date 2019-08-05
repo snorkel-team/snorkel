@@ -8,7 +8,7 @@ from snorkel.analysis.utils import set_seed
 from snorkel.labeling.apply.pandas import PandasLFApplier
 from snorkel.labeling.lf import LabelingFunction, labeling_function
 from snorkel.labeling.model.label_model import LabelModel
-from snorkel.labeling.preprocess import preprocessor
+from snorkel.preprocess import preprocessor
 from snorkel.types import DataPoint
 
 

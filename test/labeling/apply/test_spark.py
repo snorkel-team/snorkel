@@ -9,7 +9,7 @@ from pyspark.sql import Row, SQLContext
 
 from snorkel.labeling.apply.spark import SparkLFApplier
 from snorkel.labeling.lf import labeling_function
-from snorkel.labeling.preprocess import preprocessor
+from snorkel.preprocess import preprocessor
 from snorkel.types import DataPoint
 
 

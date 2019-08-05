@@ -1,7 +1,7 @@
 from typing import Any, Callable, List, Mapping, NamedTuple, Optional
 
-from snorkel.labeling.preprocess import BasePreprocessor
-from snorkel.labeling.preprocess.nlp import EN_CORE_WEB_SM, SpacyPreprocessor
+from snorkel.preprocess import BasePreprocessor
+from snorkel.preprocess.nlp import EN_CORE_WEB_SM, SpacyPreprocessor
 
 from .core import LabelingFunction, labeling_function
 
@@ -9,7 +9,7 @@ from .core import LabelingFunction, labeling_function
 class SpacyPreprocessorParameters(NamedTuple):
     """Parameters needed to construct a SpacyPreprocessor.
 
-    See ``snorkel.labeling.preprocess.nlp.SpacyPreprocessor``.
+    See ``snorkel.preprocess.nlp.SpacyPreprocessor``.
     """
 
     text_field: str

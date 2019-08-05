@@ -181,7 +181,7 @@ class Mapper(BaseMapper):
     Use ``snorkel.map.spark.make_spark_mapper`` for PySpark compatibility.
 
     For an example of a Mapper, see
-        ``snorkel.labeling.preprocess.nlp.SpacyPreprocessor``
+        ``snorkel.preprocess.nlp.SpacyPreprocessor``
 
     Parameters
     ----------

@@ -4,7 +4,7 @@ from types import SimpleNamespace
 from typing import List
 
 from snorkel.labeling.lf import LabelingFunction, labeling_function
-from snorkel.labeling.preprocess import preprocessor
+from snorkel.preprocess import preprocessor
 from snorkel.types import DataPoint
 
 

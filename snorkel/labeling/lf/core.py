@@ -1,6 +1,6 @@
 from typing import Any, Callable, List, Mapping, Optional
 
-from snorkel.labeling.preprocess import BasePreprocessor
+from snorkel.preprocess import BasePreprocessor
 from snorkel.types import DataPoint
 
 

@@ -5,7 +5,7 @@ import dill
 import pytest
 
 from snorkel.labeling.lf.nlp import NLPLabelingFunction, nlp_labeling_function
-from snorkel.labeling.preprocess import preprocessor
+from snorkel.preprocess import preprocessor
 from snorkel.types import DataPoint
 
 

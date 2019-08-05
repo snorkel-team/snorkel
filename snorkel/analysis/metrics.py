@@ -53,9 +53,6 @@ def metric_score(
         msg = f"The metric you provided ({metric}) is not currently implemented."
         raise ValueError(msg)
 
-    if filter_dict is None:
-        filter_dict = {"golds": [-1]}  # Assumes -1 = ABSTAIN
-
     # Print helpful error messages if golds or preds has invalid shape or type
     golds = to_int_label_array(golds) if golds is not None else None
     preds = to_int_label_array(preds) if preds is not None else None

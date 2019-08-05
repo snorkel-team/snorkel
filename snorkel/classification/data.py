@@ -66,6 +66,14 @@ class DictDataset(Dataset):
         except StopIteration:
             return 0
 
+    def __repr__(self) -> str:
+        return (
+            f"{type(self).__name__}"
+            f"(name={self.name}, "
+            f"X_keys={list(self.X_dict.keys())}, "
+            f"Y_keys={list(self.Y_dict.keys())})"
+        )
+
 
 def collate_dicts(batch: List[Batch]) -> Batch:
     """Combine many one-element dicts into a single many-element dict for both X and Y.

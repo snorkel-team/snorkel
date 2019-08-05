@@ -48,7 +48,7 @@ class Scorer:
                 if metric not in METRICS:
                     raise ValueError(f"Unrecognized metric: {metric}")
 
-            filter_dict = {"golds": [abstain_label]} if abstain_label else {}
+            filter_dict = {} if abstain_label is None else {"golds": [abstain_label]}
             self.metrics = {
                 m: partial(metric_score, metric=m, filter_dict=filter_dict)
                 for m in metrics

@@ -3,10 +3,11 @@ from snorkel.map import BaseMapper, LambdaMapper, Mapper, lambda_mapper
 """Base classes for preprocessors.
 
 A preprocessor is a data point to data point mapping in a labeling
-pipeline. This allows LFs to share common preprocessing steps that
-make it easier to express labeling logic. A simple example for text
-processing is concatenating the title and body of an article. For a
-more complex example, see ``snorkel.preprocess.nlp.SpacyPreprocessor``.
+pipeline. This allows Snorkel operations (e.g. LFs) to share common
+preprocessing steps that make it easier to express labeling logic.
+A simple example for text processing is concatenating the title and
+body of an article. For a more complex example, see
+``snorkel.preprocess.nlp.SpacyPreprocessor``.
 """
 
 # Used for type checking only

@@ -447,11 +447,21 @@ class SnorkelClassifier(nn.Module):
         """Map each label to its corresponding task outputs based on whether the task is available.
 
         If remap_labels specified, overrides specific label -> task mappings.
+        If a label is mappied to `None`, that key is removed from the mapping.
         """
-        labels_to_tasks = {
-            name: name for name in label_names if name in self.task_flows
-        }
-        labels_to_tasks.update(remap_labels)
+        labels_to_tasks = {}
+        for label in label_names:
+            # If available in task flows, label should map to task of same name
+            if label in self.task_flows:
+                labels_to_tasks[label] = label
+
+            # Override any existing label -> task mappings
+            if label in remap_labels:
+                task = remap_labels.get(label)
+                # Note: task might be manually remapped to None to remove it from the labels_to_tasks
+                if task is not None:
+                    labels_to_tasks[label] = task
+
         return labels_to_tasks
 
     def _move_to_device(self) -> None:  # pragma: no cover

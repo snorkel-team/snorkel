@@ -1,7 +1,7 @@
 import unittest
 from types import SimpleNamespace
 
-from snorkel.labeling.preprocess.nlp import SpacyPreprocessor
+from snorkel.preprocess.nlp import SpacyPreprocessor
 
 
 class TestSpacyPreprocessor(unittest.TestCase):

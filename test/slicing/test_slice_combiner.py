@@ -199,9 +199,7 @@ class SliceCombinerTest(unittest.TestCase):
 
         # Ensure smoother temperature for multi-class
         combiner_module = SliceCombinerModule()
-        with self.assertRaisesRegexp(
-            NotImplementedError, "SliceCombiner does not support multiclass labels."
-        ):
+        with self.assertRaisesRegex(NotImplementedError, "not support multiclass"):
             combiner_module(outputs)
 
     def test_temperature(self):
@@ -251,9 +249,12 @@ class SliceCombinerTest(unittest.TestCase):
         combined_rep = combiner_module(outputs)
 
         # Check number of elements that match either of the original weights
-        num_matching_original = torch.sum(
-            torch.isclose(combined_rep, torch.ones(batch_size, h_dim) * 2, atol=1e-4)
-        ) + torch.sum(
-            torch.isclose(combined_rep, torch.ones(batch_size, h_dim) * 4, atol=1e-4)
+        # Every example should either match 2 or 4
+        isclose_four = torch.isclose(
+            combined_rep, torch.ones(batch_size, h_dim) * 2, atol=1e-4
         )
+        isclose_two = torch.isclose(
+            combined_rep, torch.ones(batch_size, h_dim) * 4, atol=1e-4
+        )
+        num_matching_original = torch.sum(isclose_four) + torch.sum(isclose_two)
         self.assertEqual(num_matching_original, batch_size * h_dim)

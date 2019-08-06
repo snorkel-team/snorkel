@@ -15,7 +15,7 @@ class SliceCombinerModule(nn.Module):
         * Prediction operations
         * Prediction transform features
 
-    NOTE: This module currently assumes binary labels.
+    NOTE: This module currently only handles binary labels.
 
     Parameters
     ----------
@@ -97,7 +97,7 @@ class SliceCombinerModule(nn.Module):
 
         predictor_confidences = torch.cat(
             [
-                # Compute the "confidence" using probability score of the positive class
+                # Compute the "confidence" using score of the positive class
                 F.softmax(output, dim=1)[:, 0].unsqueeze(-1)
                 for output in predictor_outputs
             ],

@@ -10,8 +10,8 @@ from dask import dataframe as dd
 from snorkel.labeling.apply import LFApplier, PandasLFApplier
 from snorkel.labeling.apply.dask import DaskLFApplier, PandasParallelLFApplier
 from snorkel.labeling.lf import labeling_function
-from snorkel.labeling.preprocess import preprocessor
-from snorkel.labeling.preprocess.nlp import SpacyPreprocessor
+from snorkel.preprocess import preprocessor
+from snorkel.preprocess.nlp import SpacyPreprocessor
 from snorkel.types import DataPoint
 
 
@@ -35,7 +35,7 @@ def f(x: DataPoint) -> int:
     return 0 if x.num > 42 else -1
 
 
-@labeling_function(preprocessors=[square])
+@labeling_function(pre=[square])
 def fp(x: DataPoint) -> int:
     return 0 if x.num_squared > 42 else -1
 
@@ -82,7 +82,7 @@ class TestLFApplier(unittest.TestCase):
             x.num_squared = square_hit_tracker(x.num)
             return x
 
-        @labeling_function(preprocessors=[square_memoize])
+        @labeling_function(pre=[square_memoize])
         def fp_memoized(x: DataPoint) -> int:
             return 0 if x.num_squared > 42 else -1
 
@@ -121,7 +121,7 @@ class TestPandasApplier(unittest.TestCase):
             x.num_squared = square_hit_tracker(x.num)
             return x
 
-        @labeling_function(preprocessors=[square_memoize])
+        @labeling_function(pre=[square_memoize])
         def fp_memoized(x: DataPoint) -> int:
             return 0 if x.num_squared > 42 else -1
 
@@ -134,11 +134,11 @@ class TestPandasApplier(unittest.TestCase):
     def test_lf_applier_pandas_spacy_preprocessor(self) -> None:
         spacy = SpacyPreprocessor(text_field="text", doc_field="doc")
 
-        @labeling_function(preprocessors=[spacy])
+        @labeling_function(pre=[spacy])
         def first_is_name(x: DataPoint) -> int:
             return 0 if x.doc[0].pos_ == "PROPN" else -1
 
-        @labeling_function(preprocessors=[spacy])
+        @labeling_function(pre=[spacy])
         def has_verb(x: DataPoint) -> int:
             return 0 if sum(t.pos_ == "VERB" for t in x.doc) > 0 else -1
 
@@ -151,11 +151,11 @@ class TestPandasApplier(unittest.TestCase):
         spacy = SpacyPreprocessor(text_field="text", doc_field="doc")
         spacy.memoize = True
 
-        @labeling_function(preprocessors=[spacy])
+        @labeling_function(pre=[spacy])
         def first_is_name(x: DataPoint) -> int:
             return 0 if x.doc[0].pos_ == "PROPN" else -1
 
-        @labeling_function(preprocessors=[spacy])
+        @labeling_function(pre=[spacy])
         def has_verb(x: DataPoint) -> int:
             return 0 if sum(t.pos_ == "VERB" for t in x.doc) > 0 else -1
 
@@ -187,7 +187,7 @@ class TestDaskApplier(unittest.TestCase):
             x.num_squared = x.num ** 2
             return x
 
-        @labeling_function(preprocessors=[square_memoize])
+        @labeling_function(pre=[square_memoize])
         def fp_memoized(x: DataPoint) -> int:
             return 0 if x.num_squared > 42 else -1
 
@@ -201,11 +201,11 @@ class TestDaskApplier(unittest.TestCase):
     def test_lf_applier_dask_spacy_preprocessor(self) -> None:
         spacy = SpacyPreprocessor(text_field="text", doc_field="doc")
 
-        @labeling_function(preprocessors=[spacy])
+        @labeling_function(pre=[spacy])
         def first_is_name(x: DataPoint) -> int:
             return 0 if x.doc[0].pos_ == "PROPN" else -1
 
-        @labeling_function(preprocessors=[spacy])
+        @labeling_function(pre=[spacy])
         def has_verb(x: DataPoint) -> int:
             return 0 if sum(t.pos_ == "VERB" for t in x.doc) > 0 else -1
 
@@ -220,11 +220,11 @@ class TestDaskApplier(unittest.TestCase):
         spacy = SpacyPreprocessor(text_field="text", doc_field="doc")
         spacy.memoize = True
 
-        @labeling_function(preprocessors=[spacy])
+        @labeling_function(pre=[spacy])
         def first_is_name(x: DataPoint) -> int:
             return 0 if x.doc[0].pos_ == "PROPN" else -1
 
-        @labeling_function(preprocessors=[spacy])
+        @labeling_function(pre=[spacy])
         def has_verb(x: DataPoint) -> int:
             return 0 if sum(t.pos_ == "VERB" for t in x.doc) > 0 else -1
 

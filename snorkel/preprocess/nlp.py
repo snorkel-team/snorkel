@@ -36,7 +36,7 @@ class SpacyPreprocessor(Preprocessor):
     disable
         List of pipeline components to disable
         See https://spacy.io/usage/processing-pipelines#disabling
-    preprocessors
+    pre
         Preprocessors to run before this preprocessor is executed
     memoize
         Memoize preprocessor outputs?
@@ -48,7 +48,7 @@ class SpacyPreprocessor(Preprocessor):
         doc_field: str,
         language: str = EN_CORE_WEB_SM,
         disable: Optional[List[str]] = None,
-        preprocessors: Optional[List[BasePreprocessor]] = None,
+        pre: Optional[List[BasePreprocessor]] = None,
         memoize: bool = False,
     ) -> None:
         name = type(self).__name__
@@ -56,7 +56,7 @@ class SpacyPreprocessor(Preprocessor):
             name,
             field_names=dict(text=text_field),
             mapped_field_names=dict(doc=doc_field),
-            pre=preprocessors,
+            pre=pre,
             memoize=memoize,
         )
         self._nlp = spacy.load(language, disable=disable or [])

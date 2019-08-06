@@ -16,12 +16,11 @@ clone Snorkel, then use `tox` to create a development environment:
 git clone https://github.com/HazyResearch/snorkel
 pip3 install -U tox
 cd snorkel
-tox -e dev
+tox --devenv .env
 ```
 
-Running `tox -e dev` will install the required packages in `requirements-dev.txt`
-and create a virtual environment with Snorkel and all of its dependencies installed
-in the directory `.env`.
+Running `tox --devenv .env` will install create a virtual environment with Snorkel
+and all of its dependencies installed in the directory `.env`.
 This can be used in a number of ways, e.g. with `conda activate`
 or for [linting in VSCode](https://code.visualstudio.com/docs/python/environments#_where-the-extension-looks-for-environments).
 For example, you can simply activate this environment and start using Snorkel:
@@ -38,12 +37,16 @@ There are a number of useful tox commands defined:
 
 ```bash
 tox -e py36  # Run unit tests pytest in Python 3.6
+tox -e py37  # Run unit tests pytest in Python 3.7
+tox -e coverage  # Compute unit test coverage
+tox -e spark  # Run Spark-based tests (marked with @pytest.mark.spark)
+tox -e complex  # Run more complex, integration tests (marked with @pytest.mark.complex)
+tox -e doctest  # Run doctest on modules
 tox -e check  # Check style/linting with black, isort, and flake8
 tox -e type  # Run static type checking with mypy
 tox -e fix  # Fix style issues with black and isort
-tox -e spark  # Run Spark-based tests (marked with @pytest.mark.spark)
-tox -e complex  # Run more complex, integration tests (marked with @pytest.mark.complex)
-tox  # Run unit tests, style checks, linting, and type checking
+tox -e doc  # Build documentation with Sphinx
+tox  # Run unit tests, doctests, style checks, linting, and type checking
 ```
 
 Make sure to run `tox` before committing.

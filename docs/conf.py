@@ -46,7 +46,12 @@ autodoc_mock_imports = [
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon", "sphinx_autodoc_typehints"]
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
+    "sphinx_autodoc_typehints",
+    "sphinx.ext.linkcode",
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -93,12 +98,41 @@ napoleon_use_rtype = True
 # http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#directive-autoclass
 autoclass_content = "both"
 
+
+with open("exclude-members.txt", "r") as f:
+    exclude_members = [line.rstrip('\n') for line in f]
+
+
 # Default options to an ..autoXXX directive.
 autodoc_default_options = {
     "members": None,
     "inherited-members": None,
     "show-inheritance": None,
+    "exclude-members": ", ".join(exclude_members),
 }
 
 # Subclasses should show parent classes docstrings if they don't override them.
 autodoc_inherit_docstrings = True
+
+# -- Options for linkcode extension -------------------------------------------
+
+
+def linkcode_resolve(domain, info):
+    if domain != "py":
+        return None
+    if not info["module"]:
+        return None
+    filename = info["module"].replace(".", "/")
+    return f"https://github.com/HazyResearch/snorkel/blob/redux/{filename}.py"
+
+
+# -- Run apidoc -------------------------------------------
+def run_apidoc(_):
+    args = ["-f", "-o", "./source/", "../snorkel"]
+    from sphinx.ext import apidoc
+
+    apidoc.main(args)
+
+
+def setup(app):
+    app.connect("builder-inited", run_apidoc)

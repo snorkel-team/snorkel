@@ -99,7 +99,14 @@ class labeling_function:
 
     Parameters
     ----------
-    See ``LabelingFunction``.
+    name
+        Name of the LF
+    resources
+        Labeling resources passed in to ``f`` via ``kwargs``
+    preprocessors
+        Preprocessors to run on data points before LF execution
+    fault_tolerant
+        Output ``-1`` if LF execution fails?
 
     Examples
     --------

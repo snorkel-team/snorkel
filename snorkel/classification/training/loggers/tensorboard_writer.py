@@ -10,6 +10,8 @@ from .log_writer import LogWriter
 class TensorBoardWriter(LogWriter):
     """A class for logging to Tensorboard during training process.
 
+    See ``LogWriter`` for more attributes.
+
     Parameters
     ----------
     kwargs
@@ -19,8 +21,6 @@ class TensorBoardWriter(LogWriter):
     ----------
     writer
         tensorboardX ``SummaryWriter`` for logging and visualization
-
-    See ``LogWriter``.
     """
 
     def __init__(self, **kwargs: Any) -> None:

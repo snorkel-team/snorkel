@@ -52,7 +52,7 @@ class SnorkelClassifier(nn.Module):
     Parameters
     ----------
     tasks
-        A list of ``Task``s to build a model from
+        A list of ``Task``\s to build a model from
     name
         The name of the classifier
 
@@ -107,7 +107,7 @@ class SnorkelClassifier(nn.Module):
         return f"{cls_name}(name={self.name})"
 
     def _build_network(self, tasks: List[Task]) -> None:
-        """Construct the network from a list of ``Task``s by adding them one by one.
+        """Construct the network from a list of ``Task``\s by adding them one by one.
 
         Parameters
         ----------

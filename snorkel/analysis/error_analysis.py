@@ -6,33 +6,49 @@ import numpy as np
 from .utils import to_int_label_array
 
 
-def error_buckets(
-    golds: np.ndarray, preds: np.ndarray
-) -> Dict[Tuple[int, int], List[int]]:
-    """Return data point indices bucketed by gold label/pred label combination.
-
-    Returned buckets[i,j] is a list of items with predicted label i and true label j.
-    For a binary problem with (1=positive, 0=negative):
-        buckets[1,1] = true positives
-        buckets[1,0] = false positives
-        buckets[0,1] = false negatives
-        buckets[0,0] = true negatives
+def get_label_buckets(*y: np.ndarray) -> Dict[Tuple[int, ...], np.ndarray]:
+    """Return data point indices bucketed by label combinations.
 
     Parameters
     ----------
-    golds
-        An np.ndarray of gold (int) labels
-    preds
-        An np.ndarray of (int) predictions
+    *y
+        A list of np.ndarray of (int) labels
 
     Returns
     -------
-    Dict
-        A mapping of each error bucket to its corresponding indices
+    Dict[Tuple[int, ...], np.ndarray]
+        A mapping of each label bucket to a NumPy array of its corresponding indices
+
+    Example
+    -------
+    A common use case is calling ``buckets = label_buckets(Y_gold, Y_pred)`` where
+    ``Y_gold`` is a set of gold (i.e. ground truth) labels and ``Y_pred`` is a
+    corresponding set of predicted labels.
+
+    >>> Y_gold = np.array([1, 1, 1, 0])
+    >>> Y_pred = np.array([1, 1, -1, -1])
+    >>> buckets = get_label_buckets(Y_gold, Y_pred)
+
+    The returned ``buckets[(i, j)]`` is a NumPy array of data point indices with
+    predicted label i and true label j.
+
+    >>> buckets[(1, 1)]  # true positives
+    array([0, 1])
+    >>> (1, 0) in buckets  # false negatives
+    False
+    >>> (0, 1) in buckets  # false positives
+    False
+    >>> (0, 0) in buckets  # true negatives
+    False
+    >>> buckets[(1, -1)]  # abstained positives
+    array([2])
+    >>> buckets[(0, -1)]  # abstained negatives
+    array([3])
     """
     buckets: DefaultDict[Tuple[int, int], List[int]] = defaultdict(list)
-    golds = to_int_label_array(golds)
-    preds = to_int_label_array(preds, flatten_vector=True)
-    for i, (l, y) in enumerate(zip(preds, golds)):
-        buckets[(l, y)].append(i)
-    return dict(buckets)
+    y_flat = list(map(lambda x: to_int_label_array(x, flatten_vector=True), y))
+    if len(set(map(len, y_flat))) != 1:
+        raise ValueError("Arrays must all have the same number of elements")
+    for i, labels in enumerate(zip(*y_flat)):
+        buckets[labels].append(i)
+    return {k: np.array(v) for k, v in buckets.items()}

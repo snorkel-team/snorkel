@@ -1,3 +1,4 @@
+import logging
 from collections import Counter
 from itertools import chain
 from typing import Any, Dict, List, NamedTuple, Optional, Set, Tuple, Union
@@ -661,7 +662,7 @@ class LabelModel(nn.Module):
                 self.optimizer, linear_warmup_func
             )
             if self.config.verbose:  # pragma: no cover
-                print(f"Warmup {self.warmup_steps} steps.")
+                logging.info(f"Warmup {self.warmup_steps} steps.")
 
         elif self.train_config.lr_scheduler_config.warmup_percentage:
             warmup_percentage = self.train_config.lr_scheduler_config.warmup_percentage
@@ -671,7 +672,7 @@ class LabelModel(nn.Module):
                 self.optimizer, linear_warmup_func
             )
             if self.config.verbose:  # pragma: no cover
-                print(f"Warmup {self.warmup_steps} steps.")
+                logging.info(f"Warmup {self.warmup_steps} steps.")
 
         else:
             warmup_scheduler = None
@@ -745,20 +746,20 @@ class LabelModel(nn.Module):
 
         # Compute O and initialize params
         if self.config.verbose:  # pragma: no cover
-            print("Computing O...")
+            logging.info("Computing O...")
         self._generate_O(L_shift)
         self._init_params()
 
         # Estimate \mu
         if self.config.verbose:  # pragma: no cover
-            print("Estimating \mu...")
+            logging.info("Estimating \mu...")
 
         # Set model to train mode
         self.train()
 
         # Move model to GPU
         if self.config.verbose and self.config.device != "cpu":  # pragma: no cover
-            print("Using GPU...")
+            logging.info("Using GPU...")
         self.to(self.config.device)
 
         # Set training components
@@ -802,7 +803,7 @@ class LabelModel(nn.Module):
 
         # Print confusion matrix if applicable
         if self.config.verbose:  # pragma: no cover
-            print("Finished Training")
+            logging.info("Finished Training")
 
     def save(self, destination: str, **kwargs: Any) -> None:
         """Save label model.

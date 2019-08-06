@@ -1,3 +1,4 @@
+import logging
 from collections import defaultdict
 from typing import DefaultDict, Dict, List, Optional
 
@@ -75,4 +76,4 @@ class Logger:
         if score_strings["valid"]:
             valid_scores = f"{', '.join(score_strings['valid'])}"
             string += f" VALID:[{valid_scores}]"
-        print(string)
+        logging.info(string)

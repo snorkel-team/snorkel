@@ -230,8 +230,6 @@ class TestPandasTFApplier(unittest.TestCase):
             pd.DataFrame({"num": [81, 81], "strs": ["z", "z"]}, index=[2, 2]),
         ]
         for df_batch, df_batch_expected in zip(gen, df_expected):
-            print(f"df_batch: {df_batch}")
-            print(f"df_batch_expected: {df_batch_expected}")
             self.assertEqual(df_batch.num.dtype, "int64")
             pd.testing.assert_frame_equal(df_batch, df_batch_expected)
         pd.testing.assert_frame_equal(df, self._get_x_df_with_str())

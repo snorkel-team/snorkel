@@ -28,11 +28,3 @@ and our `tutorials repo <https://github.com/HazyResearch/snorkel/>`_.
     source/snorkel.slicing
     source/snorkel.synthetic
     source/snorkel.types
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

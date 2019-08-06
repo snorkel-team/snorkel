@@ -58,7 +58,7 @@ class Operation:
 
 
 class Task:
-    """A single task (a collection of modules and specified path through them).
+    r"""A single task (a collection of modules and specified path through them).
 
     Parameters
     ----------

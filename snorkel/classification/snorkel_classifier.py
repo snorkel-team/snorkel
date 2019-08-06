@@ -47,7 +47,7 @@ class ClassifierConfig(Config):
 
 
 class SnorkelClassifier(nn.Module):
-    """A classifier built from one or more tasks to support advanced workflows.
+    r"""A classifier built from one or more tasks to support advanced workflows.
 
     Parameters
     ----------
@@ -107,7 +107,7 @@ class SnorkelClassifier(nn.Module):
         return f"{cls_name}(name={self.name})"
 
     def _build_network(self, tasks: List[Task]) -> None:
-        """Construct the network from a list of ``Task``\s by adding them one by one.
+        r"""Construct the network from a list of ``Task``\s by adding them one by one.
 
         Parameters
         ----------

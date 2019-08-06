@@ -9,7 +9,7 @@ from .core import BaseLFApplier, RowData, apply_lfs_to_data_point
 
 
 class SparkLFApplier(BaseLFApplier):
-    """LF applier for a Spark RDD.
+    r"""LF applier for a Spark RDD.
 
     Data points are stored as ``Row``\s in an RDD, and a Spark
     ``map`` job is submitted to execute the LFs. A common

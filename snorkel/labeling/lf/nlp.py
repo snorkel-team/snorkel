@@ -28,7 +28,7 @@ class SpacyPreprocessorConfig(NamedTuple):
 
 
 class NLPLabelingFunction(LabelingFunction):
-    """Special labeling function type for SpaCy-based LFs.
+    r"""Special labeling function type for SpaCy-based LFs.
 
     This class is a special version of ``LabelingFunction``. It
     has a ``SpacyPreprocessor`` integrated which shares a cache

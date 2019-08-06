@@ -15,6 +15,8 @@ class SliceCombinerModule(nn.Module):
         * Prediction operations
         * Prediction transform features
 
+    NOTE: This module currently assumes binary labels.
+
     Parameters
     ----------
     slice_ind_key
@@ -88,10 +90,15 @@ class SliceCombinerModule(nn.Module):
             flow_dict, self.slice_pred_key
         )
 
+        if predictor_outputs[0].shape[1] > 2:
+            raise NotImplementedError(
+                "SliceCombiner does not support multiclass labels."
+            )
+
         predictor_confidences = torch.cat(
             [
-                # Compute the "confidence" using the max score across classes
-                torch.max(F.softmax(output, dim=1), dim=1)[0].unsqueeze(1)
+                # Compute the "confidence" using probability score of the positive class
+                F.softmax(output, dim=1)[:, 0].unsqueeze(-1)
                 for output in predictor_outputs
             ],
             dim=-1,

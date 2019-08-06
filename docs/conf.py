@@ -100,7 +100,7 @@ autoclass_content = "both"
 
 
 with open("exclude-members.txt", "r") as f:
-    exclude_members = [line.rstrip('\n') for line in f]
+    exclude_members = [line.rstrip("\n") for line in f]
 
 
 # Default options to an ..autoXXX directive.

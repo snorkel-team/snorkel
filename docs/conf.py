@@ -13,6 +13,8 @@
 import os
 import sys
 
+import torch
+
 sys.path.insert(0, os.path.abspath(".."))
 
 
@@ -99,22 +101,17 @@ napoleon_use_rtype = True
 autoclass_content = "both"
 
 
-with open("exclude-members.txt", "r") as f:
-    exclude_members = [line.rstrip("\n") for line in f]
-
-
 # Default options to an ..autoXXX directive.
 autodoc_default_options = {
     "members": None,
     "inherited-members": None,
     "show-inheritance": None,
-    "exclude-members": ", ".join(exclude_members),
 }
 
 # Subclasses should show parent classes docstrings if they don't override them.
 autodoc_inherit_docstrings = True
 
-# -- Options for linkcode extension -------------------------------------------
+# -- Options for linkcode extension ------------------------------------------
 
 
 def linkcode_resolve(domain, info):
@@ -126,7 +123,7 @@ def linkcode_resolve(domain, info):
     return f"https://github.com/HazyResearch/snorkel/blob/redux/{filename}.py"
 
 
-# -- Run apidoc -------------------------------------------
+# -- Run apidoc --------------------------------------------------------------
 def run_apidoc(_):
     args = ["-f", "-o", "./source/", "../snorkel"]
     from sphinx.ext import apidoc
@@ -134,5 +131,15 @@ def run_apidoc(_):
     apidoc.main(args)
 
 
+# -- Exclude PyTorch methods -------------------------------------------------
+def skip_torch_module_member(app, what, name, obj, skip, options):
+    skip_torch = "Module." in str(obj) and name in dir(torch.nn.Module)
+    if name == "dump_patches":  # Special handling for documented attrib
+        skip_torch = True
+    return skip or skip_torch
+
+
+# -- Run setup ---------------------------------------------------------------
 def setup(app):
+    app.connect("autodoc-skip-member", skip_torch_module_member)
     app.connect("builder-inited", run_apidoc)

@@ -28,7 +28,7 @@ class SpacyPreprocessorConfig(NamedTuple):
 
 
 class NLPLabelingFunction(LabelingFunction):
-    """Special labeling function type for SpaCy-based LFs.
+    r"""Special labeling function type for SpaCy-based LFs.
 
     This class is a special version of ``LabelingFunction``. It
     has a ``SpacyPreprocessor`` integrated which shares a cache
@@ -45,7 +45,7 @@ class NLPLabelingFunction(LabelingFunction):
     of SpaCy ``Doc`` objects and a full attribute listing,
     see https://spacy.io/api/doc.
 
-    Simple ``NLPLabelingFunction``s can be defined via a
+    Simple ``NLPLabelingFunction``\s can be defined via a
     decorator. See ``nlp_labeling_function``.
 
     Parameters
@@ -161,7 +161,26 @@ class nlp_labeling_function(labeling_function):
 
     Parameters
     ----------
-    See ``NLPLabelingFunction``.
+    name
+        Name of the LF
+    resources
+        Labeling resources passed in to ``f`` via ``kwargs``
+    preprocessors
+        Preprocessors to run before SpacyPreprocessor is executed
+    fault_tolerant
+        Output -1 if LF execution fails?
+    text_field
+        Name of data point text field to input
+    doc_field
+        Name of data point field to output parsed document to
+    language
+        SpaCy model to load
+        See https://spacy.io/usage/models#usage
+    disable
+        List of pipeline components to disable
+        See https://spacy.io/usage/processing-pipelines#disabling
+    memoize
+        Memoize preprocessor outputs?
 
 
     Example

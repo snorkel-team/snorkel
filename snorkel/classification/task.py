@@ -58,7 +58,7 @@ class Operation:
 
 
 class Task:
-    """A single task (a collection of modules and specified path through them).
+    r"""A single task (a collection of modules and specified path through them).
 
     Parameters
     ----------
@@ -67,7 +67,7 @@ class Task:
     module_pool
         A ModuleDict mapping module names to the modules themselves
     task_flow
-        A list of ``Operation``s to execute in order, defining the flow of information
+        A list of ``Operation``\s to execute in order, defining the flow of information
         through the network for this task
     scorer
         A ``Scorer`` with the desired metrics to calculate for this task

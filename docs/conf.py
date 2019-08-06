@@ -10,6 +10,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
+import datetime
 import os
 import sys
 
@@ -21,9 +22,10 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "Snorkel"
-copyright = "2019, Snorkel Team"
+copyright = f"{datetime.datetime.now().year}, Snorkel Team"
 author = "Snorkel Team"
 master_doc = "index"
+html_logo = "_static/octopus.png"
 
 VERSION = {}
 with open("../snorkel/version.py", "r") as version_file:
@@ -50,6 +52,7 @@ autodoc_mock_imports = [
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",
     "sphinx.ext.linkcode",
@@ -63,6 +66,7 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+autosummary_generate = True
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -98,7 +102,7 @@ napoleon_use_rtype = True
 # directive
 #
 # http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#directive-autoclass
-autoclass_content = "both"
+autoclass_content = "class"
 
 
 # Default options to an ..autoXXX directive.
@@ -123,14 +127,6 @@ def linkcode_resolve(domain, info):
     return f"https://github.com/HazyResearch/snorkel/blob/redux/{filename}.py"
 
 
-# -- Run apidoc --------------------------------------------------------------
-def run_apidoc(_):
-    args = ["-f", "-o", "./source/", "../snorkel"]
-    from sphinx.ext import apidoc
-
-    apidoc.main(args)
-
-
 # -- Exclude PyTorch methods -------------------------------------------------
 def skip_torch_module_member(app, what, name, obj, skip, options):
     skip_torch = "Module." in str(obj) and name in dir(torch.nn.Module)
@@ -142,4 +138,3 @@ def skip_torch_module_member(app, what, name, obj, skip, options):
 # -- Run setup ---------------------------------------------------------------
 def setup(app):
     app.connect("autodoc-skip-member", skip_torch_module_member)
-    app.connect("builder-inited", run_apidoc)

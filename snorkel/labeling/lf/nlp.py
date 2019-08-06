@@ -16,7 +16,7 @@ class SpacyPreprocessorParameters(NamedTuple):
     doc_field: str
     language: str
     disable: Optional[List[str]]
-    preprocessors: List[BasePreprocessor]
+    pre: List[BasePreprocessor]
     memoize: bool
 
 
@@ -56,7 +56,7 @@ class NLPLabelingFunction(LabelingFunction):
         Function that implements the core LF logic
     resources
         Labeling resources passed in to ``f`` via ``kwargs``
-    preprocessors
+    pre
         Preprocessors to run before SpacyPreprocessor is executed
     fault_tolerant
         Output -1 if LF execution fails?
@@ -109,7 +109,7 @@ class NLPLabelingFunction(LabelingFunction):
         doc_field: str,
         language: str,
         disable: Optional[List[str]],
-        preprocessors: List[BasePreprocessor],
+        pre: List[BasePreprocessor],
         memoize: bool,
     ) -> None:
         # Create a SpacyPreprocessor if one has not yet been instantiated.
@@ -119,7 +119,7 @@ class NLPLabelingFunction(LabelingFunction):
             doc_field=doc_field,
             language=language,
             disable=disable,
-            preprocessors=preprocessors,
+            pre=pre,
             memoize=memoize,
         )
         if not hasattr(cls, "_nlp_config"):
@@ -136,7 +136,7 @@ class NLPLabelingFunction(LabelingFunction):
         name: str,
         f: Callable[..., int],
         resources: Optional[Mapping[str, Any]] = None,
-        preprocessors: Optional[List[BasePreprocessor]] = None,
+        pre: Optional[List[BasePreprocessor]] = None,
         fault_tolerant: bool = False,
         text_field: str = "text",
         doc_field: str = "doc",
@@ -145,13 +145,13 @@ class NLPLabelingFunction(LabelingFunction):
         memoize: bool = True,
     ) -> None:
         self._create_or_check_preprocessor(
-            text_field, doc_field, language, disable, preprocessors or [], memoize
+            text_field, doc_field, language, disable, pre or [], memoize
         )
         super().__init__(
             name,
             f,
             resources=resources,
-            preprocessors=[self._nlp_config.nlp],
+            pre=[self._nlp_config.nlp],
             fault_tolerant=fault_tolerant,
         )
 
@@ -202,7 +202,7 @@ class nlp_labeling_function(labeling_function):
         self,
         name: Optional[str] = None,
         resources: Optional[Mapping[str, Any]] = None,
-        preprocessors: Optional[List[BasePreprocessor]] = None,
+        pre: Optional[List[BasePreprocessor]] = None,
         fault_tolerant: bool = False,
         text_field: str = "text",
         doc_field: str = "doc",
@@ -210,7 +210,7 @@ class nlp_labeling_function(labeling_function):
         disable: Optional[List[str]] = None,
         memoize: bool = True,
     ) -> None:
-        super().__init__(name, resources, preprocessors, fault_tolerant)
+        super().__init__(name, resources, pre, fault_tolerant)
         self.text_field = text_field
         self.doc_field = doc_field
         self.language = language
@@ -235,7 +235,7 @@ class nlp_labeling_function(labeling_function):
             name=name,
             f=f,
             resources=self.resources,
-            preprocessors=self.preprocessors,
+            pre=self.pre,
             fault_tolerant=self.fault_tolerant,
             text_field=self.text_field,
             doc_field=self.doc_field,

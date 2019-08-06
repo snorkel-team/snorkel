@@ -23,7 +23,7 @@ def f(x: DataPoint) -> int:
     return 0 if x.num > 42 else -1
 
 
-@labeling_function(preprocessors=[square])
+@labeling_function(pre=[square])
 def fp(x: DataPoint) -> int:
     return 0 if x.num_squared > 42 else -1
 
@@ -74,7 +74,7 @@ class TestSparkApplier(unittest.TestCase):
         def square_memoize(x: DataPoint) -> DataPoint:
             return Row(num=x.num, num_squared=x.num ** 2)
 
-        @labeling_function(preprocessors=[square_memoize])
+        @labeling_function(pre=[square_memoize])
         def fp_memoized(x: DataPoint) -> int:
             return 0 if x.num_squared > 42 else -1
 

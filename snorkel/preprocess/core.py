@@ -51,7 +51,7 @@ class preprocessor(lambda_mapper):
 
     >>> preprocessors = [combine_text_preprocessor, spacy_preprocessor]
     >>> from snorkel.labeling.lf import labeling_function
-    >>> @labeling_function(preprocessors=preprocessors)
+    >>> @labeling_function(pre=preprocessors)
     ... def article_mentions_person(x):
     ...     for ent in x.article_parsed.ents:
     ...         if ent.label_ == "PERSON":

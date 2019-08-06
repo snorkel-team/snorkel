@@ -30,15 +30,11 @@ class TestNLPLabelingFunction(unittest.TestCase):
         self.assertEqual(lf(x), 0)
 
     def test_nlp_labeling_function(self) -> None:
-        lf = NLPLabelingFunction(
-            name="my_lf", f=has_person_mention, preprocessors=[combine_text]
-        )
+        lf = NLPLabelingFunction(name="my_lf", f=has_person_mention, pre=[combine_text])
         self._run_lf(lf)
 
     def test_nlp_labeling_function_memoized(self) -> None:
-        lf = NLPLabelingFunction(
-            name="my_lf", f=has_person_mention, preprocessors=[combine_text]
-        )
+        lf = NLPLabelingFunction(name="my_lf", f=has_person_mention, pre=[combine_text])
         lf._nlp_config.nlp.reset_cache()
         self.assertEqual(len(lf._nlp_config.nlp._cache), 0)
         self._run_lf(lf)
@@ -48,14 +44,12 @@ class TestNLPLabelingFunction(unittest.TestCase):
 
     @pytest.mark.complex
     def test_labeling_function_serialize(self) -> None:
-        lf = NLPLabelingFunction(
-            name="my_lf", f=has_person_mention, preprocessors=[combine_text]
-        )
+        lf = NLPLabelingFunction(name="my_lf", f=has_person_mention, pre=[combine_text])
         lf_load = dill.loads(dill.dumps(lf))
         self._run_lf(lf_load)
 
     def test_nlp_labeling_function_decorator(self) -> None:
-        @nlp_labeling_function(preprocessors=[combine_text])
+        @nlp_labeling_function(pre=[combine_text])
         def has_person_mention(x: DataPoint) -> int:
             person_ents = [ent for ent in x.doc.ents if ent.label_ == "PERSON"]
             return 0 if len(person_ents) > 0 else -1
@@ -73,11 +67,9 @@ class TestNLPLabelingFunction(unittest.TestCase):
                 return 0 if len(person_ents) > 0 else -1
 
     def test_nlp_labeling_function_shared_cache(self) -> None:
-        lf = NLPLabelingFunction(
-            name="my_lf", f=has_person_mention, preprocessors=[combine_text]
-        )
+        lf = NLPLabelingFunction(name="my_lf", f=has_person_mention, pre=[combine_text])
 
-        @nlp_labeling_function(preprocessors=[combine_text])
+        @nlp_labeling_function(pre=[combine_text])
         def lf2(x: DataPoint) -> int:
             return 0 if len(x.doc) < 9 else -1
 

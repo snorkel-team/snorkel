@@ -199,17 +199,14 @@ class SliceCombinerTest(unittest.TestCase):
 
         # Ensure smoother temperature for multi-class
         combiner_module = SliceCombinerModule()
-        combined_rep = combiner_module(outputs)
-        # higher tolerance because randomness in non-max class outputs -> for softmax
-        self.assertTrue(
-            torch.allclose(combined_rep, torch.ones(batch_size, h_dim) * 3, atol=1e-2)
-        )
+        with self.assertRaisesRegex(NotImplementedError, "not support multiclass"):
+            combiner_module(outputs)
 
     def test_temperature(self):
         """Test temperature parameter for attention weights."""
         batch_size = 4
         h_dim = 20
-        num_classes = 3
+        num_classes = 2
 
         # Add noise to each set of inputs to attention weights
         epsilon = 1e-5
@@ -252,7 +249,12 @@ class SliceCombinerTest(unittest.TestCase):
         combined_rep = combiner_module(outputs)
 
         # Check number of elements that match either of the original weights
-        num_matching_original = torch.sum(
-            torch.isclose(combined_rep, torch.ones(batch_size, h_dim) * 2)
-        ) + torch.sum(torch.isclose(combined_rep, torch.ones(batch_size, h_dim) * 4))
+        # Every example should either match 2 or 4
+        isclose_four = torch.isclose(
+            combined_rep, torch.ones(batch_size, h_dim) * 2, atol=1e-4
+        )
+        isclose_two = torch.isclose(
+            combined_rep, torch.ones(batch_size, h_dim) * 4, atol=1e-4
+        )
+        num_matching_original = torch.sum(isclose_four) + torch.sum(isclose_two)
         self.assertEqual(num_matching_original, batch_size * h_dim)

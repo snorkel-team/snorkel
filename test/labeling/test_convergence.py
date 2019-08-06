@@ -8,7 +8,7 @@ from snorkel.analysis.utils import set_seed
 from snorkel.labeling.apply.pandas import PandasLFApplier
 from snorkel.labeling.lf import LabelingFunction, labeling_function
 from snorkel.labeling.model.label_model import LabelModel
-from snorkel.labeling.preprocess import preprocessor
+from snorkel.preprocess import preprocessor
 from snorkel.types import DataPoint
 
 
@@ -48,7 +48,7 @@ def copy_features(x: DataPoint) -> DataPoint:
     return x
 
 
-@labeling_function(preprocessors=[copy_features], resources=dict(divisor=3))
+@labeling_function(pre=[copy_features], resources=dict(divisor=3))
 def f(x: DataPoint, divisor: int) -> int:
     # Abstain unless x0 is divisible by divisor.
     return 0 if x.x0 % divisor == 1 and x.x1 > x.x3 else -1

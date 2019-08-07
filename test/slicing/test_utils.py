@@ -6,9 +6,12 @@ import torch.nn as nn
 
 from snorkel.classification.data import DictDataLoader, DictDataset
 from snorkel.classification.snorkel_classifier import Operation, Task
-from snorkel.slicing.apply import PandasSFApplier
-from snorkel.slicing.sf import slicing_function
-from snorkel.slicing.utils import add_slice_labels, convert_to_slice_tasks
+from snorkel.slicing import (
+    PandasSFApplier,
+    add_slice_labels,
+    convert_to_slice_tasks,
+    slicing_function,
+)
 
 
 @slicing_function()

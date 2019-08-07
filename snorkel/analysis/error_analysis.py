@@ -3,7 +3,7 @@ from typing import DefaultDict, Dict, List, Tuple
 
 import numpy as np
 
-from .utils import to_int_label_array
+from snorkel.utils import to_int_label_array
 
 
 def get_label_buckets(*y: np.ndarray) -> Dict[Tuple[int, ...], np.ndarray]:

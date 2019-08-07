@@ -7,15 +7,23 @@ import pytest
 import torch
 import torch.nn as nn
 
-from snorkel.analysis.utils import set_seed
-from snorkel.classification.data import DictDataLoader, DictDataset
-from snorkel.classification.scorer import Scorer
-from snorkel.classification.snorkel_classifier import Operation, SnorkelClassifier, Task
-from snorkel.classification.training import Trainer
-from snorkel.slicing.apply import PandasSFApplier
-from snorkel.slicing.sf import slicing_function
-from snorkel.slicing.utils import add_slice_labels, convert_to_slice_tasks
+from snorkel.classification import (
+    DictDataLoader,
+    DictDataset,
+    Operation,
+    Scorer,
+    SnorkelClassifier,
+    Task,
+    Trainer,
+)
+from snorkel.slicing import (
+    PandasSFApplier,
+    add_slice_labels,
+    convert_to_slice_tasks,
+    slicing_function,
+)
 from snorkel.types import DataPoint
+from snorkel.utils import set_seed
 
 
 # Define SFs specifying points inside a circle

@@ -4,9 +4,13 @@ from typing import List
 
 import pandas as pd
 
-from snorkel.augmentation.apply import PandasTFApplier, TFApplier
-from snorkel.augmentation.policy import ApplyOnePolicy, RandomPolicy
-from snorkel.augmentation.tf import transformation_function
+from snorkel.augmentation import (
+    ApplyOnePolicy,
+    PandasTFApplier,
+    RandomPolicy,
+    TFApplier,
+    transformation_function,
+)
 from snorkel.types import DataPoint
 
 

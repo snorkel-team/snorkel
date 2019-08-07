@@ -4,7 +4,7 @@ import tempfile
 import unittest
 
 from snorkel.classification.snorkel_classifier import SnorkelClassifier
-from snorkel.classification.training import Checkpointer
+from snorkel.classification.training.loggers import Checkpointer
 
 log_manager_config = {"counter_unit": "epochs", "evaluation_freq": 1}
 

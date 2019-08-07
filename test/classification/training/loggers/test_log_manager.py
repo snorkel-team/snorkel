@@ -3,7 +3,7 @@ import tempfile
 import unittest
 
 from snorkel.classification.snorkel_classifier import SnorkelClassifier
-from snorkel.classification.training import Checkpointer, LogManager, LogWriter
+from snorkel.classification.training.loggers import Checkpointer, LogManager, LogWriter
 
 
 class TestLogManager(unittest.TestCase):

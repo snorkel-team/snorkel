@@ -2,12 +2,12 @@ import unittest
 
 import torch
 
-from snorkel.analysis.utils import set_seed
 from snorkel.classification.data import DictDataLoader, DictDataset
 from snorkel.classification.training.schedulers import (
     SequentialScheduler,
     ShuffledScheduler,
 )
+from snorkel.utils import set_seed
 
 dataset1 = DictDataset(
     "d1",

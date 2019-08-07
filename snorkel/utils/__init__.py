@@ -1,4 +1,4 @@
-"""General modeling utilities shared across Snorkel."""
+"""General machine learning utilities shared across Snorkel."""
 
 from .core import (  # noqa: F401
     filter_labels,

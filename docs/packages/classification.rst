@@ -1,7 +1,7 @@
 Snorkel Classification Package
 ------------------------------
 
-PyTorch-based multi-task learning framework for Snorkel-generated datasets.
+PyTorch-based multi-task learning framework for discriminative modeling.
 
 .. currentmodule:: snorkel.classification
 

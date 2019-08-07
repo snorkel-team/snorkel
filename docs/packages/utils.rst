@@ -1,7 +1,7 @@
 Snorkel Utils Package
 ---------------------
 
-None
+General modeling utilities shared across Snorkel.
 
 .. currentmodule:: snorkel.utils
 

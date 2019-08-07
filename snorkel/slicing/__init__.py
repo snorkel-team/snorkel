@@ -1,4 +1,4 @@
-"""Programmatic data set slicing: SF creation, models, and monitoring utilities."""
+"""Programmatic data set slicing: SF creation, monitoring utilities, and representation learning for slices."""
 
 from .apply.core import PandasSFApplier, SFApplier  # noqa: F401
 from .modules.slice_combiner import SliceCombinerModule  # noqa: F401

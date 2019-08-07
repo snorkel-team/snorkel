@@ -1,3 +1,5 @@
+"""General modeling utilities shared across Snorkel."""
+
 from .core import (  # noqa: F401
     filter_labels,
     preds_to_probs,

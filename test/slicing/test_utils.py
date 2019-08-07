@@ -4,8 +4,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 
-from snorkel.classification.data import DictDataLoader, DictDataset
-from snorkel.classification.snorkel_classifier import Operation, Task
+from snorkel.classification import DictDataLoader, DictDataset, Operation, Task
 from snorkel.slicing import (
     PandasSFApplier,
     add_slice_labels,

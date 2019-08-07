@@ -6,10 +6,15 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from snorkel.classification.data import DictDataLoader, DictDataset
-from snorkel.classification.snorkel_classifier import Operation, SnorkelClassifier, Task
+from snorkel.classification import (
+    DictDataLoader,
+    DictDataset,
+    Operation,
+    SnorkelClassifier,
+    Task,
+    Trainer,
+)
 from snorkel.classification.training.loggers import LogWriter, TensorBoardWriter
-from snorkel.classification.training.trainer import Trainer
 
 TASK_NAMES = ["task1", "task2"]
 base_config = {"n_epochs": 1, "progress_bar": False}

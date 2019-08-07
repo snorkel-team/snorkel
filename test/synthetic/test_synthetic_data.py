@@ -3,7 +3,7 @@ from typing import Optional
 
 import numpy as np
 
-from snorkel.labeling.analysis import LFAnalysis
+from snorkel.labeling import LFAnalysis
 from snorkel.synthetic.synthetic_data import generate_simple_label_matrix
 
 

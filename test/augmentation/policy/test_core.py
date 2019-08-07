@@ -1,6 +1,6 @@
 import unittest
 
-from snorkel.augmentation.policy import ApplyAllPolicy, ApplyEachPolicy
+from snorkel.augmentation import ApplyAllPolicy, ApplyEachPolicy
 
 
 class TestPolicy(unittest.TestCase):

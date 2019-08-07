@@ -1,6 +1,6 @@
 import unittest
 
-from snorkel.augmentation.policy import MeanFieldPolicy, RandomPolicy
+from snorkel.augmentation import MeanFieldPolicy, RandomPolicy
 
 
 class TestSamplingPolicy(unittest.TestCase):

@@ -4,7 +4,7 @@ import shutil
 import tempfile
 import unittest
 
-from snorkel.classification.training import TensorBoardWriter
+from snorkel.classification.training.loggers import TensorBoardWriter
 from snorkel.types import Config
 
 

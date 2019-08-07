@@ -23,15 +23,14 @@ torch>=1.1.0,<2.0.0
 # LF dependency learning
 networkx>=2.2,<3.0
 
+# Model introspection tools
+tensorboardX>=1.6,<2.0
+
 
 #### EXTRA/TEST LIBRARIES
 
 # NLP applications
 spacy>=2.1.0,<3.0.0
-torchtext>=0.3.0,<0.4.0
-
-# Model introspection tools
-tensorboardX>=1.6,<2.0
 
 # Scale-up/out
 dask[complete]>=2.1.0,<3.0.0

@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from snorkel.analysis.utils import (
+from snorkel.utils import (
     filter_labels,
     preds_to_probs,
     probs_to_preds,
@@ -14,7 +14,7 @@ PREDS = np.array([1, 0])
 PREDS_ROUND = np.array([[0, 1], [1, 0]])
 
 
-class MetricsTest(unittest.TestCase):
+class UtilsTest(unittest.TestCase):
     def test_to_int_label_array(self):
         X = np.array([[1], [0], [2.0]])
         Y_expected = np.array([1, 0, 2])

@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from snorkel.classification.data import DictDataLoader, DictDataset
+from snorkel.classification import DictDataLoader, DictDataset
 
 
 class DatasetTest(unittest.TestCase):

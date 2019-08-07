@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from snorkel.labeling.utils import filter_unlabeled_dataframe
+from snorkel.labeling import filter_unlabeled_dataframe
 
 
 class TestAnalysis(unittest.TestCase):

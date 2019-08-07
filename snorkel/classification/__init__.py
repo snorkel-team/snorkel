@@ -1,4 +1,4 @@
-"""PyTorch-based multi-task learning framework for Snorkel-generated datasets."""
+"""PyTorch-based multi-task learning framework for discriminative modeling."""
 
 from .data import DictDataLoader, DictDataset  # noqa: F401
 from .scorer import Scorer  # noqa: F401

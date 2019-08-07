@@ -1,7 +1,7 @@
 Snorkel Slicing Package
 -----------------------
 
-Programmatic data set slicing: SF creation, models, and monitoring utilities.
+Programmatic data set slicing: SF creation, monitoring utilities, and representation learning for slices.
 
 .. currentmodule:: snorkel.slicing
 

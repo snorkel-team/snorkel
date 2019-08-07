@@ -147,12 +147,12 @@ def tokens_to_ngrams(tokens, n_max=3, delim=' '):
         for n in range(min(n_max, N - root)):
             yield delim.join(tokens[root:root+n+1])
 
-class SnorkelPrint:
+class CandidateViewer:
     def __init__(self, db_path):
-        self.conn = self.__create_connection(db_path)
+        self.conn = self._create_connection(db_path)
 
     @staticmethod
-    def __create_connection(db_path):
+    def _create_connection(db_path):
         """ create a database connection to snorkel SQLite database
             :param db_path: path to snorkel database, by default it's snorkel.db
             :return: Connection object or None
@@ -164,7 +164,7 @@ class SnorkelPrint:
             print("[log-SnorkelPrint] error in creating connection to snorkel database. [Details]: " + str(e))
             return None
 
-    def __db_select(self, query):
+    def _db_select(self, query):
         try:
             cur = self.conn.cursor()
             cur.execute(query)
@@ -174,20 +174,20 @@ class SnorkelPrint:
             print("[log-SnorkelPrint] failed to execute select query. [Details]: " + str(e))
             return None
 
-    def __get_span_text(self, span_id):
+    def _get_span_text(self, span_id):
         """
         getting actual text string of a span
         :param span_id: span id
         :return:
         """
         try:
-            span_result = self.__db_select(
+            span_result = self._db_select(
                 "SELECT sentence_id, char_start, char_end FROM span WHERE id = " + str(span_id) + "")
             sentence_id = span_result[0][0]
             char_start = span_result[0][1]
             char_end = span_result[0][2]
 
-            sentence_result = self.__db_select("SELECT id, text FROM sentence WHERE id = " + str(sentence_id) + "")
+            sentence_result = self._db_select("SELECT id, text FROM sentence WHERE id = " + str(sentence_id) + "")
             sentence_text = sentence_result[0][1]
 
             return sentence_text[char_start:char_end + 1]
@@ -209,13 +209,13 @@ class SnorkelPrint:
             # getting list of extracted candidates
             candidates_query = "SELECT id, " + rel_info[1][0] + "_id, " + rel_info[1][1] + "_id FROM " + rel_info[0] + ""
             # [id, entity1_id, entity2_id]
-            candidates_results = self.__db_select(candidates_query)
+            candidates_results = self._db_select(candidates_query)
 
             # printing
             for i in range(len(candidates_results)):
                 arg1 = candidates_results[i][1]
                 arg2 = candidates_results[i][2]
-                print("[" + doc_id + "] " + self.__get_span_text(arg1) + " <-----> " + self.__get_span_text(arg2))
+                print("[" + doc_id + "] " + self._get_span_text(arg1) + " <-----> " + self._get_span_text(arg2))
                 # check the max print for the output
                 if i >= max_output - 1:
                     break
@@ -231,13 +231,13 @@ class SnorkelPrint:
         doc_sents = []
         doc_sents_start_idx = []
 
-        tmp = self.__db_select("SELECT id FROM document WHERE name = \"" + doc_name + "\"")
+        tmp = self._db_select("SELECT id FROM document WHERE name = \"" + doc_name + "\"")
         if tmp is not None:
             doc_id = tmp[0][0]
             doc_sent_query = "SELECT stable_id FROM context WHERE type = \"sentence\" and stable_id like \"" + doc_name + "::%\""
-            doc_sent_info = self.__db_select(doc_sent_query)
+            doc_sent_info = self._db_select(doc_sent_query)
             doc_sent_query = "SELECT text FROM sentence WHERE document_id = " + str(doc_id) + ""
-            doc_sent_text = self.__db_select(doc_sent_query)
+            doc_sent_text = self._db_select(doc_sent_query)
 
             if doc_sent_info is not None and doc_sent_text is not None:
                 doc_text = ""

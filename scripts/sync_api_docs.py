@@ -1,5 +1,12 @@
 #!/usr/bin/env python
 
+"""Check and update API docs under docs/packages.
+
+This script checks and updates the package documentation pages, making sure
+that the packages in docs/packages.json are documented and up to date.
+Rather than calling this directly, use `tox -e check` or `tox -e fix`.
+"""
+
 import json
 import os
 import sys

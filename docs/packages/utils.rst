@@ -1,7 +1,7 @@
 Snorkel Utils Package
 ---------------------
 
-None
+General machine learning utilities shared across Snorkel.
 
 .. currentmodule:: snorkel.utils
 

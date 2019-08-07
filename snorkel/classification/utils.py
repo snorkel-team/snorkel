@@ -1,6 +1,7 @@
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
+import pandas as pd
 import torch
 
 TensorCollection = Union[torch.Tensor, dict, list, tuple]
@@ -116,3 +117,17 @@ def collect_flow_outputs_by_suffix(
         for flow_name in sorted(flow_dict.keys())
         if flow_name.endswith(suffix)
     ]
+
+
+def metrics_dict_to_dataframe(metrics_dict: Dict[str, float]) -> pd.DataFrame:
+    """Format a metrics_dict (with keys 'label/dataset/split/metric') format as a pandas DataFrame."""
+
+    metrics = []
+
+    for full_metric, score in metrics_dict.items():
+        label_name, dataset_name, split, metric = tuple(full_metric.split("/"))
+        metrics.append((label_name, dataset_name, split, metric, score))
+
+    return pd.DataFrame(
+        metrics, columns=["label", "dataset", "split", "metric", "score"]
+    )

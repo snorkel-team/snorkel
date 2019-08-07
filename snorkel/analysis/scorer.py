@@ -92,7 +92,6 @@ class Scorer:
 
         for metric_name, metric in self.metrics.items():
             score = metric(golds, preds, probs)
-
             if isinstance(score, dict):
                 metric_dict.update(score)
             else:

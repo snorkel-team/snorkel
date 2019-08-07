@@ -17,7 +17,6 @@ python:
   version: 3.6
   install:
       - requirements: docs/requirements-doc.txt
-      - requirements: requirements.txt
       - method: pip
         path: .
   system_packages: true

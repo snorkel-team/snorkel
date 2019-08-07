@@ -31,7 +31,6 @@ tensorboardX>=1.6,<2.0
 
 # NLP applications
 spacy>=2.1.0,<3.0.0
-torchtext>=0.3.0,<0.4.0
 
 # Scale-up/out
 dask[complete]>=2.1.0,<3.0.0

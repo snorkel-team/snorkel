@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from snorkel.analysis.error_analysis import get_label_buckets
+from snorkel.analysis import get_label_buckets
 
 
 class ErrorAnalysisTest(unittest.TestCase):

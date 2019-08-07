@@ -6,9 +6,14 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from snorkel.analysis.utils import set_seed
-from snorkel.classification.data import DictDataLoader, DictDataset
-from snorkel.classification.snorkel_classifier import Operation, SnorkelClassifier, Task
+from snorkel.classification import (
+    DictDataLoader,
+    DictDataset,
+    Operation,
+    SnorkelClassifier,
+    Task,
+)
+from snorkel.utils import set_seed
 
 NUM_EXAMPLES = 10
 BATCH_SIZE = 2

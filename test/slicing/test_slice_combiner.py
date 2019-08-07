@@ -3,8 +3,8 @@ import unittest
 
 import torch
 
-from snorkel.analysis.utils import set_seed
-from snorkel.slicing.modules.slice_combiner import SliceCombinerModule
+from snorkel.slicing import SliceCombinerModule
+from snorkel.utils import set_seed
 
 
 class SliceCombinerTest(unittest.TestCase):

@@ -1,4 +1,4 @@
-from snorkel.labeling.apply import LFApplier, PandasLFApplier
+from snorkel.labeling import LFApplier, PandasLFApplier
 
 
 class SFApplier(LFApplier):

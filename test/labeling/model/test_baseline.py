@@ -2,11 +2,7 @@ import unittest
 
 import numpy as np
 
-from snorkel.labeling.model.baselines import (
-    MajorityClassVoter,
-    MajorityLabelVoter,
-    RandomVoter,
-)
+from snorkel.labeling import MajorityClassVoter, MajorityLabelVoter, RandomVoter
 
 
 class BaselineModelTest(unittest.TestCase):

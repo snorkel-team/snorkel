@@ -3,7 +3,7 @@ from typing import Tuple
 
 import numpy as np
 
-from snorkel.classification.scorer import Scorer
+from snorkel.classification import Scorer
 
 
 class ScorerTest(unittest.TestCase):

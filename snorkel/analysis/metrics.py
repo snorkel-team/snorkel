@@ -3,7 +3,7 @@ from typing import Any, Callable, Dict, List, NamedTuple, Optional
 import numpy as np
 import sklearn.metrics as skmetrics
 
-from .utils import filter_labels, to_int_label_array
+from snorkel.utils import filter_labels, to_int_label_array
 
 
 class Metric(NamedTuple):

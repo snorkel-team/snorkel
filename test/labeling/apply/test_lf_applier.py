@@ -7,9 +7,8 @@ import pandas as pd
 import pytest
 from dask import dataframe as dd
 
-from snorkel.labeling.apply import LFApplier, PandasLFApplier
+from snorkel.labeling import LFApplier, PandasLFApplier, labeling_function
 from snorkel.labeling.apply.dask import DaskLFApplier, PandasParallelLFApplier
-from snorkel.labeling.lf import labeling_function
 from snorkel.preprocess import preprocessor
 from snorkel.preprocess.nlp import SpacyPreprocessor
 from snorkel.types import DataPoint

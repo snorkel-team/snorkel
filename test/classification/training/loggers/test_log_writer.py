@@ -4,7 +4,7 @@ import shutil
 import tempfile
 import unittest
 
-from snorkel.classification.training import LogWriter
+from snorkel.classification.training.loggers import LogWriter
 from snorkel.types import Config
 
 

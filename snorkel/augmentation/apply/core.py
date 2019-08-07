@@ -2,7 +2,7 @@ from typing import Iterator, List
 
 from tqdm import tqdm
 
-from snorkel.augmentation.policy import Policy
+from snorkel.augmentation.policy.core import Policy
 from snorkel.augmentation.tf import BaseTransformationFunction
 from snorkel.types import DataPoint, DataPoints
 

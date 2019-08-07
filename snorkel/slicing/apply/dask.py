@@ -13,7 +13,7 @@ class DaskSFApplier(DaskLFApplier):  # pragma: no cover
     pass
 
 
-class ParallelPandasSFApplier(PandasParallelLFApplier):  # pragma: no cover
+class PandasParallelSFApplier(PandasParallelLFApplier):  # pragma: no cover
     """Parallel SF applier for a Pandas DataFrame.
 
     See ``snorkel.labeling.apply.dask.PandasParallelLFApplier`` for details.

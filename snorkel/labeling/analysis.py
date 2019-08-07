@@ -7,7 +7,7 @@ import scipy.sparse as sparse
 from pandas import DataFrame, Series
 from sklearn.metrics import confusion_matrix
 
-from snorkel.analysis.utils import to_int_label_array
+from snorkel.utils import to_int_label_array
 
 from .lf import LabelingFunction
 

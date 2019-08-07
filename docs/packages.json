@@ -1,0 +1,33 @@
+{
+    "packages": [
+        "analysis",
+        "augmentation",
+        "classification",
+        "labeling",
+        "map",
+        "preprocess",
+        "slicing",
+        "utils"
+    ],
+    "extra_members": {
+        "labeling": [
+            "apply.dask.DaskLFApplier",
+            "apply.dask.PandasParallelLFApplier",
+            "apply.spark.SparkLFApplier",
+            "lf.nlp.NLPLabelingFunction",
+            "lf.nlp.nlp_labeling_function"
+        ],
+        "map": [
+            "spark.make_spark_mapper"
+        ],
+        "preprocess": [
+            "nlp.SpacyPreprocessor",
+            "spark.make_spark_preprocessor"
+        ],
+        "slicing": [
+            "apply.dask.DaskSFApplier",
+            "apply.dask.PandasParallelSFApplier",
+            "apply.spark.SparkSFApplier"
+        ]
+    }
+}

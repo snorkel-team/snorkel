@@ -2,8 +2,8 @@ import unittest
 
 import numpy as np
 
-from snorkel.analysis.metrics import metric_score
-from snorkel.analysis.utils import preds_to_probs
+from snorkel.analysis import metric_score
+from snorkel.utils import preds_to_probs
 
 
 class MetricsTest(unittest.TestCase):

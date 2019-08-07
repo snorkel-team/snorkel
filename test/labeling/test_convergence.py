@@ -4,12 +4,15 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from snorkel.analysis.utils import set_seed
-from snorkel.labeling.apply.pandas import PandasLFApplier
-from snorkel.labeling.lf import LabelingFunction, labeling_function
-from snorkel.labeling.model.label_model import LabelModel
+from snorkel.labeling import (
+    LabelingFunction,
+    LabelModel,
+    PandasLFApplier,
+    labeling_function,
+)
 from snorkel.preprocess import preprocessor
 from snorkel.types import DataPoint
+from snorkel.utils import set_seed
 
 
 def create_data(n: int) -> pd.DataFrame:

@@ -3,8 +3,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from snorkel.labeling.analysis import LFAnalysis
-from snorkel.labeling.lf import LabelingFunction
+from snorkel.labeling import LabelingFunction, LFAnalysis
 
 L = [
     [-1, -1, 0, -1, -1, 0],

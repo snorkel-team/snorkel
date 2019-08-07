@@ -8,12 +8,12 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from snorkel.analysis.utils import probs_to_preds, set_seed
 from snorkel.classification.scorer import Scorer
 from snorkel.labeling.analysis import LFAnalysis
 from snorkel.labeling.model.graph_utils import get_clique_tree
 from snorkel.labeling.model.logger import Logger
 from snorkel.types import Config
+from snorkel.utils import probs_to_preds, set_seed
 from snorkel.utils.config_utils import merge_config
 from snorkel.utils.lr_schedulers import LRSchedulerConfig
 from snorkel.utils.optimizers import OptimizerConfig

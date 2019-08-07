@@ -8,7 +8,8 @@ import pytest
 import torch.nn as nn
 import torch.optim as optim
 
-from snorkel.labeling.model.label_model import LabelModel, TrainConfig
+from snorkel.labeling import LabelModel
+from snorkel.labeling.model.label_model import TrainConfig
 from snorkel.synthetic.synthetic_data import generate_simple_label_matrix
 
 

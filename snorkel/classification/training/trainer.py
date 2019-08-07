@@ -12,7 +12,12 @@ from snorkel.classification.snorkel_classifier import (
     ClassifierConfig,
     SnorkelClassifier,
 )
-from snorkel.classification.training import (
+from snorkel.types import Config
+from snorkel.utils.config_utils import merge_config
+from snorkel.utils.lr_schedulers import LRSchedulerConfig
+from snorkel.utils.optimizers import OptimizerConfig
+
+from .loggers import (
     Checkpointer,
     CheckpointerConfig,
     LogManager,
@@ -21,11 +26,7 @@ from snorkel.classification.training import (
     LogWriterConfig,
     TensorBoardWriter,
 )
-from snorkel.classification.training.schedulers import batch_schedulers
-from snorkel.types import Config
-from snorkel.utils.config_utils import merge_config
-from snorkel.utils.lr_schedulers import LRSchedulerConfig
-from snorkel.utils.optimizers import OptimizerConfig
+from .schedulers import batch_schedulers
 
 Metrics = Dict[str, float]
 

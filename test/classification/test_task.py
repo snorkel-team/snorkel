@@ -2,7 +2,7 @@ import unittest
 
 import torch.nn as nn
 
-from snorkel.classification.snorkel_classifier import Operation, Task
+from snorkel.classification import Operation, Task
 
 TASK_NAME = "TestTask"
 

@@ -23,6 +23,15 @@ class Policy:
     ------
     NotImplementedError
         Subclasses need to implement the ``generate`` method
+
+    Attributes
+    ----------
+    n
+        Total number of TFs
+    n_per_original
+        See above
+    keep_original
+        See above
     """
 
     def __init__(
@@ -85,6 +94,15 @@ class ApplyAllPolicy(Policy):
         point by the TFs being applied, the original data point will
         remain unchanged.
 
+    Attributes
+    ----------
+    n
+        Total number of TFs
+    n_per_original
+        See above
+    keep_original
+        See above
+
     Example
     -------
     >>> policy = ApplyAllPolicy(3, n_per_original=2, keep_original=False)
@@ -128,6 +146,15 @@ class ApplyEachPolicy(Policy):
         point by the TFs being applied, the original data point will
         remain unchanged.
 
+    Attributes
+    ----------
+    n
+        Total number of TFs
+    n_per_original
+        Total number of TFs
+    keep_original
+        See above
+    
     Example
     -------
     >>> policy = ApplyEachPolicy(3, keep_original=True)

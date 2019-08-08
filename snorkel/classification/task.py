@@ -74,11 +74,15 @@ class Task:
     scorer
         A ``Scorer`` with the desired metrics to calculate for this task
     loss_func
-        A function that converts final logits into loss values
-        Note that this function will receive as inputs the outputs dict, labels (Y),
-        and a mask denoting which
+        A function that converts final logits into loss values.
+        Defaults to cross_entropy_from_outputs() (which expects integer labels) if none
+        is provided. To use probalistic labels for training, use the method
+        cross_entropy_soft_from_outputs() instead.
+        Note that whatever function is used will receive as inputs the outputs dict,
+        labels, and a mask denoting which data points are 'active' (have labels)
     output_func
         A function that converts final logits into 'outputs' (e.g. probabilities)
+        Defaults to softmax_from_outputs()
 
     Attributes
     ----------
@@ -109,7 +113,9 @@ class Task:
         self.module_pool = module_pool
         self.task_flow = task_flow
         # By default, apply cross entropy loss and softmax to the output of the last
-        # operation in the task flow.
+        # operation in the task flow. To perform cross-entropy loss over probabilistic
+        # labels, use `partial(cross_entropy_soft_from_outputs, task_flow[-1].name)`
+        # instead.
         self.loss_func = loss_func or partial(cross_entropy_from_outputs, task_flow[-1].name)
         self.output_func = output_func or partial(
             softmax_from_outputs, task_flow[-1].name

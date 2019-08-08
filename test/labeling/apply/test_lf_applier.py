@@ -92,7 +92,7 @@ class TestLFApplier(unittest.TestCase):
 
     def test_lf_applier_no_labels(self) -> None:
         data_points = [SimpleNamespace(num=num) for num in DATA]
-        applier = LFApplier([h, h])
+        applier = LFApplier([h])
         L = applier.apply(data_points)
         np.testing.assert_equal(L, -1)
 

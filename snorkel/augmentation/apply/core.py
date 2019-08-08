@@ -5,6 +5,7 @@ from tqdm import tqdm
 from snorkel.augmentation.policy.core import Policy
 from snorkel.augmentation.tf import BaseTransformationFunction
 from snorkel.types import DataPoint, DataPoints
+from snorkel.utils.data_operators import check_unique_names
 
 
 class BaseTFApplier:
@@ -24,12 +25,14 @@ class BaseTFApplier:
 
     Raises
     ------
-    NotImplementedError
-        ``apply`` method must be implemented by subclasses
+    ValueError
+        If names of TFs are not unique
     """
 
     def __init__(self, tfs: List[BaseTransformationFunction], policy: Policy) -> None:
         self._tfs = tfs
+        self._tf_names = [tf.name for tf in tfs]
+        check_unique_names(self._tf_names)
         self._policy = policy
 
     def _apply_policy_to_data_point(self, x: DataPoint) -> DataPoints:
@@ -50,6 +53,10 @@ class BaseTFApplier:
             if transform_applied:
                 x_transformed.append(x_t)
         return x_transformed
+
+    def __repr__(self) -> str:
+        policy_name = type(self._policy).__name__
+        return f"{type(self).__name__}, Policy: {policy_name}, TFs: {self._tf_names}"
 
 
 class TFApplier(BaseTFApplier):

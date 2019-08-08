@@ -25,8 +25,8 @@ class BaseTFApplier:
 
     Raises
     ------
-    NotImplementedError
-        ``apply`` method must be implemented by subclasses
+    ValueError
+        If names of TFs are not unique
     """
 
     def __init__(self, tfs: List[BaseTransformationFunction], policy: Policy) -> None:

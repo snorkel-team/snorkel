@@ -154,7 +154,7 @@ class ApplyEachPolicy(Policy):
         Total number of TFs
     keep_original
         See above
-    
+
     Example
     -------
     >>> policy = ApplyEachPolicy(3, keep_original=True)

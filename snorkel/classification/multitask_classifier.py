@@ -46,7 +46,7 @@ class ClassifierConfig(Config):
     dataparallel: bool = True
 
 
-class SnorkelClassifier(nn.Module):
+class MultitaskClassifier(nn.Module):
     r"""A classifier built from one or more tasks to support advanced workflows.
 
     Parameters

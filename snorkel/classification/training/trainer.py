@@ -8,9 +8,9 @@ import torch.optim as optim
 from tqdm import tqdm
 
 from snorkel.classification.data import DictDataLoader  # noqa: F401
-from snorkel.classification.snorkel_classifier import (
+from snorkel.classification.multitask_classifier import (
     ClassifierConfig,
-    SnorkelClassifier,
+    MultitaskClassifier,
 )
 from snorkel.types import Config
 from snorkel.utils.config_utils import merge_config
@@ -55,7 +55,7 @@ class TrainerConfig(Config):
     progress_bar
         If True, print a tqdm progress bar during training
     model_config
-        Settings for the SnorkelClassifier
+        Settings for the MultitaskClassifier
     log_manager_config
         Settings for the LogManager
     checkpointing
@@ -105,7 +105,7 @@ class TrainerConfig(Config):
 
 
 class Trainer:
-    """A class for training a SnorkelClassifier.
+    """A class for training a MultitaskClassifier.
 
     Parameters
     ----------
@@ -141,9 +141,9 @@ class Trainer:
         self.name = name if name is not None else type(self).__name__
 
     def fit(
-        self, model: SnorkelClassifier, dataloaders: List["DictDataLoader"]
+        self, model: MultitaskClassifier, dataloaders: List["DictDataLoader"]
     ) -> None:
-        """Train a SnorkelClassifier.
+        """Train a MultitaskClassifier.
 
         Parameters
         ----------
@@ -419,7 +419,7 @@ class Trainer:
         self.batch_scheduler = scheduler_class()  # type: ignore
 
     def _evaluate(
-        self, model: SnorkelClassifier, dataloaders: List["DictDataLoader"], split: str
+        self, model: MultitaskClassifier, dataloaders: List["DictDataLoader"], split: str
     ) -> Metrics:
         """Evalute the current quality of the model on data for the requested split."""
         loaders = [d for d in dataloaders if d.dataset.split in split]  # type: ignore
@@ -427,7 +427,7 @@ class Trainer:
 
     def _logging(
         self,
-        model: SnorkelClassifier,
+        model: MultitaskClassifier,
         dataloaders: List["DictDataLoader"],
         batch_size: int,
     ) -> Metrics:
@@ -468,7 +468,7 @@ class Trainer:
                     metric_name, metric_value, self.log_manager.point_total
                 )
 
-    def _checkpoint_model(self, model: SnorkelClassifier, metric_dict: Metrics) -> None:
+    def _checkpoint_model(self, model: MultitaskClassifier, metric_dict: Metrics) -> None:
         """Save the current model."""
         if self.checkpointer is not None:
             self.checkpointer.checkpoint(

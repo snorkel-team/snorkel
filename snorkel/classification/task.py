@@ -6,9 +6,11 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from snorkel.classification.scorer import Scorer
+from .scorer import Scorer
+from .loss import ce_loss_from_outputs
 
-Outputs = Mapping[str, List[torch.Tensor]]
+
+Outputs = Mapping[str, List[torch.FloatTensor]]
 
 
 class Operation:
@@ -73,6 +75,8 @@ class Task:
         A ``Scorer`` with the desired metrics to calculate for this task
     loss_func
         A function that converts final logits into loss values
+        Note that this function will receive as inputs the outputs dict, labels (Y),
+        and a mask denoting which
     output_func
         A function that converts final logits into 'outputs' (e.g. probabilities)
 
@@ -106,8 +110,10 @@ class Task:
         self.task_flow = task_flow
         # By default, apply cross entropy loss and softmax to the output of the last
         # operation in the task flow.
-        self.loss_func = loss_func or partial(ce_loss, task_flow[-1].name)
-        self.output_func = output_func or partial(softmax, task_flow[-1].name)
+        self.loss_func = loss_func or partial(ce_loss_from_outputs, task_flow[-1].name)
+        self.output_func = output_func or partial(
+            softmax_from_outputs, task_flow[-1].name
+        )
         self.scorer = scorer
 
         logging.info(f"Created task: {self.name}")
@@ -117,34 +123,8 @@ class Task:
         return f"{cls_name}(name={self.name})"
 
 
-def ce_loss(
-    op_name: str, outputs: Outputs, Y: torch.Tensor, active: torch.Tensor
-) -> torch.Tensor:
-    """Calculate cross-entropy loss for the outputs of the specified module.
-
-    Parameters
-    ----------
-    op_name
-        The name of the operation whose output should be used for calculating loss
-    outputs
-        The dictionary of operation outputs
-    Y
-        The gold labels to calculate loss from
-    active
-        A mask of which data points to consider when calculating loss
-
-    Returns
-    -------
-    torch.Tensor
-        The calculated loss
-    """
-    # Subtract 1 from hard labels in Y to account for Snorkel reserving the label 0 for
-    # abstains while F.cross_entropy() expects 0-indexed labels
-    return F.cross_entropy(outputs[op_name][0][active], (Y.view(-1))[active])
-
-
-def softmax(op_name: str, outputs: Outputs) -> torch.Tensor:
-    """Calculate the softmax of the outputs of the specified module.
+def softmax_from_outputs(op_name: str, outputs: Outputs) -> torch.Tensor:
+    """Calculate the softmax of the output of the specified operation.
 
     Parameters
     ----------

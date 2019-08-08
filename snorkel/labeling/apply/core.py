@@ -6,6 +6,7 @@ from tqdm import tqdm
 
 from snorkel.labeling.lf import LabelingFunction
 from snorkel.types import DataPoint, DataPoints
+from snorkel.utils.data_operators import check_unique_names
 
 RowData = List[Tuple[int, int, int]]
 
@@ -25,12 +26,14 @@ class BaseLFApplier:
 
     Raises
     ------
-    NotImplementedError
-        ``apply`` method must be implemented by subclasses
+    ValueError
+        If names of LFs are not unique
     """
 
     def __init__(self, lfs: List[LabelingFunction]) -> None:
         self._lfs = lfs
+        self._lf_names = [lf.name for lf in lfs]
+        check_unique_names(self._lf_names)
 
     def _matrix_from_row_data(self, labels: List[RowData]) -> np.ndarray:
         L = np.zeros((len(labels), len(self._lfs)), dtype=int) - 1
@@ -39,6 +42,9 @@ class BaseLFApplier:
             row, col, data = zip(*chain.from_iterable(labels))
             L[row, col] = data
         return L
+
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}, LFs: {self._lf_names}"
 
 
 def apply_lfs_to_data_point(

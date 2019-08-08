@@ -22,7 +22,7 @@ def cross_entropy_soft(
 
     Note that the method signature is intentionally very similar to F.cross_entropy()
     so that it can be used as a drop-in replacement when target labels are changed from
-    from a 1D array of ints to a 2D array of probabilities.
+    from a 1D tensor of ints to a 2D tensor of probabilities.
 
     Parameters
     ----------

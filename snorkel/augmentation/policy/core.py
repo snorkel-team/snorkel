@@ -23,6 +23,15 @@ class Policy:
     ------
     NotImplementedError
         Subclasses need to implement the ``generate`` method
+
+    Attributes
+    ----------
+    n
+        Total number of TFs
+    n_per_original
+        See above
+    keep_original
+        See above
     """
 
     def __init__(
@@ -90,6 +99,15 @@ class ApplyAllPolicy(Policy):
     >>> policy = ApplyAllPolicy(3, n_per_original=2, keep_original=False)
     >>> policy.generate_for_example()
     [[0, 1, 2], [0, 1, 2]]
+
+    Attributes
+    ----------
+    n
+        Total number of TFs
+    n_per_original
+        See above
+    keep_original
+        See above
     """
 
     def generate(self) -> List[int]:
@@ -133,6 +151,15 @@ class ApplyEachPolicy(Policy):
     >>> policy = ApplyEachPolicy(3, keep_original=True)
     >>> policy.generate_for_example()
     [[], [0], [1], [2]]
+
+    Attributes
+    ----------
+    n
+        Total number of TFs
+    n_per_original
+        Total number of TFs
+    keep_original
+        See above
     """
 
     def __init__(self, n_tfs: int, keep_original: bool = True) -> None:

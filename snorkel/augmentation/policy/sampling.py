@@ -29,6 +29,17 @@ class MeanFieldPolicy(Policy):
         even if in-place modifications are made to the original data
         point by the TFs being applied, the original data point will
         remain unchanged.
+
+    Attributes
+    ----------
+    n
+        Total number of TFs
+    n_per_original
+        See above
+    keep_original
+        See above
+    sequence_length
+        See above
     """
 
     def __init__(
@@ -76,6 +87,17 @@ class RandomPolicy(MeanFieldPolicy):
         even if in-place modifications are made to the original data
         point by the TFs being applied, the original data point will
         remain unchanged.
+
+    Attributes
+    ----------
+    n
+        Total number of TFs
+    n_per_original
+        See above
+    keep_original
+        See above
+    sequence_length
+        See above
     """
 
     def __init__(

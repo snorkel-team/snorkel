@@ -2,7 +2,7 @@
 
 from .data import DictDataLoader, DictDataset  # noqa: F401
 from .loss import (  # noqa: F401
-    ce_loss_from_outputs,
+    cross_entropy_from_outputs,
     cross_entropy_soft_from_outputs,
     cross_entropy_soft,
 )

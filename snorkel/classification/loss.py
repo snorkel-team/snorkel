@@ -90,7 +90,7 @@ def ce_soft_loss_from_outputs(
     return cross_entropy_soft(outputs[op_name][0][active], Y[active])
 
 
-def ce_loss_from_outputs(
+def cross_entropy_from_outputs(
     op_name: str, outputs: Outputs, Y: torch.Tensor, active: torch.IntTensor
 ) -> torch.Tensor:
     """Calculate mean cross-entropy loss for the active outputs of the specified op.

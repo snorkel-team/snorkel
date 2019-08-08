@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from torch import nn
 
 from .scorer import Scorer
-from .loss import ce_loss_from_outputs
+from .loss import cross_entropy_from_outputs
 
 
 Outputs = Mapping[str, List[torch.FloatTensor]]
@@ -110,7 +110,7 @@ class Task:
         self.task_flow = task_flow
         # By default, apply cross entropy loss and softmax to the output of the last
         # operation in the task flow.
-        self.loss_func = loss_func or partial(ce_loss_from_outputs, task_flow[-1].name)
+        self.loss_func = loss_func or partial(cross_entropy_from_outputs, task_flow[-1].name)
         self.output_func = output_func or partial(
             softmax_from_outputs, task_flow[-1].name
         )

@@ -94,6 +94,12 @@ class ApplyAllPolicy(Policy):
         point by the TFs being applied, the original data point will
         remain unchanged.
 
+    Example
+    -------
+    >>> policy = ApplyAllPolicy(3, n_per_original=2, keep_original=False)
+    >>> policy.generate_for_example()
+    [[0, 1, 2], [0, 1, 2]]
+
     Attributes
     ----------
     n
@@ -102,12 +108,6 @@ class ApplyAllPolicy(Policy):
         See above
     keep_original
         See above
-
-    Example
-    -------
-    >>> policy = ApplyAllPolicy(3, n_per_original=2, keep_original=False)
-    >>> policy.generate_for_example()
-    [[0, 1, 2], [0, 1, 2]]
     """
 
     def generate(self) -> List[int]:
@@ -146,6 +146,12 @@ class ApplyEachPolicy(Policy):
         point by the TFs being applied, the original data point will
         remain unchanged.
 
+    Example
+    -------
+    >>> policy = ApplyEachPolicy(3, keep_original=True)
+    >>> policy.generate_for_example()
+    [[], [0], [1], [2]]
+
     Attributes
     ----------
     n
@@ -154,12 +160,6 @@ class ApplyEachPolicy(Policy):
         Total number of TFs
     keep_original
         See above
-
-    Example
-    -------
-    >>> policy = ApplyEachPolicy(3, keep_original=True)
-    >>> policy.generate_for_example()
-    [[], [0], [1], [2]]
     """
 
     def __init__(self, n_tfs: int, keep_original: bool = True) -> None:

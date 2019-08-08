@@ -195,13 +195,14 @@ class CandidateViewer:
             print("[log-SnorkelPrint] failed to get span string from database. [Details]: " + str(e))
             return None
 
-    def print_candidates(self, rel_info, doc_id, max_output=20):
+    def print_candidates(self, rel_info, doc_id, max_output=20, keywords=[]):
         """
         printing extracted candidates in a document
         :param rel_info: [x, [y, z]] where x is the table name and y, and z are the relation arguments (take a look at
         the candidate class you defined using candidate_subclass to find these two names)
         :param doc_id: id of document in input file
         :param max_output: maximum number of candidates to show in the output
+        :param keywords: list of keyword strings to be used in searching arg1 and arg1 in a relation
         :return:
         """
 
@@ -215,13 +216,17 @@ class CandidateViewer:
             for i in range(len(candidates_results)):
                 arg1 = candidates_results[i][1]
                 arg2 = candidates_results[i][2]
-                print("[" + doc_id + "] " + self._get_span_text(arg1) + " <-----> " + self._get_span_text(arg2))
-                # check the max print for the output
-                if i >= max_output - 1:
-                    break
+                arg1_text = self._get_span_text(arg1)
+                arg2_text = self._get_span_text(arg2)
+
+                if not len(keywords) or (any(k in arg1_text for k in keywords) or any(k in arg2_text for k in keywords)):
+                    print("[" + doc_id + "] " + arg1_text + " <-----> " + arg2_text)
+                    # check the max print for the output
+                    if i >= max_output - 1:
+                        break
         except Exception as e:
             print("[log-SnorkelPrint] error in printing candidates. [Details]: " + str(e))
-
+            
     def get_doc_text(self, doc_name):
         """
         getting text string of a document along with list of sentences and their starting indexes

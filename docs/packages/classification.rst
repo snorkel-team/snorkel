@@ -18,7 +18,6 @@ PyTorch-based multi-task learning framework for discriminative modeling.
    LogWriter
    LogWriterConfig
    Operation
-   Scorer
    SnorkelClassifier
    Task
    TensorBoardWriter

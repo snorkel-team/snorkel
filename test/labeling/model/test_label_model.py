@@ -125,7 +125,6 @@ class LabelModelTest(unittest.TestCase):
         self.assertGreaterEqual(probs.min(), 0.0)
 
     def test_get_accuracy(self):
-        np.random.seed(123)
         # set up L matrix
         true_accs = [0.95, 0.6, 0.7, 0.55, 0.8]
         coverage = [1.0, 0.8, 1.0, 1.0, 1.0]
@@ -141,12 +140,12 @@ class LabelModelTest(unittest.TestCase):
                     )
 
         label_model = LabelModel(cardinality=2)
-        label_model.fit(L)
+        label_model.fit(L, n_epochs=1000, seed=123)
 
         accs = label_model.get_accuracies()
         for i in range(len(accs)):
             true_acc = true_accs[i]
-            self.assertAlmostEqual(accs[i], true_acc, 1)
+            self.assertAlmostEqual(accs[i], true_acc, delta=0.05)
 
     def test_build_mask(self):
 

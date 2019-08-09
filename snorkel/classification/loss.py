@@ -12,7 +12,7 @@ def cross_entropy_with_probs(
     weight: Optional[torch.Tensor] = None,
     reduction: str = "mean",
 ) -> torch.Tensor:
-    """Calculate cross-entropy loss when targets are probabilities (floats), not ints
+    """Calculate cross-entropy loss when targets are probabilities (floats), not ints.
 
     PyTorch's F.cross_entropy() method requires integer labels; it does accept
     probabilistic labels. We can, however, simulate such functionality with a for loop,
@@ -69,7 +69,7 @@ def cross_entropy_with_probs(
 def cross_entropy_with_probs_from_outputs(
     op_name: str, outputs: Outputs, Y: torch.Tensor, active: torch.IntTensor
 ) -> torch.Tensor:
-    """Calculate mean cross-entropy loss for active outputs using probabilistic labels
+    """Calculate mean cross-entropy loss for active outputs using probabilistic labels.
 
     Parameters
     ----------

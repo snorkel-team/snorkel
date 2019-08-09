@@ -47,7 +47,7 @@ class ClassifierConfig(Config):
 
 
 class SnorkelClassifier(nn.Module):
-    """A classifier built from one or more tasks to support advanced workflows.
+    r"""A classifier built from one or more tasks to support advanced workflows.
 
     Parameters
     ----------

@@ -5,7 +5,7 @@ import pandas as pd
 
 from snorkel.classification.scorer import Scorer
 from snorkel.labeling.lf import LabelingFunction
-from snorkel.slicing.apply import PandasSFApplier
+from snorkel.slicing import PandasSFApplier
 
 SliceMetricsDict = Dict[str, Dict[str, float]]
 

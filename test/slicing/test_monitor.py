@@ -4,11 +4,11 @@ from types import SimpleNamespace
 import numpy as np
 import pandas as pd
 
-from snorkel.analysis.utils import preds_to_probs
 from snorkel.classification.scorer import Scorer
-from snorkel.slicing.apply import SFApplier
+from snorkel.slicing import SFApplier
 from snorkel.slicing.monitor import PandasSlicer, SliceScorer
 from snorkel.slicing.sf import slicing_function
+from snorkel.utils import preds_to_probs
 
 DATA = [5, 10, 19, 22, 25]
 

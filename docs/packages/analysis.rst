@@ -9,6 +9,5 @@ Generic model analysis utilities shared across Snorkel.
    :toctree: _autosummary/analysis/
    :nosignatures:
 
-   Scorer
    get_label_buckets
    metric_score

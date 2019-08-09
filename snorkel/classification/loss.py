@@ -3,13 +3,13 @@ from typing import Callable, List, Mapping, Optional, Sequence, Tuple, Union
 import torch
 import torch.nn.functional as F
 
-Outputs = Mapping[str, List[torch.FloatTensor]]
+Outputs = Mapping[str, List[torch.Tensor]]
 
 
-def cross_entropy_soft(
-    input: torch.FloatTensor,
-    target: torch.FloatTensor,
-    weight: Optional[torch.FloatTensor] = None,
+def cross_entropy_with_probs(
+    input: torch.Tensor,
+    target: torch.Tensor,
+    weight: Optional[torch.Tensor] = None,
     reduction: str = "mean",
 ) -> torch.Tensor:
     """Calculate cross-entropy loss when targets are probabilities (floats), not ints
@@ -66,8 +66,8 @@ def cross_entropy_soft(
         raise ValueError("Keyword 'reduction' must be one of ['none', 'mean', 'sum']")
 
 
-def ce_soft_loss_from_outputs(
-    op_name: str, outputs: Outputs, Y: torch.FloatTensor, active: torch.IntTensor
+def cross_entropy_with_probs_from_outputs(
+    op_name: str, outputs: Outputs, Y: torch.Tensor, active: torch.IntTensor
 ) -> torch.Tensor:
     """Calculate mean cross-entropy loss for active outputs using probabilistic labels
 
@@ -87,7 +87,7 @@ def ce_soft_loss_from_outputs(
     torch.Tensor
         The calculated loss
     """
-    return cross_entropy_soft(outputs[op_name][0][active], Y[active])
+    return cross_entropy_with_probs(outputs[op_name][0][active], Y[active])
 
 
 def cross_entropy_from_outputs(
@@ -96,7 +96,7 @@ def cross_entropy_from_outputs(
     """Calculate mean cross-entropy loss for the active outputs of the specified op.
 
     Note: TBD
-    ...gold labels must be integers. To use "soft" probabilistic labels, use cross_entropy_soft() instead.
+    ...gold labels must be integers. To use "soft" probabilistic labels, use cross_entropy_with_probs() instead.
 
     Parameters
     ----------
@@ -115,8 +115,3 @@ def cross_entropy_from_outputs(
         The calculated loss
     """
     return F.cross_entropy(outputs[op_name][0][active], (Y.view(-1))[active])
-
-
-
-
-

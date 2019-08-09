@@ -23,5 +23,7 @@ PyTorch-based multi-task learning framework for discriminative modeling.
    Task
    TensorBoardWriter
    Trainer
-   ce_loss
-   softmax
+   cross_entropy_from_outputs
+   cross_entropy_with_probs
+   cross_entropy_with_probs_from_outputs
+   softmax_from_outputs

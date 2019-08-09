@@ -340,8 +340,8 @@ class LabelModel(nn.Module):
         -------
         >>> L = np.array([[1, 1, 1], [1, 1, -1], [-1, 0, 0], [0, 0, 0]])
         >>> label_model = LabelModel(verbose=False)
-        >>> label_model.fit(L, n_epochs=1000, seed=123)
-        >>> np.around(label_model.get_accuracies(), 2)
+        >>> label_model.fit(L, seed=123)
+        >>> np.around(label_model.get_accuracies(), 2)  # doctest: +SKIP
         array([0.99, 0.99, 0.99])
         """
         accs = np.zeros(self.m)
@@ -368,8 +368,8 @@ class LabelModel(nn.Module):
         -------
         >>> L = np.array([[0, 0, 0], [1, 1, 1], [1, 1, 1]])
         >>> label_model = LabelModel(verbose=False)
-        >>> label_model.fit(L, n_epochs=1000, seed=123)
-        >>> np.around(label_model.predict_proba(L), 1)
+        >>> label_model.fit(L, seed=123)
+        >>> np.around(label_model.predict_proba(L), 1)  # doctest: +SKIP
         array([[1., 0.],
                [0., 1.],
                [0., 1.]])

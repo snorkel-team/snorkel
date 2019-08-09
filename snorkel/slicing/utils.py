@@ -4,8 +4,8 @@ import numpy as np
 import torch
 from torch import nn
 
-from snorkel.classification.data import DictDataLoader
 from snorkel.analysis import Scorer
+from snorkel.classification.data import DictDataLoader
 from snorkel.classification.snorkel_classifier import Operation, Task
 
 from .modules.slice_combiner import SliceCombinerModule

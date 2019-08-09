@@ -18,8 +18,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from snorkel.analysis import Scorer
 from snorkel.classification.data import DictDataLoader
+from snorkel.classification.scorer import Scorer
 from snorkel.classification.utils import move_to_device
 from snorkel.types import Config
 from snorkel.utils import probs_to_preds

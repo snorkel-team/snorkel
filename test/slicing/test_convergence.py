@@ -7,11 +7,11 @@ import pytest
 import torch
 import torch.nn as nn
 
-from snorkel.analysis import Scorer
 from snorkel.classification import (
     DictDataLoader,
     DictDataset,
     Operation,
+    Scorer,
     SnorkelClassifier,
     Task,
     Trainer,

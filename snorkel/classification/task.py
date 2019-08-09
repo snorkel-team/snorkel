@@ -6,7 +6,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from snorkel.analysis import Scorer
+from snorkel.classification.scorer import Scorer
 
 Outputs = Mapping[str, List[torch.Tensor]]
 

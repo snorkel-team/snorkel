@@ -102,8 +102,8 @@ class SnorkelClassifier(nn.Module):
         logging.info(
             f"Created multi-task model {self.name} that contains "
             f"task(s) {self.task_names} from "
-            f"{len(unique_ops)} ({len(all_ops) - len(unique_ops)} shared) and "
-            f"{len(unique_mods)} ({len(all_mods) - len(unique_mods)} shared)."
+            f"{len(unique_ops)} operations ({len(all_ops) - len(unique_ops)} shared) and "
+            f"{len(unique_mods)} modules ({len(all_mods) - len(unique_mods)} shared)."
         )
 
         # Move model to specified device

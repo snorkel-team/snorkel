@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from snorkel.classification.scorer import Scorer
+from snorkel.analysis import Scorer
 from snorkel.labeling.analysis import LFAnalysis
 from snorkel.labeling.model.graph_utils import get_clique_tree
 from snorkel.labeling.model.logger import Logger

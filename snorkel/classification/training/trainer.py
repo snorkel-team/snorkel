@@ -419,7 +419,10 @@ class Trainer:
         self.batch_scheduler = scheduler_class()  # type: ignore
 
     def _evaluate(
-        self, model: MultitaskClassifier, dataloaders: List["DictDataLoader"], split: str
+        self,
+        model: MultitaskClassifier,
+        dataloaders: List["DictDataLoader"],
+        split: str,
     ) -> Metrics:
         """Evalute the current quality of the model on data for the requested split."""
         loaders = [d for d in dataloaders if d.dataset.split in split]  # type: ignore
@@ -468,7 +471,9 @@ class Trainer:
                     metric_name, metric_value, self.log_manager.point_total
                 )
 
-    def _checkpoint_model(self, model: MultitaskClassifier, metric_dict: Metrics) -> None:
+    def _checkpoint_model(
+        self, model: MultitaskClassifier, metric_dict: Metrics
+    ) -> None:
         """Save the current model."""
         if self.checkpointer is not None:
             self.checkpointer.checkpoint(

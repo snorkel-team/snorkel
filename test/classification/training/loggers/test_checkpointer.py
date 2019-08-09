@@ -3,7 +3,7 @@ import shutil
 import tempfile
 import unittest
 
-from snorkel.classification.snorkel_classifier import SnorkelClassifier
+from snorkel.classification.multitask_classifier import MultitaskClassifier
 from snorkel.classification.training.loggers import Checkpointer
 
 log_manager_config = {"counter_unit": "epochs", "evaluation_freq": 1}
@@ -23,7 +23,7 @@ class TestLogManager(unittest.TestCase):
             checkpoint_runway=3,
             checkpoint_metric="task/dataset/valid/f1:max",
         )
-        model = SnorkelClassifier([])
+        model = MultitaskClassifier([])
         checkpointer.checkpoint(2, model, {"task/dataset/valid/f1": 0.5})
         self.assertEqual(len(checkpointer.best_metric_dict), 0)
         checkpointer.checkpoint(
@@ -40,7 +40,7 @@ class TestLogManager(unittest.TestCase):
             checkpoint_runway=3,
             checkpoint_metric="task/dataset/valid/f1:min",
         )
-        model = SnorkelClassifier([])
+        model = MultitaskClassifier([])
         checkpointer.checkpoint(
             3, model, {"task/dataset/valid/f1": 0.8, "task/dataset/valid/f2": 0.5}
         )
@@ -56,7 +56,7 @@ class TestLogManager(unittest.TestCase):
             checkpoint_metric="task/dataset/valid/f1:max",
             checkpoint_clear=True,
         )
-        model = SnorkelClassifier([])
+        model = MultitaskClassifier([])
         checkpointer.checkpoint(1, model, {"task/dataset/valid/f1": 0.8})
         expected_files = ["checkpoint_1.pth", "best_model_task_dataset_valid_f1.pth"]
         self.assertEqual(set(os.listdir(checkpoint_dir)), set(expected_files))
@@ -71,7 +71,7 @@ class TestLogManager(unittest.TestCase):
             checkpoint_dir=checkpoint_dir,
             checkpoint_metric="task/dataset/valid/f1:max",
         )
-        model = SnorkelClassifier([])
+        model = MultitaskClassifier([])
         checkpointer.checkpoint(1, model, {"task/dataset/valid/f1": 0.8})
         load_model = checkpointer.load_best_model(model)
         self.assertEqual(model, load_model)

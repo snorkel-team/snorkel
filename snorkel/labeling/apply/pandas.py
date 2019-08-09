@@ -2,7 +2,7 @@ from functools import partial
 from typing import List, Tuple
 
 import numpy as np
-from pandas import DataFrame
+import pandas as pd
 from tqdm import tqdm
 
 from snorkel.labeling.lf import LabelingFunction
@@ -51,9 +51,24 @@ class PandasLFApplier(BaseLFApplier):
     are executed via a ``pandas.DataFrame.apply`` call, which
     is single-process and can be slow for large DataFrames.
     For large datasets, consider ``DaskLFApplier`` or ``SparkLFApplier``.
+
+    Parameters
+    ----------
+    lfs
+        LFs that this applier executes on examples
+
+    Example
+    -------
+    >>> from snorkel.labeling import labeling_function
+    >>> @labeling_function()
+    ... def is_big_num(x):
+    ...     return 1 if x.num > 42 else 0
+    >>> applier = PandasLFApplier([is_big_num])
+    >>> applier.apply(pd.DataFrame(dict(num=[10, 100], text=["hello", "hi"])))
+    array([[0], [1]])
     """
 
-    def apply(self, df: DataFrame, progress_bar: bool = True) -> np.ndarray:
+    def apply(self, df: pd.DataFrame, progress_bar: bool = True) -> np.ndarray:
         """Label Pandas DataFrame of data points with LFs.
 
         Parameters

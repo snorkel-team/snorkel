@@ -94,9 +94,16 @@ class MultitaskClassifier(nn.Module):
         # Build network with given tasks
         self._build_network(tasks)
 
+        # Report total task count and duplicates
+        all_ops = [op.name for t in tasks for op in t.task_flow]
+        unique_ops = set(all_ops)
+        all_mods = [mod_name for t in tasks for mod_name in t.module_pool]
+        unique_mods = set(all_mods)
         logging.info(
             f"Created multi-task model {self.name} that contains "
-            f"task(s) {self.task_names}."
+            f"task(s) {self.task_names} from "
+            f"{len(unique_ops)} operations ({len(all_ops) - len(unique_ops)} shared) and "
+            f"{len(unique_mods)} modules ({len(all_mods) - len(unique_mods)} shared)."
         )
 
         # Move model to specified device

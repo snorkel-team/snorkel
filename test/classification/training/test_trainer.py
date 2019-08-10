@@ -9,8 +9,8 @@ import torch.optim as optim
 from snorkel.classification import (
     DictDataLoader,
     DictDataset,
+    MultitaskClassifier,
     Operation,
-    SnorkelClassifier,
     Task,
     Trainer,
 )
@@ -61,7 +61,7 @@ tasks = [
     create_task(TASK_NAMES[0], module_suffixes=["A", "A"]),
     create_task(TASK_NAMES[1], module_suffixes=["A", "B"]),
 ]
-model = SnorkelClassifier([tasks[0]])
+model = MultitaskClassifier([tasks[0]])
 
 
 class TrainerTest(unittest.TestCase):
@@ -72,7 +72,7 @@ class TrainerTest(unittest.TestCase):
 
     def test_trainer_twotask(self):
         """Train a model with overlapping modules and flows"""
-        multitask_model = SnorkelClassifier(tasks)
+        multitask_model = MultitaskClassifier(tasks)
         trainer = Trainer(**base_config)
         trainer.fit(multitask_model, dataloaders)
 

@@ -6,7 +6,7 @@ from torch import nn
 
 from snorkel.analysis import Scorer
 from snorkel.classification.data import DictDataLoader
-from snorkel.classification.snorkel_classifier import Operation, Task
+from snorkel.classification.multitask_classifier import Operation, Task
 
 from .modules.slice_combiner import SliceCombinerModule
 

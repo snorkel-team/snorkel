@@ -14,7 +14,7 @@ Outputs = Mapping[str, List[torch.FloatTensor]]
 
 
 class Operation:
-    """A single operation (forward pass of a module) to execute in a task flow.
+    """A single operation (forward pass of a module) to execute in a Task.
 
     See ``Task`` for more detail on the usage and semantics of an Operation.
 
@@ -68,7 +68,7 @@ class Task:
         The name of the task
     module_pool
         A ModuleDict mapping module names to the modules themselves
-    task_flow
+    op_sequence
         A list of ``Operation``\s to execute in order, defining the flow of information
         through the network for this task
     scorer
@@ -90,7 +90,7 @@ class Task:
         See above
     module_pool
         See above
-    task_flow
+    op_sequence
         See above
     scorer
         See above
@@ -104,23 +104,23 @@ class Task:
         self,
         name: str,
         module_pool: nn.ModuleDict,
-        task_flow: List[Operation],
+        op_sequence: Sequence[Operation],
         scorer: Scorer = Scorer(metrics=["accuracy"]),
         loss_func: Optional[Callable[..., torch.Tensor]] = None,
         output_func: Optional[Callable[..., torch.Tensor]] = None,
     ) -> None:
         self.name = name
         self.module_pool = module_pool
-        self.task_flow = task_flow
+        self.op_sequence = op_sequence
         # By default, apply cross entropy loss and softmax to the output of the last
-        # operation in the task flow. To perform cross-entropy loss over probabilistic
-        # labels, use `partial(cross_entropy_with_probs_from_outputs, task_flow[-1].name)`
-        # instead.
+        # operation in the op sequence. To perform cross-entropy loss over probabilistic
+        # labels, use `partial(cross_entropy_with_probs_from_outputs,
+        # op_sequence[-1].name)` instead.
         self.loss_func = loss_func or partial(
-            cross_entropy_from_outputs, task_flow[-1].name
+            cross_entropy_from_outputs, op_sequence[-1].name
         )
         self.output_func = output_func or partial(
-            softmax_from_outputs, task_flow[-1].name
+            softmax_from_outputs, op_sequence[-1].name
         )
         self.scorer = scorer
 

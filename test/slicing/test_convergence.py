@@ -211,12 +211,12 @@ def create_task(task_name: str, module_suffixes: List[str]) -> Task:
     op1 = Operation(module_name=module1_name, inputs=[("_input_", "coordinates")])
     op2 = Operation(module_name=module2_name, inputs=[(op1.name, 0)])
 
-    task_flow = [op1, op2]
+    op_sequence = [op1, op2]
 
     task = Task(
         name=task_name,
         module_pool=module_pool,
-        task_flow=task_flow,
+        op_sequence=op_sequence,
         scorer=Scorer(metrics=["f1", "accuracy"]),
     )
 

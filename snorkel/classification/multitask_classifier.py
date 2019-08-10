@@ -66,7 +66,7 @@ class MultitaskClassifier(nn.Module):
         A dictionary of all modules used by any of the tasks (See Task docstring)
     task_names
         See Task docstring
-    task_flows
+    op_sequences
         See Task docstring
     loss_funcs
         See Task docstring
@@ -86,7 +86,7 @@ class MultitaskClassifier(nn.Module):
         # Initiate the model attributes
         self.module_pool = nn.ModuleDict()
         self.task_names: Set[str] = set()
-        self.task_flows: Dict[str, List[Operation]] = dict()
+        self.op_sequences: Dict[str, List[Operation]] = dict()
         self.loss_funcs: Dict[str, Callable[..., torch.Tensor]] = dict()
         self.output_funcs: Dict[str, Callable[..., torch.Tensor]] = dict()
         self.scorers: Dict[str, Scorer] = dict()
@@ -95,7 +95,7 @@ class MultitaskClassifier(nn.Module):
         self._build_network(tasks)
 
         # Report total task count and duplicates
-        all_ops = [op.name for t in tasks for op in t.task_flow]
+        all_ops = [op.name for t in tasks for op in t.op_sequence]
         unique_ops = set(all_ops)
         all_mods = [mod_name for t in tasks for mod_name in t.module_pool]
         unique_mods = set(all_mods)
@@ -151,15 +151,10 @@ class MultitaskClassifier(nn.Module):
                     self.module_pool[key] = nn.DataParallel(task.module_pool[key])
                 else:
                     self.module_pool[key] = task.module_pool[key]
-        # Collect task names
         self.task_names.add(task.name)
-        # Collect task flows
-        self.task_flows[task.name] = task.task_flow
-        # Collect loss functions
+        self.op_sequences[task.name] = task.op_sequence
         self.loss_funcs[task.name] = task.loss_func
-        # Collect output functions
         self.output_funcs[task.name] = task.output_func
-        # Collect scorers
         self.scorers[task.name] = task.scorer
 
         # Move model to specified device
@@ -194,11 +189,11 @@ class MultitaskClassifier(nn.Module):
         outputs: OutputDict = {"_input_": X_dict_moved}  # type: ignore
 
         # Call forward for each task, using cached result if available
-        # Each task flow consists of one or more operations that are executed in order
+        # Each op_sequence consists of one or more operations that are executed in order
         for task_name in task_names:
-            task_flow = self.task_flows[task_name]
+            op_sequence = self.op_sequences[task_name]
 
-            for operation in task_flow:
+            for operation in op_sequence:
                 if operation.name not in outputs:
                     if operation.inputs:
                         # Feed the inputs the module requested in the reqested order
@@ -475,7 +470,7 @@ class MultitaskClassifier(nn.Module):
                     labels_to_tasks[label] = task
 
             # If available in task flows, label should map to task of same name
-            elif label in self.task_flows:
+            elif label in self.op_sequences:
                 labels_to_tasks[label] = label
 
         return labels_to_tasks

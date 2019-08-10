@@ -10,7 +10,7 @@ from snorkel.classification.utils import collect_flow_outputs_by_suffix
 class SliceCombinerModule(nn.Module):
     """A module for combining the weighted representations learned by slices.
 
-    Intended for use with task flow including:
+    Intended for use with the MultitaskClassifier including:
         * Indicator operations
         * Prediction operations
         * Prediction transform features

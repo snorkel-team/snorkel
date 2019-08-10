@@ -131,7 +131,7 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
         slice_task_ops.extend(ind_task_ops)
 
         # Create op sequence
-        ind_op_sequence = body_flow + ind_task_ops
+        ind_op_sequence = list(body_flow) + list(ind_task_ops)
 
         # Create ind task
         ind_task = Task(
@@ -170,7 +170,7 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
         slice_task_ops.extend(pred_task_ops)
 
         # Create op sequence
-        pred_op_sequence = body_flow + pred_task_ops
+        pred_op_sequence = list(body_flow) + list(pred_task_ops)
 
         # Create pred task
         pred_task = Task(
@@ -204,7 +204,9 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
     # NOTE: See note in doc string about module_pool polution
 
     # Create op_sequence
-    master_op_sequence = body_flow + slice_task_ops + [master_combiner_op, master_head_op]
+    master_op_sequence = (
+        list(body_flow) + list(slice_task_ops) + [master_combiner_op, master_head_op]
+    )
 
     master_task = Task(
         name=master_task_name,

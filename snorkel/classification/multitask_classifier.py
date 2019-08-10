@@ -9,6 +9,7 @@ from typing import (
     List,
     Mapping,
     Optional,
+    Sequence,
     Set,
     Tuple,
     Union,
@@ -86,7 +87,7 @@ class MultitaskClassifier(nn.Module):
         # Initiate the model attributes
         self.module_pool = nn.ModuleDict()
         self.task_names: Set[str] = set()
-        self.op_sequences: Dict[str, List[Operation]] = dict()
+        self.op_sequences: Dict[str, Sequence[Operation]] = dict()
         self.loss_funcs: Dict[str, Callable[..., torch.Tensor]] = dict()
         self.output_funcs: Dict[str, Callable[..., torch.Tensor]] = dict()
         self.scorers: Dict[str, Scorer] = dict()

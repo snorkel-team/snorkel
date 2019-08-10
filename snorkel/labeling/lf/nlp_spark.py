@@ -1,12 +1,8 @@
 from snorkel.map import Mapper
-from snorkel.preprocess.nlp import SpacyPreprocessor
 from snorkel.preprocess.spark import make_spark_preprocessor
+from snorkel.preprocess.nlp import SpacyPreprocessor
 
-from .nlp import (
-    BaseNLPLabelingFunction,
-    SpacyPreprocessorParameters,
-    base_nlp_labeling_function,
-)
+from .nlp import BaseNLPLabelingFunction, SpacyPreprocessorParameters, base_nlp_labeling_function
 
 
 class SparkNLPLabelingFunction(BaseNLPLabelingFunction):
@@ -70,7 +66,7 @@ class spark_nlp_labeling_function(base_nlp_labeling_function):
         Name of the LF
     resources
         Labeling resources passed in to ``f`` via ``kwargs``
-    preprocessors
+    pre
         Preprocessors to run before SpacyPreprocessor is executed
     fault_tolerant
         Output -1 if LF execution fails?
@@ -102,5 +98,4 @@ class spark_nlp_labeling_function(base_nlp_labeling_function):
     >>> has_person_mention(x)
     -1
     """
-
     _lf_cls = SparkNLPLabelingFunction

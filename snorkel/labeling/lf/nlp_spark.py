@@ -1,8 +1,12 @@
 from snorkel.map import Mapper
-from snorkel.preprocess.spark import make_spark_preprocessor
 from snorkel.preprocess.nlp import SpacyPreprocessor
+from snorkel.preprocess.spark import make_spark_preprocessor
 
-from .nlp import BaseNLPLabelingFunction, SpacyPreprocessorParameters, base_nlp_labeling_function
+from .nlp import (
+    BaseNLPLabelingFunction,
+    SpacyPreprocessorParameters,
+    base_nlp_labeling_function,
+)
 
 
 class SparkNLPLabelingFunction(BaseNLPLabelingFunction):
@@ -98,4 +102,5 @@ class spark_nlp_labeling_function(base_nlp_labeling_function):
     >>> has_person_mention(x)
     -1
     """
+
     _lf_cls = SparkNLPLabelingFunction

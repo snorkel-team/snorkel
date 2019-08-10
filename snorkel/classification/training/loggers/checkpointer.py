@@ -4,7 +4,7 @@ import os
 from shutil import copyfile
 from typing import Any, Dict, Iterable, List, Optional, Set
 
-from snorkel.classification.snorkel_classifier import SnorkelClassifier
+from snorkel.classification.multitask_classifier import MultitaskClassifier
 from snorkel.types import Config
 
 Metrics = Dict[str, float]
@@ -105,7 +105,7 @@ class Checkpointer:
         self.best_metric_dict: Dict[str, float] = {}
 
     def checkpoint(
-        self, iteration: float, model: SnorkelClassifier, metric_dict: Metrics
+        self, iteration: float, model: MultitaskClassifier, metric_dict: Metrics
     ) -> None:
         """Check if iteration and current metrics necessitate a checkpoint.
 
@@ -183,7 +183,7 @@ class Checkpointer:
             for fname in file_list:
                 os.remove(fname)
 
-    def load_best_model(self, model: SnorkelClassifier) -> SnorkelClassifier:
+    def load_best_model(self, model: MultitaskClassifier) -> MultitaskClassifier:
         """Load the best model from the checkpoint."""
         metric = list(self.checkpoint_metric.keys())[0]
         if metric not in self.best_metric_dict:  # pragma: no cover

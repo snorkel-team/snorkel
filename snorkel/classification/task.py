@@ -6,8 +6,9 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
+from snorkel.analysis import Scorer
+
 from .loss import cross_entropy_from_outputs
-from .scorer import Scorer
 
 Outputs = Mapping[str, List[torch.FloatTensor]]
 

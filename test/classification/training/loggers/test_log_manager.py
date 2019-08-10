@@ -2,7 +2,7 @@ import shutil
 import tempfile
 import unittest
 
-from snorkel.classification.snorkel_classifier import SnorkelClassifier
+from snorkel.classification.multitask_classifier import MultitaskClassifier
 from snorkel.classification.training.loggers import Checkpointer, LogManager, LogWriter
 
 
@@ -117,7 +117,7 @@ class TestLogManager(unittest.TestCase):
             n_batches_per_epoch=2, checkpointer=checkpointer, log_writer=log_writer
         )
 
-        classifier = SnorkelClassifier([])
+        classifier = MultitaskClassifier([])
         best_classifier = log_manager.close(classifier)
         self.assertEqual(best_classifier, classifier)
 

@@ -18,8 +18,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from snorkel.analysis import Scorer
 from snorkel.classification.data import DictDataLoader
-from snorkel.classification.scorer import Scorer
 from snorkel.classification.utils import move_to_device
 from snorkel.types import Config
 from snorkel.utils import probs_to_preds
@@ -46,7 +46,7 @@ class ClassifierConfig(Config):
     dataparallel: bool = True
 
 
-class SnorkelClassifier(nn.Module):
+class MultitaskClassifier(nn.Module):
     r"""A classifier built from one or more tasks to support advanced workflows.
 
     Parameters
@@ -94,9 +94,16 @@ class SnorkelClassifier(nn.Module):
         # Build network with given tasks
         self._build_network(tasks)
 
+        # Report total task count and duplicates
+        all_ops = [op.name for t in tasks for op in t.task_flow]
+        unique_ops = set(all_ops)
+        all_mods = [mod_name for t in tasks for mod_name in t.module_pool]
+        unique_mods = set(all_mods)
         logging.info(
             f"Created multi-task model {self.name} that contains "
-            f"task(s) {self.task_names}."
+            f"task(s) {self.task_names} from "
+            f"{len(unique_ops)} operations ({len(all_ops) - len(unique_ops)} shared) and "
+            f"{len(unique_mods)} modules ({len(all_mods) - len(unique_mods)} shared)."
         )
 
         # Move model to specified device

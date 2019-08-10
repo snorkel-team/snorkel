@@ -49,6 +49,16 @@ def h(x: DataPoint) -> int:
     return -1
 
 
+@labeling_function()
+def f_np(x: DataPoint) -> int:
+    return 0 if x[1] > 42 else -1
+
+
+@labeling_function(resources=dict(db=[3, 6, 9]))
+def g_np(x: DataPoint, db: List[int]) -> int:
+    return 0 if x[1] in db else -1
+
+
 DATA = [3, 43, 12, 9, 3]
 L_EXPECTED = np.array([[-1, 0], [0, -1], [-1, -1], [-1, 0], [-1, 0]])
 L_PREPROCESS_EXPECTED = np.array([[-1, -1], [0, 0], [-1, 0], [-1, 0], [-1, -1]])
@@ -92,9 +102,15 @@ class TestLFApplier(unittest.TestCase):
 
     def test_lf_applier_no_labels(self) -> None:
         data_points = [SimpleNamespace(num=num) for num in DATA]
-        applier = LFApplier([h, h])
-        L = applier.apply(data_points)
+        applier = LFApplier([h])
+        L = applier.apply(data_points, progress_bar=False)
         np.testing.assert_equal(L, -1)
+
+    def test_lf_applier_numpy(self) -> None:
+        X = np.vstack((DATA, DATA)).T
+        applier = LFApplier([f_np, g_np])
+        L = applier.apply(X, progress_bar=False)
+        np.testing.assert_equal(L, L_EXPECTED)
 
 
 class TestPandasApplier(unittest.TestCase):

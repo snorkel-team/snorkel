@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Optional
 
-from snorkel.classification.snorkel_classifier import SnorkelClassifier
+from snorkel.classification.multitask_classifier import MultitaskClassifier
 from snorkel.types import Config
 
 from .checkpointer import Checkpointer
@@ -127,7 +127,7 @@ class LogManager:
         self.epoch_count = 0
         self.unit_count = 0
 
-    def close(self, model: SnorkelClassifier) -> SnorkelClassifier:
+    def close(self, model: MultitaskClassifier) -> MultitaskClassifier:
         """Close the log writer and checkpointer if needed. Reload best model."""
         if self.log_writer is not None:
             self.log_writer.close()

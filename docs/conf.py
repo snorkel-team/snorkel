@@ -103,6 +103,7 @@ autodoc_default_options = {
     "members": None,
     "inherited-members": None,
     "show-inheritance": None,
+    "special-members": "__call__",
 }
 
 # Subclasses should show parent classes docstrings if they don't override them.

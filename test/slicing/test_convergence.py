@@ -7,12 +7,12 @@ import pytest
 import torch
 import torch.nn as nn
 
+from snorkel.analysis import Scorer
 from snorkel.classification import (
     DictDataLoader,
     DictDataset,
+    MultitaskClassifier,
     Operation,
-    Scorer,
-    SnorkelClassifier,
     Task,
     Trainer,
 )
@@ -92,7 +92,7 @@ class SlicingConvergenceTest(unittest.TestCase):
 
         # Convert to slice tasks
         tasks = convert_to_slice_tasks(base_task, slice_names)
-        model = SnorkelClassifier(tasks=tasks)
+        model = MultitaskClassifier(tasks=tasks)
 
         # Train
         trainer = Trainer(lr=0.001, n_epochs=50, progress_bar=False)
@@ -142,7 +142,7 @@ class SlicingConvergenceTest(unittest.TestCase):
 
         # Convert to slice tasks
         tasks = convert_to_slice_tasks(base_task, slice_names)
-        model = SnorkelClassifier(tasks=tasks)
+        model = MultitaskClassifier(tasks=tasks)
 
         # Train
         # NOTE: Needs more epochs to convergence with more heads

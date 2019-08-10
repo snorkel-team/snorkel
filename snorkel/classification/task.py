@@ -8,7 +8,9 @@ from torch import nn
 
 from snorkel.analysis import Scorer
 
-Outputs = Mapping[str, List[torch.Tensor]]
+from .loss import cross_entropy_from_outputs
+
+Outputs = Mapping[str, List[torch.FloatTensor]]
 
 
 class Operation:
@@ -72,9 +74,15 @@ class Task:
     scorer
         A ``Scorer`` with the desired metrics to calculate for this task
     loss_func
-        A function that converts final logits into loss values
+        A function that converts final logits into loss values.
+        Defaults to cross_entropy_from_outputs() (which expects integer labels) if none
+        is provided. To use probalistic labels for training, use the method
+        cross_entropy_with_probs_from_outputs() instead.
+        Note that whatever function is used will receive as inputs the outputs dict,
+        labels, and a mask denoting which data points are 'active' (have labels)
     output_func
         A function that converts final logits into 'outputs' (e.g. probabilities)
+        Defaults to softmax_from_outputs()
 
     Attributes
     ----------
@@ -105,9 +113,15 @@ class Task:
         self.module_pool = module_pool
         self.task_flow = task_flow
         # By default, apply cross entropy loss and softmax to the output of the last
-        # operation in the task flow.
-        self.loss_func = loss_func or partial(ce_loss, task_flow[-1].name)
-        self.output_func = output_func or partial(softmax, task_flow[-1].name)
+        # operation in the task flow. To perform cross-entropy loss over probabilistic
+        # labels, use `partial(cross_entropy_with_probs_from_outputs, task_flow[-1].name)`
+        # instead.
+        self.loss_func = loss_func or partial(
+            cross_entropy_from_outputs, task_flow[-1].name
+        )
+        self.output_func = output_func or partial(
+            softmax_from_outputs, task_flow[-1].name
+        )
         self.scorer = scorer
 
         logging.info(f"Created task: {self.name}")
@@ -117,34 +131,8 @@ class Task:
         return f"{cls_name}(name={self.name})"
 
 
-def ce_loss(
-    op_name: str, outputs: Outputs, Y: torch.Tensor, active: torch.Tensor
-) -> torch.Tensor:
-    """Calculate cross-entropy loss for the outputs of the specified module.
-
-    Parameters
-    ----------
-    op_name
-        The name of the operation whose output should be used for calculating loss
-    outputs
-        The dictionary of operation outputs
-    Y
-        The gold labels to calculate loss from
-    active
-        A mask of which data points to consider when calculating loss
-
-    Returns
-    -------
-    torch.Tensor
-        The calculated loss
-    """
-    # Subtract 1 from hard labels in Y to account for Snorkel reserving the label 0 for
-    # abstains while F.cross_entropy() expects 0-indexed labels
-    return F.cross_entropy(outputs[op_name][0][active], (Y.view(-1))[active])
-
-
-def softmax(op_name: str, outputs: Outputs) -> torch.Tensor:
-    """Calculate the softmax of the outputs of the specified module.
+def softmax_from_outputs(op_name: str, outputs: Outputs) -> torch.Tensor:
+    """Calculate the softmax of the output of the specified operation.
 
     Parameters
     ----------

@@ -208,7 +208,7 @@ class LabelModel(nn.Module):
 
     def _build_mask(self) -> None:
         """Build mask applied to O^{-1}, O for the matrix approx constraint."""
-        self.mask = torch.ones(self.d, self.d).byte()
+        self.mask = torch.ones(self.d, self.d, dtype=torch.bool)
         for ci in self.c_data.values():
             si = ci.start_index
             ei = ci.end_index
@@ -275,7 +275,8 @@ class LabelModel(nn.Module):
                 self.mu_init[idx, y] += mu_init
 
         # Initialize randomly based on self.mu_init
-        self.mu = nn.Parameter(self.mu_init.clone() * np.random.random()).float()
+        r = np.random.random()
+        self.mu = nn.Parameter(self.mu_init.clone() * r).float()  # type: ignore
 
         # Build the mask over O^{-1}
         self._build_mask()

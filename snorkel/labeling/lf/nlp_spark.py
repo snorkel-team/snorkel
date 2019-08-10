@@ -1,4 +1,3 @@
-from snorkel.map import Mapper
 from snorkel.preprocess.nlp import SpacyPreprocessor
 from snorkel.preprocess.spark import make_spark_preprocessor
 
@@ -54,11 +53,12 @@ class SparkNLPLabelingFunction(BaseNLPLabelingFunction):
     """
 
     @classmethod
-    def _create_preprocessor(  # type: ignore
+    def _create_preprocessor(
         cls, parameters: SpacyPreprocessorParameters
-    ) -> Mapper:
+    ) -> SpacyPreprocessor:
         preprocessor = SpacyPreprocessor(**parameters._asdict())
-        return make_spark_preprocessor(preprocessor)
+        make_spark_preprocessor(preprocessor)
+        return preprocessor
 
 
 class spark_nlp_labeling_function(base_nlp_labeling_function):

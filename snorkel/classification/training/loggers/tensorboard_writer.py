@@ -1,6 +1,6 @@
 from typing import Any
 
-from tensorboardX import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 
 from snorkel.types import Config
 
@@ -20,7 +20,7 @@ class TensorBoardWriter(LogWriter):
     Attributes
     ----------
     writer
-        tensorboardX ``SummaryWriter`` for logging and visualization
+        ``SummaryWriter`` for logging and visualization
     """
 
     def __init__(self, **kwargs: Any) -> None:

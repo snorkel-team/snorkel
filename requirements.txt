@@ -18,13 +18,14 @@ tqdm>=4.29.0,<5.0.0
 
 # Internal models
 scikit-learn>=0.20.2,<0.22.0
-torch>=1.1.0,<1.2.0
+torch>=1.2.0,<2.0.0
 
 # LF dependency learning
 networkx>=2.2,<3.0
 
 # Model introspection tools
-tensorboardX>=1.6,<2.0
+future>=0.17.0,<0.18.0
+tensorboard>=1.14.0,<2.0.0
 
 
 #### EXTRA/TEST LIBRARIES

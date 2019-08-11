@@ -11,7 +11,7 @@ from .nlp import (
 class SparkNLPLabelingFunction(BaseNLPLabelingFunction):
     r"""Special labeling function type for SpaCy-based LFs running on Spark.
 
-    This class is a Spark-compatabile version of ``NLPLabelingFunction``.
+    This class is a Spark-compatible version of ``NLPLabelingFunction``.
     See ``NLPLabelingFunction`` for details.
 
     Parameters

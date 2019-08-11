@@ -196,7 +196,10 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
         }
     )
 
-    master_combiner_op = Operation(module_name=master_combiner_module_name, inputs=[])
+    required_names = [op.name for op in list(body_flow) + list(slice_task_ops)]
+    master_combiner_op = Operation(
+        module_name=master_combiner_module_name, inputs=required_names
+    )
     master_head_op = Operation(
         module_name=master_head_module_name, inputs=[master_combiner_op.name]
     )

@@ -16,10 +16,6 @@ class TestSlicingFunction(unittest.TestCase):
         with self.assertRaises(TypeError):
             sf(x_none)
 
-    def _run_sf_no_raise(self, sf: SlicingFunction) -> None:
-        x_none = SimpleNamespace(num=None)
-        self.assertEqual(sf(x_none), -1)
-
     def test_slicing_function_decorator(self) -> None:
         @slicing_function()
         def sf(x) -> int:
@@ -29,3 +25,10 @@ class TestSlicingFunction(unittest.TestCase):
         self.assertEqual(sf.name, "sf")
         self._run_sf(sf)
         self._run_sf_raise(sf)
+
+    def test_slicing_function_decorator_no_parens(self) -> None:
+        with self.assertRaisesRegex(ValueError, "missing parentheses"):
+
+            @slicing_function
+            def sf(x) -> int:
+                return 0 if x.num > 42 else -1

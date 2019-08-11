@@ -24,10 +24,16 @@ class Operation:
     module_name
         The name of the module in the module pool that this operation uses
     inputs
-        The inputs that the specified module expects, given as tuples which reference a
-        previous operation (or the original input) and an index (if the specified
-        operation outputs a single value or sequence of values) or a key (if the
-        specified operation outputs a dictionary of values)
+        The inputs that the specified module expects, given as a list of names of
+        previous operations (or optionally a tuple of the operation name and a key
+        if the output of that module is a dict instead of a Tensor).
+        Note that the original input to the model can be referred to as "_input_".
+
+    Example
+    -------
+    >>> op1 = Operation(module_name="linear1", inputs=[("_input_", "features")])
+    >>> op2 = Operation(module_name="linear2", inputs=["linear1"]
+    >>> op_sequence = [op1, op2]
 
     Attributes
     ----------
@@ -73,14 +79,12 @@ class Task:
         A ``Scorer`` with the desired metrics to calculate for this task
     loss_func
         A function that converts final logits into loss values.
-        Defaults to cross_entropy_from_outputs() (which expects integer labels) if none
-        is provided. To use probalistic labels for training, use the method
-        cross_entropy_with_probs_from_outputs() instead.
-        Note that whatever function is used will receive as inputs the outputs dict,
-        labels, and a mask denoting which data points are 'active' (have labels)
+        Defaults to F.cross_entropy() if none is provided.
+        To use probalistic labels for training, use the Snorkel-defined method
+        cross_entropy_with_probs() instead.
     output_func
         A function that converts final logits into 'outputs' (e.g. probabilities)
-        Defaults to softmax_from_outputs()
+        Defaults to F.softmax(..., dim=1).
 
     Attributes
     ----------

@@ -321,17 +321,17 @@ class LFAnalysis:
         return P
 
     def lf_summary(
-        self, Y: Optional[np.ndarray] = None, est_accs: Optional[np.ndarray] = None
+        self, Y: Optional[np.ndarray] = None, est_weights: Optional[np.ndarray] = None
     ) -> DataFrame:
         """Create a pandas DataFrame with the various per-LF statistics.
 
         Parameters
         ----------
         Y
-            [n] or [n, 1] np.ndarray of gold labels. If provided, the empirical accuracy
+            [n] or [n, 1] np.ndarray of gold labels. If provided, the empirical weight
             for each LF will be calculated.
-        est_accs
-            Learned accuracies for each LF
+        est_weights
+            Learned weights for each LF
 
         Returns
         -------
@@ -364,7 +364,7 @@ class LFAnalysis:
             d["Incorrect"] = Series(data=incorrects, index=lf_names)
             d["Emp. Acc."] = Series(data=accs, index=lf_names)
 
-        if est_accs is not None:
-            d["Learned Acc."] = Series(est_accs, index=lf_names)
+        if est_weights is not None:
+            d["Learned Weight"] = Series(est_weights, index=lf_names)
 
         return DataFrame(data=d, index=lf_names)

@@ -20,7 +20,7 @@ import torch.nn as nn
 
 from snorkel.analysis import Scorer
 from snorkel.classification.data import DictDataLoader
-from snorkel.classification.utils import move_to_device
+from snorkel.classification.utils import metrics_dict_to_dataframe, move_to_device
 from snorkel.types import Config
 from snorkel.utils import probs_to_preds
 
@@ -382,7 +382,10 @@ class MultitaskClassifier(nn.Module):
 
     @torch.no_grad()
     def score(
-        self, dataloaders: List[DictDataLoader], remap_labels: Dict[str, str] = {}
+        self,
+        dataloaders: List[DictDataLoader],
+        remap_labels: Dict[str, str] = {},
+        as_dataframe: bool = False,
     ) -> Dict[str, float]:
         """Calculate scores for the provided DictDataLoaders.
 
@@ -393,6 +396,9 @@ class MultitaskClassifier(nn.Module):
         remap_labels
             A dict specifying which labels in the dataset's Y_dict (key)
             to remap to a new task (value)
+        as_dataframe
+            A boolean indicating whether to return results as pandas
+            DataFrame (True) or dict (False)
 
         Returns
         -------
@@ -446,7 +452,10 @@ class MultitaskClassifier(nn.Module):
                     )
                     metric_score_dict[identifier] = metric_value
 
-        return metric_score_dict
+        if as_dataframe:
+            return metrics_dict_to_dataframe(metric_score_dict)
+        else:
+            return metric_score_dict
 
     def _get_labels_to_tasks(
         self, label_names: Iterable[str], remap_labels: Dict[str, str] = {}
@@ -458,16 +467,16 @@ class MultitaskClassifier(nn.Module):
         """
         labels_to_tasks = {}
         for label in label_names:
-            # If available in task flows, label should map to task of same name
-            if label in self.task_flows:
-                labels_to_tasks[label] = label
-
             # Override any existing label -> task mappings
             if label in remap_labels:
                 task = remap_labels.get(label)
                 # Note: task might be manually remapped to None to remove it from the labels_to_tasks
                 if task is not None:
                     labels_to_tasks[label] = task
+
+            # If available in task flows, label should map to task of same name
+            elif label in self.task_flows:
+                labels_to_tasks[label] = label
 
         return labels_to_tasks
 

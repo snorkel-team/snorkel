@@ -14,7 +14,7 @@ from .modules.slice_combiner import SliceCombinerModule
 def add_slice_labels(
     dataloader: DictDataLoader,
     base_task: Task,
-    slice_labels: np.ndarray,
+    S_matrix: np.ndarray,
     slice_names: List[str],
 ) -> None:
     """Modify a dataloader in-place, adding labels for slice tasks.
@@ -25,13 +25,13 @@ def add_slice_labels(
         A DictDataLoader whose dataset.Y_dict attribute will be modified in place
     base_task
        The Task for which we want corresponding slice tasks/labels
-    slice_labels
+       S_matrix
         A [num_examples x num_slices] slice matrix (output of SFApplier)
     slice_names
         A list of slice names corresponding to columns of ``slice_labels``
     """
 
-    slice_labels, slice_names = _add_base_slice(slice_labels, slice_names)
+    slice_labels, slice_names = _add_base_slice(S_matrix, slice_names)
     assert slice_labels.shape[1] == len(slice_names)
 
     Y_dict: Dict[str, np.ndarray] = dataloader.dataset.Y_dict  # type: ignore

@@ -14,8 +14,10 @@ Programmatic data set slicing: SF creation, monitoring utilities, and representa
    PandasSFApplier
    SFApplier
    SliceCombinerModule
+   SliceScorer
    SlicingFunction
    apply.spark.SparkSFApplier
    add_slice_labels
    convert_to_slice_tasks
+   slice_dataframe
    slicing_function

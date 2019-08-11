@@ -6,7 +6,7 @@ import pandas as pd
 
 from snorkel.classification.scorer import Scorer
 from snorkel.slicing import SFApplier
-from snorkel.slicing.monitor import PandasSlicer, SliceScorer
+from snorkel.slicing.monitor import SliceScorer, slice_dataframe
 from snorkel.slicing.sf import slicing_function
 from snorkel.utils import preds_to_probs
 
@@ -25,10 +25,9 @@ class PandasSlicerTest(unittest.TestCase):
 
     def test_slice(self):
         self.assertEqual(len(self.df), 5)
-        slicer = PandasSlicer(self.df)
 
         # Should return a subset
-        sliced_df = slicer.slice(sf)
+        sliced_df = slice_dataframe(self.df, sf)
         self.assertEqual(len(sliced_df), 3)
 
 
@@ -49,12 +48,12 @@ class SliceScorerTest(unittest.TestCase):
         S_matrix = SFApplier([sf]).apply(data)
         slice_names = [sf.name]
         scorer = SliceScorer(scorer, slice_names)
-        metrics = scorer.score(S_matrix=S_matrix, golds=golds, preds=preds, probs=probs)
+        metrics = scorer.score(S=S_matrix, golds=golds, preds=preds, probs=probs)
         self.assertEqual(metrics["overall"]["accuracy"], 0.6)
         self.assertEqual(metrics["sf"]["accuracy"], 2.0 / 3.0)
 
         metrics_df = scorer.score(
-            S_matrix=S_matrix, golds=golds, preds=preds, probs=probs, as_dataframe=True
+            S=S_matrix, golds=golds, preds=preds, probs=probs, as_dataframe=True
         )
         self.assertTrue(isinstance(metrics_df, pd.DataFrame))
         self.assertEqual(metrics_df["accuracy"]["overall"], 0.6)

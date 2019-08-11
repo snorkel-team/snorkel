@@ -10,44 +10,6 @@ from snorkel.slicing import PandasSFApplier
 SliceMetricsDict = Dict[str, Dict[str, float]]
 
 
-class PandasSlicer:
-    """Create DataFrames corresponding to slices.
-
-    Parameters
-    ----------
-    df
-        A pandas DataFrame that will be sliced
-
-    Attributes
-    ----------
-    df
-        See above.
-    """
-
-    def __init__(self, df: pd.DataFrame):
-        self.df = df
-
-    def slice(self, slicing_function: LabelingFunction) -> pd.DataFrame:
-        """Return a dataframe with examples corresponding to specified slice_name.
-
-        Parameters
-        ----------
-        slicing_function
-            slicing_function which will operate over self.df to return a subset of examples
-
-        Returns
-        -------
-        pd.DataFrame
-            A DataFrame including only examples belonging to slice_name
-        """
-
-        S_matrix = PandasSFApplier([slicing_function]).apply(self.df)
-
-        # Index into the SF labels for the first (and only) column
-        df_idx = np.where(S_matrix[:, 0])[0]
-        return self.df.iloc[df_idx]
-
-
 class SliceScorer:
     """Scorer that returns metrics on overall performance and slices.
 
@@ -72,7 +34,7 @@ class SliceScorer:
 
     def score(
         self,
-        S_matrix: np.ndarray,
+        S: np.ndarray,
         golds: np.ndarray,
         preds: np.ndarray,
         probs: np.ndarray,
@@ -82,8 +44,8 @@ class SliceScorer:
 
         Parameters
         ----------
-        S_matrix
-            An [num_examples x num_slices] matrix of slicing function outputs
+        S
+            A [num_examples x num_slices] matrix of slicing function outputs
         golds
             Gold (aka ground truth) labels (integers)
         preds
@@ -100,8 +62,8 @@ class SliceScorer:
             A dictionary mapping slice_name to metric names to metric scores
             or aforementioned dictionary formatted as pandas DataFrame
         """
-        assert S_matrix.shape[1] == len(self.slice_names)
-        assert S_matrix.shape[0] == len(golds) == len(preds) == len(probs)
+        assert S.shape[1] == len(self.slice_names)
+        assert S.shape[0] == len(golds) == len(preds) == len(probs)
 
         # Include overall metrics
         metrics_dict = dict()
@@ -109,7 +71,7 @@ class SliceScorer:
 
         # Include slice metrics
         for idx, slice_name in enumerate(self.slice_names):
-            mask = S_matrix[:, idx].astype(bool)
+            mask = S[:, idx].astype(bool)
             metrics_dict.update(
                 {slice_name: self.scorer.score(golds[mask], preds[mask], probs[mask])}
             )
@@ -118,3 +80,29 @@ class SliceScorer:
             return pd.DataFrame.from_dict(metrics_dict).transpose()
         else:
             return metrics_dict
+
+
+def slice_dataframe(
+    df: pd.DataFrame, slicing_function: LabelingFunction
+) -> pd.DataFrame:
+    """Return a dataframe with examples corresponding to specified SlicingFunction.
+
+    Parameters
+    ----------
+    df
+        A pandas DataFrame that will be sliced
+    slicing_function
+        SlicingFunction which will operate over df to return a subset of examples;
+        function returns a subset of data for which slicing_function output is True
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame including only examples belonging to slice_name
+    """
+
+    S = PandasSFApplier([slicing_function]).apply(df)
+
+    # Index into the SF labels for the first (and only) column
+    df_idx = np.where(S[:, 0])[0]
+    return df.iloc[df_idx]

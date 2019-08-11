@@ -3,7 +3,7 @@ from typing import Dict, List, Union
 import numpy as np
 import pandas as pd
 
-from snorkel.classification.scorer import Scorer
+from snorkel.analysis.scorer import Scorer
 from snorkel.labeling.lf import LabelingFunction
 from snorkel.slicing import PandasSFApplier
 

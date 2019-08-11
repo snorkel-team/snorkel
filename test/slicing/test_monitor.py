@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import numpy as np
 import pandas as pd
 
-from snorkel.classification.scorer import Scorer
+from snorkel.analysis.scorer import Scorer
 from snorkel.slicing import SFApplier
 from snorkel.slicing.monitor import SliceScorer, slice_dataframe
 from snorkel.slicing.sf import slicing_function

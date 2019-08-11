@@ -11,7 +11,7 @@ SliceMetricsDict = Dict[str, Dict[str, float]]
 
 
 class SliceScorer:
-    """Scorer that returns metrics on overall performance and slices.
+    """Scorer that returns metrics on overall performance, as well as slices.
 
     Parameters
     ----------

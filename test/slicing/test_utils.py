@@ -117,10 +117,8 @@ def create_dummy_task(task_name):
     )
 
     op_sequence = [
-        Operation(name="encoder", module_name="linear1", inputs=[("_input_", 0)]),
-        Operation(
-            name="prediction_head", module_name="linear2", inputs=[("encoder", 0)]
-        ),
+        Operation(name="encoder", module_name="linear1", inputs=["_input_"]),
+        Operation(name="prediction_head", module_name="linear2", inputs=["encoder"]),
     ]
 
     task = Task(name=task_name, module_pool=module_pool, op_sequence=op_sequence)

@@ -42,7 +42,7 @@ class Operation:
     def __init__(
         self,
         module_name: str,
-        inputs: Sequence[Tuple[str, Union[str, int]]],
+        inputs: Sequence[Union[str, Tuple[str, str]]],
         name: Optional[str] = None,
     ) -> None:
         self.name = name or module_name

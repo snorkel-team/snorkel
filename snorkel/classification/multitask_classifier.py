@@ -201,16 +201,16 @@ class MultitaskClassifier(nn.Module):
                         try:
                             inputs = []
                             for op_input in operation.inputs:
-                                if isinstance(op_input[1], int):
-                                    # The output of the indicated operation has only
-                                    # one field; use that as the input to the current op
-                                    op_name, field_idx = op_input
-                                    inputs.append(outputs[op_name][field_idx])
-                                else:  # isinstance(op_input[1], str)
+                                if isinstance(op_input, tuple):
                                     # The output of the indicated operation has a dict
                                     # of fields; extract the designated field by name
                                     op_name, field_key = op_input
                                     inputs.append(outputs[op_name][field_key])
+                                else:  # isinstance(op_input[1], str)
+                                    # The output of the indicated operation has only
+                                    # one field; use that as the input to the current op
+                                    op_name = op_input
+                                    inputs.append(outputs[op_name][0])
                         except Exception:
                             raise ValueError(f"Unsuccessful operation {operation}.")
                         output = self.module_pool[operation.module_name].forward(

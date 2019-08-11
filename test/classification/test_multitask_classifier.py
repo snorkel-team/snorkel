@@ -72,9 +72,8 @@ class ClassifierTest(unittest.TestCase):
 
     def test_no_data_parallel(self):
         model = MultitaskClassifier(tasks=[self.task1, self.task2], dataparallel=False)
-        self.assertEqual(len(model.task_names), 1)
-        self.assertEqual(len(model.op_sequences), 1)
-        self.assertEqual(len(model.module_pool), 2)
+        self.assertEqual(len(model.task_names), 2)
+        self.assertIsInstance(model.module_pool["linear1A"], nn.Module)
 
     def test_no_input_spec(self):
         # Confirm model doesn't break when a module does not specify specific inputs
@@ -82,9 +81,7 @@ class ClassifierTest(unittest.TestCase):
         task = Task(
             name="task",
             module_pool=nn.ModuleDict({"identity": nn.Identity()}),
-            op_sequence=[
-                Operation("identity", []),
-            ],
+            op_sequence=[Operation("identity", [])],
         )
         model = MultitaskClassifier(tasks=[task], dataparallel=False)
         outputs = model.forward(dataset.X_dict, ["task"])

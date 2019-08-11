@@ -93,13 +93,17 @@ class SliceCombinerModule(nn.Module):
 
         if predictor_outputs[0].shape[1] > 2:
             raise NotImplementedError(
-                "SliceCombiner does not support multiclass labels."
+                "SliceCombiner does not support more than 2 classes yet."
+            )
+        elif predictor_outputs[0].shape[1] < 2:
+            raise NotImplementedError(
+                "SliceCombiner currently requires output shape [..., 2] for predictor heads."
             )
 
         predictor_confidences = torch.cat(
             [
                 # Compute the "confidence" using score of the positive class
-                F.softmax(output, dim=1)[:, 1].unsqueeze(-1)
+                F.softmax(output, dim=1)[:, 1].unsqueeze(1)
                 for output in predictor_outputs
             ],
             dim=-1,

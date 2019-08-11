@@ -3,6 +3,7 @@ import tempfile
 import unittest
 
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 
@@ -135,6 +136,11 @@ class ClassifierTest(unittest.TestCase):
         metrics = model.score([self.dataloader])
         # deterministic random tie breaking alternates predicted labels
         self.assertEqual(metrics["task1/dataset/train/accuracy"], 0.4)
+
+        # test dataframe format
+        metrics_df = model.score([self.dataloader], as_dataframe=True)
+        self.assertTrue(isinstance(metrics_df, pd.DataFrame))
+        self.assertEqual(metrics_df.at[0, "score"], 0.4)
 
     def test_score_shuffled(self):
         # Test scoring with a shuffled dataset

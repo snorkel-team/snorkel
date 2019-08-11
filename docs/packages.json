@@ -15,7 +15,9 @@
             "apply.dask.PandasParallelLFApplier",
             "apply.spark.SparkLFApplier",
             "lf.nlp.NLPLabelingFunction",
-            "lf.nlp.nlp_labeling_function"
+            "lf.nlp.nlp_labeling_function",
+            "lf.nlp_spark.SparkNLPLabelingFunction",
+            "lf.nlp_spark.spark_nlp_labeling_function"
         ],
         "map": [
             "spark.make_spark_mapper"

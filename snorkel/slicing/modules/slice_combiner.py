@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict
 
 import torch
 import torch.nn as nn
@@ -53,9 +53,9 @@ class SliceCombinerModule(nn.Module):
         self.slice_pred_feat_key = slice_pred_feat_key
         self.temperature = temperature
 
-    def forward(  # type:ignore
-        self, output_dict: Dict[str, List[torch.Tensor]]
-    ) -> torch.Tensor:
+    def forward(
+        self, output_dict: Dict[str, torch.Tensor]
+    ) -> torch.Tensor:  # type:ignore
         """Reweight and combine predictor representations given output dict.
 
         Parameters
@@ -77,9 +77,10 @@ class SliceCombinerModule(nn.Module):
         indicator_outputs = collect_flow_outputs_by_suffix(
             output_dict, self.slice_ind_key
         )
+        # Indicator heads are always binary (negative class = 0, positive class = 1)
         indicator_preds = torch.cat(
             [
-                F.softmax(output, dim=1)[:, 0].unsqueeze(1)
+                F.softmax(output, dim=1)[:, 1].unsqueeze(1)
                 for output in indicator_outputs
             ],
             dim=-1,
@@ -98,7 +99,7 @@ class SliceCombinerModule(nn.Module):
         predictor_confidences = torch.cat(
             [
                 # Compute the "confidence" using score of the positive class
-                F.softmax(output, dim=1)[:, 0].unsqueeze(-1)
+                F.softmax(output, dim=1)[:, 1].unsqueeze(-1)
                 for output in predictor_outputs
             ],
             dim=-1,

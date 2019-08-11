@@ -53,9 +53,9 @@ class SliceCombinerModule(nn.Module):
         self.slice_pred_feat_key = slice_pred_feat_key
         self.temperature = temperature
 
-    def forward(
+    def forward(  # type:ignore
         self, output_dict: Dict[str, torch.Tensor]
-    ) -> torch.Tensor:  # type:ignore
+    ) -> torch.Tensor:
         """Reweight and combine predictor representations given output dict.
 
         Parameters

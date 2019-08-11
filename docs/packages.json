@@ -29,7 +29,9 @@
         "slicing": [
             "apply.dask.DaskSFApplier",
             "apply.dask.PandasParallelSFApplier",
-            "apply.spark.SparkSFApplier"
+            "apply.spark.SparkSFApplier",
+            "sf.nlp.NLPSlicingFunction",
+            "sf.nlp.nlp_slicing_function"
         ]
     }
 }

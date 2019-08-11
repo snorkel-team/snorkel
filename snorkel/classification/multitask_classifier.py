@@ -196,23 +196,31 @@ class MultitaskClassifier(nn.Module):
 
             for operation in op_sequence:
                 if operation.name not in outputs:
-                    # Feed the inputs the module requested in the reqested order
                     try:
-                        inputs = []
-                        for op_input in operation.inputs:
-                            if isinstance(op_input, tuple):
-                                # The output of the indicated operation has a dict
-                                # of fields; extract the designated field by name
-                                op_name, field_key = op_input
-                                inputs.append(outputs[op_name][field_key])
-                            else:
-                                # The output of the indicated operation has only
-                                # one field; use that as the input to the current op
-                                op_name = op_input
-                                inputs.append(outputs[op_name])
+                        if operation.inputs:
+                            # Feed the inputs the module requested in the reqested order
+                            inputs = []
+                            for op_input in operation.inputs:
+                                if isinstance(op_input, tuple):
+                                    # The output of the indicated operation has a dict
+                                    # of fields; extract the designated field by name
+                                    op_name, field_key = op_input
+                                    inputs.append(outputs[op_name][field_key])
+                                else:
+                                    # The output of the indicated operation has only
+                                    # one field; use that as the input to the current op
+                                    op_name = op_input
+                                    inputs.append(outputs[op_name])
+                            output = self.module_pool[operation.module_name].forward(
+                                *inputs
+                            )
+                        else:
+                            # Feed the entire outputs dict for the module to pull from
+                            output = self.module_pool[operation.module_name].forward(
+                                outputs
+                            )
                     except Exception:
                         raise ValueError(f"Unsuccessful operation {operation}.")
-                    output = self.module_pool[operation.module_name].forward(*inputs)
                     outputs[operation.name] = output
 
         return outputs

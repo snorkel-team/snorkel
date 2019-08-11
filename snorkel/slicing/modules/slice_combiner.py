@@ -54,18 +54,18 @@ class SliceCombinerModule(nn.Module):
         self.temperature = temperature
 
     def forward(  # type:ignore
-        self, flow_dict: Dict[str, List[torch.Tensor]]
+        self, output_dict: Dict[str, List[torch.Tensor]]
     ) -> torch.Tensor:
         """Reweight and combine predictor representations given output dict.
 
         Parameters
         ----------
-        flow_dict
+        output_dict
             A dict of data fields containing operation outputs from indicator head,
             predictor head, and predictor transform (corresponding to slice_ind_key,
             slice_pred_key, slice_pred_feat_key, respectively).
 
-            NOTE: The flow_dict outputs for the ind/pred heads must be raw logits.
+            NOTE: The output_dict outputs for the ind/pred heads must be raw logits.
 
         Returns
         -------
@@ -75,7 +75,7 @@ class SliceCombinerModule(nn.Module):
 
         # Concatenate indicator head predictions into tensor [batch_size x num_slices]
         indicator_outputs = collect_flow_outputs_by_suffix(
-            flow_dict, self.slice_ind_key
+            output_dict, self.slice_ind_key
         )
         indicator_preds = torch.cat(
             [
@@ -87,7 +87,7 @@ class SliceCombinerModule(nn.Module):
 
         # Concatenate predictor head confidences into tensor [batch_size x num_slices]
         predictor_outputs = collect_flow_outputs_by_suffix(
-            flow_dict, self.slice_pred_key
+            output_dict, self.slice_pred_key
         )
 
         if predictor_outputs[0].shape[1] > 2:
@@ -107,7 +107,7 @@ class SliceCombinerModule(nn.Module):
         # Concatenate each predictor feature (to be combined into reweighted
         # representation) into [batch_size x 1 x feat_dim] tensor
         predictor_feat_outputs = collect_flow_outputs_by_suffix(
-            flow_dict, self.slice_pred_feat_key
+            output_dict, self.slice_pred_feat_key
         )
         slice_representations = torch.stack(predictor_feat_outputs, dim=1)
 

@@ -70,6 +70,12 @@ class ClassifierTest(unittest.TestCase):
             X_dict = self.dataloader.dataset.X_dict
             model.forward(X_dict, [task1.name])
 
+    def test_no_data_parallel(self):
+        model = MultitaskClassifier(tasks=[self.task1], dataparallel=False)
+        self.assertEqual(len(model.task_names), 1)
+        self.assertEqual(len(model.op_sequences), 1)
+        self.assertEqual(len(model.module_pool), 2)
+
     def test_predict(self):
         model = MultitaskClassifier([self.task1])
         results = model.predict(self.dataloader)
@@ -96,6 +102,13 @@ class ClassifierTest(unittest.TestCase):
         loss_dict, count_dict = model.calculate_loss(dataset.X_dict, dataset.Y_dict)
         self.assertFalse(loss_dict)
         self.assertFalse(count_dict)
+
+    def test_partially_empty_batch(self):
+        dataset = create_dataloader("task1", shuffle=False).dataset
+        dataset.Y_dict["task1"][0] = -1
+        model = MultitaskClassifier([self.task1])
+        loss_dict, count_dict = model.calculate_loss(dataset.X_dict, dataset.Y_dict)
+        self.assertEqual(count_dict["task1"], 9)
 
     def test_remapped_labels(self):
         # Test additional label keys in the Y_dict
@@ -221,7 +234,7 @@ class ClassifierTest(unittest.TestCase):
 
 def create_dataloader(task_name="task", split="train", **kwargs):
     X = torch.FloatTensor([[i, i] for i in range(NUM_EXAMPLES)])
-    Y = torch.ones(NUM_EXAMPLES, 1).long()
+    Y = torch.ones(NUM_EXAMPLES).long()
 
     dataset = DictDataset(
         name="dataset", split=split, X_dict={"data": X}, Y_dict={task_name: Y}

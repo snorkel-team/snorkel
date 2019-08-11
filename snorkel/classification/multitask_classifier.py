@@ -396,6 +396,9 @@ class MultitaskClassifier(nn.Module):
         remap_labels
             A dict specifying which labels in the dataset's Y_dict (key)
             to remap to a new task (value)
+        as_dataframe
+            A boolean indicating whether to return results as pandas
+            DataFrame (True) or dict (False)
 
         Returns
         -------

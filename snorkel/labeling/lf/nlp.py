@@ -2,8 +2,9 @@ from typing import Any, Callable, List, Mapping, NamedTuple, Optional
 
 from snorkel.preprocess import BasePreprocessor
 from snorkel.preprocess.nlp import EN_CORE_WEB_SM, SpacyPreprocessor
+from snorkel.utils.data_operators import base_nlp_operator_decorator
 
-from .core import LabelingFunction, labeling_function
+from .core import LabelingFunction
 
 
 class SpacyPreprocessorParameters(NamedTuple):
@@ -172,61 +173,7 @@ class NLPLabelingFunction(BaseNLPLabelingFunction):
         return SpacyPreprocessor(**parameters._asdict())
 
 
-class base_nlp_labeling_function(labeling_function):
-    """Decorator to define a BaseNLPLabelingFunction child object from a function."""
-
-    _lf_cls: Optional[type] = None
-
-    def __init__(
-        self,
-        name: Optional[str] = None,
-        resources: Optional[Mapping[str, Any]] = None,
-        pre: Optional[List[BasePreprocessor]] = None,
-        fault_tolerant: bool = False,
-        text_field: str = "text",
-        doc_field: str = "doc",
-        language: str = EN_CORE_WEB_SM,
-        disable: Optional[List[str]] = None,
-        memoize: bool = True,
-    ) -> None:
-        super().__init__(name, resources, pre, fault_tolerant)
-        self.text_field = text_field
-        self.doc_field = doc_field
-        self.language = language
-        self.disable = disable
-        self.memoize = memoize
-
-    def __call__(self, f: Callable[..., int]) -> BaseNLPLabelingFunction:
-        """Wrap a function to create an ``BaseNLPLabelingFunction``.
-
-        Parameters
-        ----------
-        f
-            Function that implements the core NLP LF logic
-
-        Returns
-        -------
-        BaseNLPLabelingFunction
-            New ``BaseNLPLabelingFunction`` executing logic in wrapped function
-        """
-        if self._lf_cls is None:
-            raise NotImplementedError("_lf_cls must be defined")
-        name = self.name or f.__name__
-        return self._lf_cls(
-            name=name,
-            f=f,
-            resources=self.resources,
-            pre=self.pre,
-            fault_tolerant=self.fault_tolerant,
-            text_field=self.text_field,
-            doc_field=self.doc_field,
-            language=self.language,
-            disable=self.disable,
-            memoize=self.memoize,
-        )
-
-
-class nlp_labeling_function(base_nlp_labeling_function):
+class nlp_labeling_function(base_nlp_operator_decorator):
     """Decorator to define an NLPLabelingFunction object from a function.
 
     Parameters
@@ -268,4 +215,4 @@ class nlp_labeling_function(base_nlp_labeling_function):
     -1
     """
 
-    _lf_cls = NLPLabelingFunction
+    _operator_cls = NLPLabelingFunction

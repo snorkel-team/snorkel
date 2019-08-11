@@ -1,11 +1,8 @@
 from snorkel.preprocess.nlp import SpacyPreprocessor
 from snorkel.preprocess.spark import make_spark_preprocessor
+from snorkel.utils.data_operators import base_nlp_operator_decorator
 
-from .nlp import (
-    BaseNLPLabelingFunction,
-    SpacyPreprocessorParameters,
-    base_nlp_labeling_function,
-)
+from .nlp import BaseNLPLabelingFunction, SpacyPreprocessorParameters
 
 
 class SparkNLPLabelingFunction(BaseNLPLabelingFunction):
@@ -61,7 +58,7 @@ class SparkNLPLabelingFunction(BaseNLPLabelingFunction):
         return preprocessor
 
 
-class spark_nlp_labeling_function(base_nlp_labeling_function):
+class spark_nlp_labeling_function(base_nlp_operator_decorator):
     """Decorator to define a SparkNLPLabelingFunction object from a function.
 
     Parameters
@@ -103,4 +100,4 @@ class spark_nlp_labeling_function(base_nlp_labeling_function):
     -1
     """
 
-    _lf_cls = SparkNLPLabelingFunction
+    _operator_cls = SparkNLPLabelingFunction

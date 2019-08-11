@@ -2,6 +2,7 @@ from typing import Any, Callable, List, Mapping, Optional
 
 from snorkel.preprocess import BasePreprocessor
 from snorkel.types import DataPoint
+from snorkel.utils.data_operators import base_operator_decorator
 
 
 class LabelingFunction:
@@ -94,7 +95,7 @@ class LabelingFunction:
         return f"{type(self).__name__} {self.name}{preprocessor_str}"
 
 
-class labeling_function:
+class labeling_function(base_operator_decorator):
     """Decorator to define a LabelingFunction object from a function.
 
     Parameters
@@ -127,38 +128,4 @@ class labeling_function:
     LabelingFunction my_lf, Preprocessors: []
     """
 
-    def __init__(
-        self,
-        name: Optional[str] = None,
-        resources: Optional[Mapping[str, Any]] = None,
-        pre: Optional[List[BasePreprocessor]] = None,
-        fault_tolerant: bool = False,
-    ) -> None:
-        if callable(name):
-            raise ValueError("Looks like this decorator is missing parentheses!")
-        self.name = name
-        self.resources = resources
-        self.pre = pre
-        self.fault_tolerant = fault_tolerant
-
-    def __call__(self, f: Callable[..., int]) -> LabelingFunction:
-        """Wrap a function to create a ``LabelingFunction``.
-
-        Parameters
-        ----------
-        f
-            Function that implements the core LF logic
-
-        Returns
-        -------
-        LabelingFunction
-            New ``LabelingFunction`` executing logic in wrapped function
-        """
-        name = self.name or f.__name__
-        return LabelingFunction(
-            name=name,
-            f=f,
-            resources=self.resources,
-            pre=self.pre,
-            fault_tolerant=self.fault_tolerant,
-        )
+    _operator_cls = LabelingFunction

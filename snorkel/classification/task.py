@@ -53,7 +53,7 @@ class Operation:
         return (
             f"Operation(name={self.name}, "
             f"module_name={self.module_name}, "
-            f"inputs={self.inputs}"
+            f"inputs={self.inputs})"
         )
 
 

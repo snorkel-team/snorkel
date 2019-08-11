@@ -329,12 +329,12 @@ class LabelModel(nn.Module):
             return c_probs
 
     def get_weights(self) -> np.ndarray:
-        """Return the vector of LF weights related to LF accuracies.
+        """Return the vector of learned LF weights for combining LFs.
 
         Returns
         -------
         np.ndarray
-            [m,1] vector of LF weights related to LF accuracies
+            [m,1] vector of learned LF weights for combining LFs.
 
         Example
         -------
@@ -698,7 +698,7 @@ class LabelModel(nn.Module):
     ) -> None:
         """Train label model.
 
-        Train label model to estimate mu, the parameters related to accuracies of LFs.
+        Train label model to estimate mu, the parameters used to combine LFs.
 
         Parameters
         ----------

@@ -248,7 +248,7 @@ def create_task(task_name, module_suffixes=("", "")):
     )
 
     op0 = Operation(module_name=module1_name, inputs=[("_input_", "data")], name="op0")
-    op1 = Operation(module_name=module2_name, inputs=[(op0.name, 0)], name="op1")
+    op1 = Operation(module_name=module2_name, inputs=[op0.name], name="op1")
 
     op_sequence = [op0, op1]
 

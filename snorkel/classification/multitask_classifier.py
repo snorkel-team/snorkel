@@ -27,7 +27,7 @@ from snorkel.utils import probs_to_preds
 
 from .task import Operation, Task
 
-OutputDict = Dict[str, Mapping[Union[str, int], Any]]
+OutputDict = Dict[str, Union[Any, Mapping[str, Any]]]
 
 
 class ClassifierConfig(Config):
@@ -210,7 +210,7 @@ class MultitaskClassifier(nn.Module):
                                     # The output of the indicated operation has only
                                     # one field; use that as the input to the current op
                                     op_name = op_input
-                                    inputs.append(outputs[op_name][0])
+                                    inputs.append(outputs[op_name])
                         except Exception:
                             raise ValueError(f"Unsuccessful operation {operation}.")
                         output = self.module_pool[operation.module_name].forward(
@@ -222,9 +222,6 @@ class MultitaskClassifier(nn.Module):
                         output = self.module_pool[operation.module_name].forward(
                             outputs
                         )
-                    if not isinstance(output, Mapping):
-                        # Make output a singleton list so it becomes a valid Mapping
-                        output = [output]
                     outputs[operation.name] = output
 
         # Note: We return all outputs to enable advanced workflows such as multi-task
@@ -272,10 +269,10 @@ class MultitaskClassifier(nn.Module):
                 count_dict[label_name] = active.sum().item()
 
                 # Extract the output of the last operation for this task
-                inputs = outputs[self.op_sequences[task_name][-1].name][0]
+                inputs = outputs[self.op_sequences[task_name][-1].name]
 
-                # Filter out any inactive examples
-                if not active.all():
+                # Filter out any inactive examples if inputs is a Tensor
+                if not active.all() and isinstance(inputs, torch.Tensor):
                     inputs = inputs[active]
                     Y = Y[active]
 
@@ -312,7 +309,7 @@ class MultitaskClassifier(nn.Module):
 
         for task_name in task_names:
             # Extract the output of the last operation for this task
-            inputs = outputs[self.op_sequences[task_name][-1].name][0]
+            inputs = outputs[self.op_sequences[task_name][-1].name]
             prob_dict[task_name] = self.output_funcs[task_name](inputs).cpu().numpy()
 
         return prob_dict

@@ -32,7 +32,7 @@ class Operation:
     Example
     -------
     >>> op1 = Operation(module_name="linear1", inputs=[("_input_", "features")])
-    >>> op2 = Operation(module_name="linear2", inputs=["linear1"]
+    >>> op2 = Operation(module_name="linear2", inputs=["linear1"])
     >>> op_sequence = [op1, op2]
 
     Attributes

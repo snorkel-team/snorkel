@@ -90,20 +90,19 @@ class ClassifierTest(unittest.TestCase):
         )
 
     def test_empty_batch(self):
-        # Make the first BATCH_SIZE labels -1 so that one batch will have no labels
         dataset = create_dataloader("task1", shuffle=False).dataset
-        for i in range(BATCH_SIZE):
-            dataset.Y_dict["task1"][i] = -1
+        dataset.Y_dict["task1"] = torch.full_like(dataset.Y_dict["task1"], -1)
         model = MultitaskClassifier([self.task1])
         loss_dict, count_dict = model.calculate_loss(dataset.X_dict, dataset.Y_dict)
-        self.assertEqual(count_dict["task1"], NUM_EXAMPLES - BATCH_SIZE)
+        self.assertFalse(loss_dict)
+        self.assertFalse(count_dict)
 
     def test_remapped_labels(self):
         # Test additional label keys in the Y_dict
         # Without remapping, model should ignore them
         task_name = self.task1.name
         X = torch.FloatTensor([[i, i] for i in range(NUM_EXAMPLES)])
-        Y = torch.ones(NUM_EXAMPLES, 1).long()
+        Y = torch.ones(NUM_EXAMPLES).long()
 
         Y_dict = {task_name: Y, "other_task": Y}
         dataset = DictDataset(

@@ -8,8 +8,6 @@ from torch import nn
 
 from snorkel.analysis import Scorer
 
-from .loss import cross_entropy_from_outputs
-
 Outputs = Mapping[str, List[torch.FloatTensor]]
 
 
@@ -112,16 +110,8 @@ class Task:
         self.name = name
         self.module_pool = module_pool
         self.op_sequence = op_sequence
-        # By default, apply cross entropy loss and softmax to the output of the last
-        # operation in the op sequence. To perform cross-entropy loss over probabilistic
-        # labels, use `partial(cross_entropy_with_probs_from_outputs,
-        # op_sequence[-1].name)` instead.
-        self.loss_func = loss_func or partial(
-            cross_entropy_from_outputs, op_sequence[-1].name
-        )
-        self.output_func = output_func or partial(
-            softmax_from_outputs, op_sequence[-1].name
-        )
+        self.loss_func = loss_func or F.cross_entropy
+        self.output_func = output_func or partial(F.softmax, dim=1)
         self.scorer = scorer
 
         logging.info(f"Created task: {self.name}")
@@ -129,21 +119,3 @@ class Task:
     def __repr__(self) -> str:
         cls_name = type(self).__name__
         return f"{cls_name}(name={self.name})"
-
-
-def softmax_from_outputs(op_name: str, outputs: Outputs) -> torch.Tensor:
-    """Calculate the softmax of the output of the specified operation.
-
-    Parameters
-    ----------
-    op_name
-        The name of the operation whose output should be used for calculating loss
-    outputs
-        The dictionary of operation outputs
-
-    Returns
-    -------
-    torch.Tensor
-        The probabilities resulting from the softmax calculation
-    """
-    return F.softmax(outputs[op_name][0], dim=1)

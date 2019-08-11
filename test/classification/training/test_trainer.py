@@ -25,7 +25,7 @@ BATCHES_PER_EPOCH = NUM_EXAMPLES / BATCH_SIZE
 
 def create_dataloader(task_name="task", split="train"):
     X = torch.FloatTensor([[i, i] for i in range(NUM_EXAMPLES)])
-    Y = torch.ones(NUM_EXAMPLES, 1).long()
+    Y = torch.ones(NUM_EXAMPLES).long()
 
     dataset = DictDataset(
         name="dataset", split=split, X_dict={"data": X}, Y_dict={task_name: Y}

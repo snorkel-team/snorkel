@@ -271,10 +271,16 @@ class MultitaskClassifier(nn.Module):
                 # Note: Use label_name as key, but task_name to access model attributes
                 count_dict[label_name] = active.sum().item()
 
+                # Extract the output of the last operation for this task
+                inputs = outputs[self.op_sequences[task_name][-1].name][0]
+
+                # Filter out any inactive examples
+                if not active.all():
+                    inputs = inputs[active]
+                    Y = Y[active]
+
                 loss_dict[label_name] = self.loss_funcs[task_name](
-                    outputs=outputs,
-                    Y=move_to_device(Y, self.config.device),
-                    active=move_to_device(active, self.config.device),
+                    inputs, move_to_device(Y, self.config.device)
                 )
 
         return loss_dict, count_dict
@@ -305,9 +311,9 @@ class MultitaskClassifier(nn.Module):
         outputs = self.forward(X_dict, task_names)
 
         for task_name in task_names:
-            prob_dict[task_name] = (
-                self.output_funcs[task_name](outputs=outputs).cpu().numpy()
-            )
+            # Extract the output of the last operation for this task
+            inputs = outputs[self.op_sequences[task_name][-1].name][0]
+            prob_dict[task_name] = self.output_funcs[task_name](inputs).cpu().numpy()
 
         return prob_dict
 

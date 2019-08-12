@@ -87,6 +87,9 @@ class NLPSlicingFunction(BaseNLPLabelingFunction):
 
 
 class nlp_slicing_function(base_nlp_labeling_function):
-    """Decorator to define a NLPSlicingFunction child object from a function."""
+    """Decorator to define a NLPSlicingFunction child object from a function.
+
+    TODO: Implement a common parent decorator for Snorkel operators
+    """
 
     _lf_cls = NLPSlicingFunction

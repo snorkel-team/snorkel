@@ -11,7 +11,7 @@ you're in the right place.
 
 For more narrative walkthroughs of Snorkel fundamentals or
 example use cases, check out our `homepage <http://snorkel.org/>`_
-and our `tutorials repo <https://github.com/HazyResearch/snorkel/>`_.
+and our `tutorials repo <https://github.com/snorkel-team/snorkel-tutorials/>`_.
 
 .. toctree::
    :maxdepth: 1

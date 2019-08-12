@@ -89,7 +89,7 @@ class UtilsTest(unittest.TestCase):
 
         # Test that modules share the same body flow operations
         # NOTE: Use "is" comparison to check object equality
-        body_flow = task.task_flow[:-1]
+        body_flow = task.op_sequence[:-1]
         ind_and_pred_tasks = [
             t for t in slice_tasks if "_ind" in t.name or "_pred" in t.name
         ]
@@ -102,7 +102,7 @@ class UtilsTest(unittest.TestCase):
 
         # Test that pred tasks share the same predictor head
         pred_tasks = [t for t in slice_tasks if "_pred" in t.name]
-        predictor_head_name = pred_tasks[0].task_flow[-1].module_name
+        predictor_head_name = pred_tasks[0].op_sequence[-1].module_name
         shared_predictor_head = pred_tasks[0].module_pool[predictor_head_name]
         for pred_task in pred_tasks[1:]:
             self.assertTrue(
@@ -116,12 +116,10 @@ def create_dummy_task(task_name):
         {"linear1": nn.Linear(2, 10), "linear2": nn.Linear(10, 2)}
     )
 
-    task_flow = [
-        Operation(name="encoder", module_name="linear1", inputs=[("_input_", 0)]),
-        Operation(
-            name="prediction_head", module_name="linear2", inputs=[("encoder", 0)]
-        ),
+    op_sequence = [
+        Operation(name="encoder", module_name="linear1", inputs=["_input_"]),
+        Operation(name="prediction_head", module_name="linear2", inputs=["encoder"]),
     ]
 
-    task = Task(name=task_name, module_pool=module_pool, task_flow=task_flow)
+    task = Task(name=task_name, module_pool=module_pool, op_sequence=op_sequence)
     return task

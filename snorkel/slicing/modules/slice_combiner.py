@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict
 
 import torch
 import torch.nn as nn
@@ -10,7 +10,7 @@ from snorkel.classification.utils import collect_flow_outputs_by_suffix
 class SliceCombinerModule(nn.Module):
     """A module for combining the weighted representations learned by slices.
 
-    Intended for use with task flow including:
+    Intended for use with the MultitaskClassifier including:
         * Indicator operations
         * Prediction operations
         * Prediction transform features
@@ -54,18 +54,18 @@ class SliceCombinerModule(nn.Module):
         self.temperature = temperature
 
     def forward(  # type:ignore
-        self, flow_dict: Dict[str, List[torch.Tensor]]
+        self, output_dict: Dict[str, torch.Tensor]
     ) -> torch.Tensor:
         """Reweight and combine predictor representations given output dict.
 
         Parameters
         ----------
-        flow_dict
+        output_dict
             A dict of data fields containing operation outputs from indicator head,
             predictor head, and predictor transform (corresponding to slice_ind_key,
             slice_pred_key, slice_pred_feat_key, respectively).
 
-            NOTE: The flow_dict outputs for the ind/pred heads must be raw logits.
+            NOTE: The output_dict outputs for the ind/pred heads must be raw logits.
 
         Returns
         -------
@@ -75,11 +75,12 @@ class SliceCombinerModule(nn.Module):
 
         # Concatenate indicator head predictions into tensor [batch_size x num_slices]
         indicator_outputs = collect_flow_outputs_by_suffix(
-            flow_dict, self.slice_ind_key
+            output_dict, self.slice_ind_key
         )
+        # Indicator heads are always binary (negative class = 0, positive class = 1)
         indicator_preds = torch.cat(
             [
-                F.softmax(output, dim=1)[:, 0].unsqueeze(1)
+                F.softmax(output, dim=1)[:, 1].unsqueeze(1)
                 for output in indicator_outputs
             ],
             dim=-1,
@@ -87,18 +88,22 @@ class SliceCombinerModule(nn.Module):
 
         # Concatenate predictor head confidences into tensor [batch_size x num_slices]
         predictor_outputs = collect_flow_outputs_by_suffix(
-            flow_dict, self.slice_pred_key
+            output_dict, self.slice_pred_key
         )
 
         if predictor_outputs[0].shape[1] > 2:
             raise NotImplementedError(
-                "SliceCombiner does not support multiclass labels."
+                "SliceCombiner does not support more than 2 classes yet."
+            )
+        elif predictor_outputs[0].shape[1] < 2:
+            raise NotImplementedError(
+                "SliceCombiner currently requires output shape [..., 2] for predictor heads."
             )
 
         predictor_confidences = torch.cat(
             [
                 # Compute the "confidence" using score of the positive class
-                F.softmax(output, dim=1)[:, 0].unsqueeze(-1)
+                F.softmax(output, dim=1)[:, 1].unsqueeze(1)
                 for output in predictor_outputs
             ],
             dim=-1,
@@ -107,7 +112,7 @@ class SliceCombinerModule(nn.Module):
         # Concatenate each predictor feature (to be combined into reweighted
         # representation) into [batch_size x 1 x feat_dim] tensor
         predictor_feat_outputs = collect_flow_outputs_by_suffix(
-            flow_dict, self.slice_pred_feat_key
+            output_dict, self.slice_pred_feat_key
         )
         slice_representations = torch.stack(predictor_feat_outputs, dim=1)
 

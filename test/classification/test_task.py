@@ -16,18 +16,18 @@ class TaskTest(unittest.TestCase):
             }
         )
 
-        task_flow = [
+        op_sequence = [
             Operation(
-                name="the_first_layer", module_name="linear1", inputs=[("_input_", 0)]
+                name="the_first_layer", module_name="linear1", inputs=["_input_"]
             ),
             Operation(
                 name="the_second_layer",
                 module_name="linear2",
-                inputs=[("the_first_layer", 0)],
+                inputs=["the_first_layer"],
             ),
         ]
 
-        task = Task(name=TASK_NAME, module_pool=module_pool, task_flow=task_flow)
+        task = Task(name=TASK_NAME, module_pool=module_pool, op_sequence=op_sequence)
 
         # Task has no functionality on its own
         # Here we only confirm that the object was initialized

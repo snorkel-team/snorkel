@@ -30,14 +30,14 @@ class ClassifierTest(unittest.TestCase):
     def test_onetask_model(self):
         model = MultitaskClassifier(tasks=[self.task1])
         self.assertEqual(len(model.task_names), 1)
-        self.assertEqual(len(model.task_flows), 1)
+        self.assertEqual(len(model.op_sequences), 1)
         self.assertEqual(len(model.module_pool), 2)
 
     def test_twotask_none_overlap_model(self):
         """Add two tasks with totally separate modules and flows"""
         model = MultitaskClassifier(tasks=[self.task1, self.task2])
         self.assertEqual(len(model.task_names), 2)
-        self.assertEqual(len(model.task_flows), 2)
+        self.assertEqual(len(model.op_sequences), 2)
         self.assertEqual(len(model.module_pool), 4)
 
     def test_twotask_all_overlap_model(self):
@@ -46,7 +46,7 @@ class ClassifierTest(unittest.TestCase):
         task2 = create_task("task2", module_suffixes=["A", "A"])
         model = MultitaskClassifier(tasks=[task1, task2])
         self.assertEqual(len(model.task_names), 2)
-        self.assertEqual(len(model.task_flows), 2)
+        self.assertEqual(len(model.op_sequences), 2)
         self.assertEqual(len(model.module_pool), 2)
 
     def test_twotask_partial_overlap_model(self):
@@ -55,7 +55,7 @@ class ClassifierTest(unittest.TestCase):
         task2 = create_task("task2", module_suffixes=["A", "B"])
         model = MultitaskClassifier(tasks=[task1, task2])
         self.assertEqual(len(model.task_names), 2)
-        self.assertEqual(len(model.task_flows), 2)
+        self.assertEqual(len(model.op_sequences), 2)
         self.assertEqual(len(model.module_pool), 3)
 
     def test_bad_tasks(self):
@@ -65,10 +65,27 @@ class ClassifierTest(unittest.TestCase):
             MultitaskClassifier(tasks=[self.task1, {"fake_task": 42}])
         with self.assertRaisesRegex(ValueError, "Unsuccessful operation"):
             task1 = create_task("task1")
-            task1.task_flow[0].inputs[0] = (0, 0)
+            task1.op_sequence[0].inputs[0] = (0, 0)
             model = MultitaskClassifier(tasks=[task1])
             X_dict = self.dataloader.dataset.X_dict
             model.forward(X_dict, [task1.name])
+
+    def test_no_data_parallel(self):
+        model = MultitaskClassifier(tasks=[self.task1, self.task2], dataparallel=False)
+        self.assertEqual(len(model.task_names), 2)
+        self.assertIsInstance(model.module_pool["linear1A"], nn.Module)
+
+    def test_no_input_spec(self):
+        # Confirm model doesn't break when a module does not specify specific inputs
+        dataset = create_dataloader("task", shuffle=False).dataset
+        task = Task(
+            name="task",
+            module_pool=nn.ModuleDict({"identity": nn.Identity()}),
+            op_sequence=[Operation("identity", [])],
+        )
+        model = MultitaskClassifier(tasks=[task], dataparallel=False)
+        outputs = model.forward(dataset.X_dict, ["task"])
+        self.assertIn("_input_", outputs)
 
     def test_predict(self):
         model = MultitaskClassifier([self.task1])
@@ -90,20 +107,26 @@ class ClassifierTest(unittest.TestCase):
         )
 
     def test_empty_batch(self):
-        # Make the first BATCH_SIZE labels -1 so that one batch will have no labels
         dataset = create_dataloader("task1", shuffle=False).dataset
-        for i in range(BATCH_SIZE):
-            dataset.Y_dict["task1"][i] = -1
+        dataset.Y_dict["task1"] = torch.full_like(dataset.Y_dict["task1"], -1)
         model = MultitaskClassifier([self.task1])
         loss_dict, count_dict = model.calculate_loss(dataset.X_dict, dataset.Y_dict)
-        self.assertEqual(count_dict["task1"], NUM_EXAMPLES - BATCH_SIZE)
+        self.assertFalse(loss_dict)
+        self.assertFalse(count_dict)
+
+    def test_partially_empty_batch(self):
+        dataset = create_dataloader("task1", shuffle=False).dataset
+        dataset.Y_dict["task1"][0] = -1
+        model = MultitaskClassifier([self.task1])
+        loss_dict, count_dict = model.calculate_loss(dataset.X_dict, dataset.Y_dict)
+        self.assertEqual(count_dict["task1"], 9)
 
     def test_remapped_labels(self):
         # Test additional label keys in the Y_dict
         # Without remapping, model should ignore them
         task_name = self.task1.name
         X = torch.FloatTensor([[i, i] for i in range(NUM_EXAMPLES)])
-        Y = torch.ones(NUM_EXAMPLES, 1).long()
+        Y = torch.ones(NUM_EXAMPLES).long()
 
         Y_dict = {task_name: Y, "other_task": Y}
         dataset = DictDataset(
@@ -163,8 +186,8 @@ class ClassifierTest(unittest.TestCase):
         op0 = Operation(
             module_name=module_name, inputs=[("_input_", "data")], name="op0"
         )
-        task_flow = [op0]
-        task = Task(name=task_name, module_pool=module_pool, task_flow=task_flow)
+        op_sequence = [op0]
+        task = Task(name=task_name, module_pool=module_pool, op_sequence=op_sequence)
         model = MultitaskClassifier([task])
 
         # Create dataset
@@ -222,7 +245,7 @@ class ClassifierTest(unittest.TestCase):
 
 def create_dataloader(task_name="task", split="train", **kwargs):
     X = torch.FloatTensor([[i, i] for i in range(NUM_EXAMPLES)])
-    Y = torch.ones(NUM_EXAMPLES, 1).long()
+    Y = torch.ones(NUM_EXAMPLES).long()
 
     dataset = DictDataset(
         name="dataset", split=split, X_dict={"data": X}, Y_dict={task_name: Y}
@@ -249,11 +272,11 @@ def create_task(task_name, module_suffixes=("", "")):
     )
 
     op0 = Operation(module_name=module1_name, inputs=[("_input_", "data")], name="op0")
-    op1 = Operation(module_name=module2_name, inputs=[(op0.name, 0)], name="op1")
+    op1 = Operation(module_name=module2_name, inputs=[op0.name], name="op1")
 
-    task_flow = [op0, op1]
+    op_sequence = [op0, op1]
 
-    task = Task(name=task_name, module_pool=module_pool, task_flow=task_flow)
+    task = Task(name=task_name, module_pool=module_pool, op_sequence=op_sequence)
 
     return task
 

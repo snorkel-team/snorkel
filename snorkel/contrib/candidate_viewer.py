@@ -1,35 +1,30 @@
-"""
-Viewing/Printing information of extracted candidates in Snorkel
-"""
-
 import sqlite3
 
 __author__ = "Pedram Hosseini"
 __email__ = 'pdr.hosseini@gmail.com'
 
-"""
--------------------------------------------
-============== Example usage ==============
--------------------------------------------
-from candidate_viewer import CandidateViewer
-
-# creating an object of CandidateViewer class
-cv = CandidateViewer("snorkel.db")
-
-# printing extracted candidates
-# where 'bio_rel' in the name of relation defined using Snorkel's candidate_subclass and 'entity1' and 'entity2'
-# are arguments of the relation
-cv.print_candidates(['bio_rel', ['entity1', 'entity2']], "article-1", max_output=10, keywords=["macrophages", "iNOS"])
-
-# getting a document's text and sentences
-doc_text, doc_sents, doc_sents_start_idx = cv.get_doc_text("article-1")
-print("==Document Text\n" + doc_text, "\n")
-print("==Document Sentences (count: {0})\n".format(len(doc_sents)), doc_sents, "\n")
-print("==Document Sentences Start Indexes\n", doc_sents_start_idx, "\n")
-"""
-
 
 class CandidateViewer:
+    """
+    Viewing/Printing information of extracted candidates in Snorkel
+
+    Example::
+    from candidate_viewer import CandidateViewer
+
+    cv = CandidateViewer("snorkel.db")
+
+    # printing extracted candidates
+    # 'bio_rel' is name of a relation defined using Snorkel's candidate_subclass
+    # 'entity1' and 'entity2' are arguments of the relation
+    cv.print_candidates(['bio_rel', ['entity1', 'entity2']], "article-1", max_output=10, keywords=["macrophages", "iNOS"])
+
+    # getting a document's text and sentences
+    doc_text, doc_sents, doc_sents_start_idx = cv.get_doc_text("article-1")
+    print("==Document Text\n" + doc_text, "\n")
+    print("==Document Sentences (count: {0})\n".format(len(doc_sents)), doc_sents, "\n")
+    print("==Document Sentences Start Indexes\n", doc_sents_start_idx, "\n")
+    """
+
     def __init__(self, db_path):
         self.conn = self._create_connection(db_path)
 

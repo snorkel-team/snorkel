@@ -5,9 +5,8 @@ import numpy as np
 import pandas as pd
 
 from snorkel.analysis.scorer import Scorer
-from snorkel.slicing import SFApplier
+from snorkel.slicing import SFApplier, slicing_function
 from snorkel.slicing.monitor import SliceScorer, slice_dataframe
-from snorkel.slicing.sf import slicing_function
 from snorkel.utils import preds_to_probs
 
 DATA = [5, 10, 19, 22, 25]

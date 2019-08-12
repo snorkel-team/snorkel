@@ -82,7 +82,7 @@ class _CliqueData(NamedTuple):
 
 
 class LabelModel(nn.Module):
-    """A conditionally independent LabelModel to learn LF accuracies and assign training labels.
+    """A conditionally independent LabelModel to learn LF weights and assign training labels.
 
     Examples
     --------
@@ -328,20 +328,20 @@ class LabelModel(nn.Module):
         else:
             return c_probs
 
-    def get_accuracies(self) -> np.ndarray:
-        """Return the vector of LF accuracies.
+    def get_weights(self) -> np.ndarray:
+        """Return the vector of learned LF weights for combining LFs.
 
         Returns
         -------
         np.ndarray
-            [m,1] vector of LF accuracies
+            [m,1] vector of learned LF weights for combining LFs.
 
         Example
         -------
         >>> L = np.array([[1, 1, 1], [1, 1, -1], [-1, 0, 0], [0, 0, 0]])
         >>> label_model = LabelModel(verbose=False)
         >>> label_model.fit(L, seed=123)
-        >>> np.around(label_model.get_accuracies(), 2)  # doctest: +SKIP
+        >>> np.around(label_model.get_weights(), 2)  # doctest: +SKIP
         array([0.99, 0.99, 0.99])
         """
         accs = np.zeros(self.m)
@@ -698,7 +698,7 @@ class LabelModel(nn.Module):
     ) -> None:
         """Train label model.
 
-        Train label model to estimate mu, the parameters related to accuracies of LFs.
+        Train label model to estimate mu, the parameters used to combine LFs.
 
         Parameters
         ----------

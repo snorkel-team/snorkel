@@ -21,41 +21,56 @@ class SliceCombinerTest(unittest.TestCase):
         num_classes = 2
 
         outputs = {
-            "task_slice:base_ind_head": [
-                # Always 2-dim binary outputs
-                torch.FloatTensor(batch_size, 2).uniform_(0, 1)
-            ],
-            "task_slice:base_pred_transform": [
-                torch.FloatTensor(batch_size, h_dim).uniform_(0, 1)
-            ],
-            "task_slice:base_pred_head": [
-                torch.FloatTensor(batch_size, num_classes).uniform_(0, 1)
-            ],
+            # Always 2-dim binary outputs
+            "task_slice:base_ind_head": torch.FloatTensor(batch_size, 2).uniform_(0, 1),
+            "task_slice:base_pred_transform": torch.FloatTensor(
+                batch_size, h_dim
+            ).uniform_(0, 1),
+            "task_slice:base_pred_head": torch.FloatTensor(
+                batch_size, num_classes
+            ).uniform_(0, 1),
         }
         combiner_module = SliceCombinerModule()
         combined_rep = combiner_module(outputs)
         self.assertEqual(tuple(combined_rep.shape), (batch_size, h_dim))
 
-        # edge case (all ones)
+        # edge case (some ones)
+        batch_size = 1
+        h_dim = 1
+        num_classes = 2
+
+        outputs = {
+            # Always 2-dim binary outputs
+            "task_slice:base_ind_head": torch.FloatTensor(batch_size, 2).uniform_(0, 1),
+            "task_slice:base_pred_transform": torch.FloatTensor(
+                batch_size, h_dim
+            ).uniform_(0, 1),
+            "task_slice:base_pred_head": torch.FloatTensor(
+                batch_size, num_classes
+            ).uniform_(0, 1),
+        }
+        combiner_module = SliceCombinerModule()
+        combined_rep = combiner_module(outputs)
+        self.assertEqual(tuple(combined_rep.shape), (batch_size, h_dim))
+
+        # num_classes = 1
         batch_size = 1
         h_dim = 1
         num_classes = 1
 
         outputs = {
-            "task_slice:base_ind_head": [
-                # Always 2-dim binary outputs
-                torch.FloatTensor(batch_size, 2).uniform_(0, 1)
-            ],
-            "task_slice:base_pred_transform": [
-                torch.FloatTensor(batch_size, h_dim).uniform_(0, 1)
-            ],
-            "task_slice:base_pred_head": [
-                torch.FloatTensor(batch_size, num_classes).uniform_(0, 1)
-            ],
+            # Always 2-dim binary outputs
+            "task_slice:base_ind_head": torch.FloatTensor(batch_size, 2).uniform_(0, 1),
+            "task_slice:base_pred_transform": torch.FloatTensor(
+                batch_size, h_dim
+            ).uniform_(0, 1),
+            "task_slice:base_pred_head": torch.FloatTensor(
+                batch_size, num_classes
+            ).uniform_(0, 1),
         }
         combiner_module = SliceCombinerModule()
-        combined_rep = combiner_module(outputs)
-        self.assertEqual(tuple(combined_rep.shape), (batch_size, h_dim))
+        with self.assertRaisesRegex(NotImplementedError, "requires output shape"):
+            combined_rep = combiner_module(outputs)
 
     def test_average_reweighting(self):
         """Test average reweighting (equal weight across two slices)."""
@@ -64,12 +79,12 @@ class SliceCombinerTest(unittest.TestCase):
         num_classes = 2
 
         outputs = {
-            "task_slice:a_ind_head": [torch.ones(batch_size, 2) * 10.0],
-            "task_slice:a_pred_transform": [torch.ones(batch_size, h_dim) * 4],
-            "task_slice:a_pred_head": [torch.ones(batch_size, num_classes) * 10.0],
-            "task_slice:b_ind_head": [torch.ones(batch_size, 2) * -10.0],
-            "task_slice:b_pred_transform": [torch.ones(batch_size, h_dim) * 2],
-            "task_slice:b_pred_head": [torch.ones(batch_size, num_classes) * -10.0],
+            "task_slice:a_ind_head": torch.ones(batch_size, 2) * 10.0,
+            "task_slice:a_pred_transform": torch.ones(batch_size, h_dim) * 4,
+            "task_slice:a_pred_head": torch.ones(batch_size, num_classes) * 10.0,
+            "task_slice:b_ind_head": torch.ones(batch_size, 2) * -10.0,
+            "task_slice:b_pred_transform": torch.ones(batch_size, h_dim) * 2,
+            "task_slice:b_pred_head": torch.ones(batch_size, num_classes) * -10.0,
         }
         combiner_module = SliceCombinerModule()
         combined_rep = combiner_module(outputs)
@@ -82,12 +97,12 @@ class SliceCombinerTest(unittest.TestCase):
         num_classes = 2
 
         outputs = {
-            "task_slice:a_ind_head": [torch.ones(batch_size, 2) * 10.0],
-            "task_slice:a_pred_transform": [torch.ones(batch_size, h_dim) * 4],
-            "task_slice:a_pred_head": [torch.zeros(batch_size, num_classes)],
-            "task_slice:b_ind_head": [torch.ones(batch_size, 2) * -10.0],
-            "task_slice:b_pred_transform": [torch.ones(batch_size, h_dim) * 2],
-            "task_slice:b_pred_head": [torch.zeros(batch_size, num_classes)],
+            "task_slice:a_ind_head": torch.ones(batch_size, 2) * 10.0,
+            "task_slice:a_pred_transform": torch.ones(batch_size, h_dim) * 4,
+            "task_slice:a_pred_head": torch.zeros(batch_size, num_classes),
+            "task_slice:b_ind_head": torch.ones(batch_size, 2) * -10.0,
+            "task_slice:b_pred_transform": torch.ones(batch_size, h_dim) * 2,
+            "task_slice:b_pred_head": torch.zeros(batch_size, num_classes),
         }
         combiner_module = SliceCombinerModule()
         combined_rep = combiner_module(outputs)
@@ -100,12 +115,12 @@ class SliceCombinerTest(unittest.TestCase):
         num_classes = 2
 
         outputs = {
-            "task_slice:a_ind_head": [torch.zeros(batch_size, 2)],
-            "task_slice:a_pred_transform": [torch.ones(batch_size, h_dim) * 4],
-            "task_slice:a_pred_head": [torch.ones(batch_size, num_classes) * 5],
-            "task_slice:b_ind_head": [torch.zeros(batch_size, 2)],
-            "task_slice:b_pred_transform": [torch.ones(batch_size, h_dim) * 2],
-            "task_slice:b_pred_head": [torch.ones(batch_size, num_classes) * 5],
+            "task_slice:a_ind_head": torch.zeros(batch_size, 2),
+            "task_slice:a_pred_transform": torch.ones(batch_size, h_dim) * 4,
+            "task_slice:a_pred_head": torch.ones(batch_size, num_classes) * 5,
+            "task_slice:b_ind_head": torch.zeros(batch_size, 2),
+            "task_slice:b_pred_transform": torch.ones(batch_size, h_dim) * 2,
+            "task_slice:b_pred_head": torch.ones(batch_size, num_classes) * 5,
         }
         combiner_module = SliceCombinerModule()
         combined_rep = combiner_module(outputs)
@@ -113,12 +128,12 @@ class SliceCombinerTest(unittest.TestCase):
 
         # Changing sign of prediction shouldn't change confidence
         outputs = {
-            "task_slice:a_ind_head": [torch.zeros(batch_size, 2)],
-            "task_slice:a_pred_transform": [torch.ones(batch_size, h_dim) * 4],
-            "task_slice:a_pred_head": [torch.ones(batch_size, num_classes) * -5],
-            "task_slice:b_ind_head": [torch.zeros(batch_size, 2)],
-            "task_slice:b_pred_transform": [torch.ones(batch_size, h_dim) * 2],
-            "task_slice:b_pred_head": [torch.ones(batch_size, num_classes) * 5],
+            "task_slice:a_ind_head": torch.zeros(batch_size, 2),
+            "task_slice:a_pred_transform": torch.ones(batch_size, h_dim) * 4,
+            "task_slice:a_pred_head": torch.ones(batch_size, num_classes) * -5,
+            "task_slice:b_ind_head": torch.zeros(batch_size, 2),
+            "task_slice:b_pred_transform": torch.ones(batch_size, h_dim) * 2,
+            "task_slice:b_pred_head": torch.ones(batch_size, num_classes) * 5,
         }
         combiner_module = SliceCombinerModule()
         combined_rep = combiner_module(outputs)
@@ -136,23 +151,21 @@ class SliceCombinerTest(unittest.TestCase):
         # half in another (index i%2), resulting in averaged weights
         for i in range(100):
             if i % 2 == 0:
-                outputs[f"task_slice:{i}_ind_head"] = [torch.ones(batch_size, 2) * 20.0]
-                outputs[f"task_slice:{i}_pred_transform"] = [
+                outputs[f"task_slice:{i}_ind_head"] = torch.ones(batch_size, 2) * 20.0
+                outputs[f"task_slice:{i}_pred_transform"] = (
                     torch.ones(batch_size, h_dim) * 4
-                ]
-                outputs[f"task_slice:{i}_pred_head"] = [
+                )
+                outputs[f"task_slice:{i}_pred_head"] = (
                     torch.ones(batch_size, num_classes) * 20.0
-                ]
+                )
             else:
-                outputs[f"task_slice:{i}_ind_head"] = [
-                    torch.ones(batch_size, 2) * -20.0
-                ]
-                outputs[f"task_slice:{i}_pred_transform"] = [
+                outputs[f"task_slice:{i}_ind_head"] = torch.ones(batch_size, 2) * -20.0
+                outputs[f"task_slice:{i}_pred_transform"] = (
                     torch.ones(batch_size, h_dim) * 2
-                ]
-                outputs[f"task_slice:{i}_pred_head"] = [
+                )
+                outputs[f"task_slice:{i}_pred_head"] = (
                     torch.ones(batch_size, num_classes) * -20.0
-                ]
+                )
 
         combiner_module = SliceCombinerModule()
         combined_rep = combiner_module(outputs)
@@ -189,17 +202,17 @@ class SliceCombinerTest(unittest.TestCase):
         )
 
         outputs = {
-            "task_slice:a_ind_head": [torch.ones(batch_size, 2) * -10.0],
-            "task_slice:a_pred_transform": [torch.ones(batch_size, h_dim) * 4],
-            "task_slice:a_pred_head": [pred_outputs_a],
-            "task_slice:b_ind_head": [torch.ones(batch_size, 2) * 10.0],
-            "task_slice:b_pred_transform": [torch.ones(batch_size, h_dim) * 2],
-            "task_slice:b_pred_head": [pred_outputs_b],
+            "task_slice:a_ind_head": torch.ones(batch_size, 2) * -10.0,
+            "task_slice:a_pred_transform": torch.ones(batch_size, h_dim) * 4,
+            "task_slice:a_pred_head": pred_outputs_a,
+            "task_slice:b_ind_head": torch.ones(batch_size, 2) * 10.0,
+            "task_slice:b_pred_transform": torch.ones(batch_size, h_dim) * 2,
+            "task_slice:b_pred_head": pred_outputs_b,
         }
 
         # Ensure smoother temperature for multi-class
         combiner_module = SliceCombinerModule()
-        with self.assertRaisesRegex(NotImplementedError, "not support multiclass"):
+        with self.assertRaisesRegex(NotImplementedError, "more than 2 classes"):
             combiner_module(outputs)
 
     def test_temperature(self):
@@ -211,30 +224,18 @@ class SliceCombinerTest(unittest.TestCase):
         # Add noise to each set of inputs to attention weights
         epsilon = 1e-5
         outputs = {
-            "task_slice:a_ind_head": [
-                torch.ones(batch_size, 2) * 10.0
-                + torch.FloatTensor(batch_size, 2).normal_(0.0, epsilon)
-            ],
-            "task_slice:a_pred_transform": [
-                torch.ones(batch_size, h_dim) * 4
-                + torch.FloatTensor(batch_size, h_dim).normal_(0.0, epsilon)
-            ],
-            "task_slice:a_pred_head": [
-                torch.ones(batch_size, num_classes) * 10.0
-                + torch.FloatTensor(batch_size, num_classes).normal_(0.0, epsilon)
-            ],
-            "task_slice:b_ind_head": [
-                torch.ones(batch_size, 2) * -10.0
-                + torch.FloatTensor(batch_size, 2).normal_(0.0, epsilon)
-            ],
-            "task_slice:b_pred_transform": [
-                torch.ones(batch_size, h_dim) * 2
-                + torch.FloatTensor(batch_size, h_dim).normal_(0.0, epsilon)
-            ],
-            "task_slice:b_pred_head": [
-                torch.ones(batch_size, num_classes) * -10.0
-                + torch.FloatTensor(batch_size, num_classes).normal_(0.0, epsilon)
-            ],
+            "task_slice:a_ind_head": torch.ones(batch_size, 2) * 10.0
+            + torch.FloatTensor(batch_size, 2).normal_(0.0, epsilon),
+            "task_slice:a_pred_transform": torch.ones(batch_size, h_dim) * 4
+            + torch.FloatTensor(batch_size, h_dim).normal_(0.0, epsilon),
+            "task_slice:a_pred_head": torch.ones(batch_size, num_classes) * 10.0
+            + torch.FloatTensor(batch_size, num_classes).normal_(0.0, epsilon),
+            "task_slice:b_ind_head": torch.ones(batch_size, 2) * -10.0
+            + torch.FloatTensor(batch_size, 2).normal_(0.0, epsilon),
+            "task_slice:b_pred_transform": torch.ones(batch_size, h_dim) * 2
+            + torch.FloatTensor(batch_size, h_dim).normal_(0.0, epsilon),
+            "task_slice:b_pred_head": torch.ones(batch_size, num_classes) * -10.0
+            + torch.FloatTensor(batch_size, num_classes).normal_(0.0, epsilon),
         }
 
         # With larger temperature, attention is smoother and reweighted rep is closer
@@ -258,3 +259,7 @@ class SliceCombinerTest(unittest.TestCase):
         )
         num_matching_original = torch.sum(isclose_four) + torch.sum(isclose_two)
         self.assertEqual(num_matching_original, batch_size * h_dim)
+
+
+if __name__ == "__main__":
+    unittest.main()

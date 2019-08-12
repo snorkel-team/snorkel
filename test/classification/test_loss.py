@@ -4,10 +4,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from snorkel.classification import (
-    cross_entropy_with_probs,
-    cross_entropy_with_probs_from_outputs,
-)
+from snorkel.classification import cross_entropy_with_probs
 from snorkel.utils import preds_to_probs
 
 
@@ -71,21 +68,6 @@ class SoftCrossEntropyTest(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "Keyword 'reduction' must be"):
             cross_entropy_with_probs(Y_probs, Y_golds_probs, reduction="bad")
-
-    def test_from_outputs(self):
-        Y_golds = torch.LongTensor([0, 1, 2])
-        Y_golds_probs = torch.Tensor(preds_to_probs(Y_golds.numpy(), num_classes=4))
-
-        Y_probs = torch.rand_like(Y_golds_probs)
-
-        outputs = {"last_op": [Y_probs]}
-        active = torch.ones_like(Y_golds).to(torch.uint8)
-
-        loss_from_tensors = cross_entropy_with_probs(Y_probs, Y_golds_probs)
-        loss_from_outputs = cross_entropy_with_probs_from_outputs(
-            op_name="last_op", outputs=outputs, Y=Y_golds_probs, active=active
-        )
-        self.assertEqual(loss_from_tensors, loss_from_outputs)
 
     def test_loss_weights(self):
         FACTOR = 10

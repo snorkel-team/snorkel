@@ -13,7 +13,7 @@ To get started, [install tox](https://tox.readthedocs.io/en/latest/install.html)
 clone Snorkel, then use `tox` to create a development environment:
 
 ```bash
-git clone https://github.com/HazyResearch/snorkel
+git clone https://github.com/snorkel-team/snorkel
 pip3 install -U tox
 cd snorkel
 tox --devenv .env

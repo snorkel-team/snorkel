@@ -27,7 +27,7 @@ from snorkel.utils import probs_to_preds
 
 from .task import Operation, Task
 
-OutputDict = Dict[str, Mapping[Union[str, int], Any]]
+OutputDict = Dict[str, Union[Any, Mapping[str, Any]]]
 
 
 class ClassifierConfig(Config):
@@ -196,40 +196,33 @@ class MultitaskClassifier(nn.Module):
 
             for operation in op_sequence:
                 if operation.name not in outputs:
-                    if operation.inputs:
-                        # Feed the inputs the module requested in the reqested order
-                        try:
+                    try:
+                        if operation.inputs:
+                            # Feed the inputs the module requested in the reqested order
                             inputs = []
                             for op_input in operation.inputs:
-                                if isinstance(op_input[1], int):
-                                    # The output of the indicated operation has only
-                                    # one field; use that as the input to the current op
-                                    op_name, field_idx = op_input
-                                    inputs.append(outputs[op_name][field_idx])
-                                else:  # isinstance(op_input[1], str)
+                                if isinstance(op_input, tuple):
                                     # The output of the indicated operation has a dict
                                     # of fields; extract the designated field by name
                                     op_name, field_key = op_input
                                     inputs.append(outputs[op_name][field_key])
-                        except Exception:
-                            raise ValueError(f"Unsuccessful operation {operation}.")
-                        output = self.module_pool[operation.module_name].forward(
-                            *inputs
-                        )
-                    else:
-                        # Feed the entire outputs dict for the module to pull from
-                        # TODO: Remove this option (only slice combiner module uses it)
-                        output = self.module_pool[operation.module_name].forward(
-                            outputs
-                        )
-                    if not isinstance(output, Mapping):
-                        # Make output a singleton list so it becomes a valid Mapping
-                        output = [output]
+                                else:
+                                    # The output of the indicated operation has only
+                                    # one field; use that as the input to the current op
+                                    op_name = op_input
+                                    inputs.append(outputs[op_name])
+                            output = self.module_pool[operation.module_name].forward(
+                                *inputs
+                            )
+                        else:
+                            # Feed the entire outputs dict for the module to pull from
+                            output = self.module_pool[operation.module_name].forward(
+                                outputs
+                            )
+                    except Exception:
+                        raise ValueError(f"Unsuccessful operation {operation}.")
                     outputs[operation.name] = output
 
-        # Note: We return all outputs to enable advanced workflows such as multi-task
-        # learning (where we want to calculate loss from multiple head modules on
-        # forward passes).
         return outputs
 
     def calculate_loss(
@@ -271,10 +264,16 @@ class MultitaskClassifier(nn.Module):
                 # Note: Use label_name as key, but task_name to access model attributes
                 count_dict[label_name] = active.sum().item()
 
+                # Extract the output of the last operation for this task
+                inputs = outputs[self.op_sequences[task_name][-1].name]
+
+                # Filter out any inactive examples if inputs is a Tensor
+                if not active.all() and isinstance(inputs, torch.Tensor):
+                    inputs = inputs[active]
+                    Y = Y[active]
+
                 loss_dict[label_name] = self.loss_funcs[task_name](
-                    outputs=outputs,
-                    Y=move_to_device(Y, self.config.device),
-                    active=move_to_device(active, self.config.device),
+                    inputs, move_to_device(Y, self.config.device)
                 )
 
         return loss_dict, count_dict
@@ -305,9 +304,9 @@ class MultitaskClassifier(nn.Module):
         outputs = self.forward(X_dict, task_names)
 
         for task_name in task_names:
-            prob_dict[task_name] = (
-                self.output_funcs[task_name](outputs=outputs).cpu().numpy()
-            )
+            # Extract the output of the last operation for this task
+            inputs = outputs[self.op_sequences[task_name][-1].name]
+            prob_dict[task_name] = self.output_funcs[task_name](inputs).cpu().numpy()
 
         return prob_dict
 

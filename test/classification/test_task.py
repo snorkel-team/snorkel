@@ -18,12 +18,12 @@ class TaskTest(unittest.TestCase):
 
         op_sequence = [
             Operation(
-                name="the_first_layer", module_name="linear1", inputs=[("_input_", 0)]
+                name="the_first_layer", module_name="linear1", inputs=["_input_"]
             ),
             Operation(
                 name="the_second_layer",
                 module_name="linear2",
-                inputs=[("the_first_layer", 0)],
+                inputs=["the_first_layer"],
             ),
         ]
 

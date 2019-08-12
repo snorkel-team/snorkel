@@ -164,7 +164,7 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
             module_name=pred_transform_module_name, inputs=head_module_op.inputs
         )
         pred_head_op = Operation(
-            module_name=pred_head_module_name, inputs=[(pred_transform_op.name, 0)]
+            module_name=pred_head_module_name, inputs=[pred_transform_op.name]
         )
         pred_task_ops = [pred_transform_op, pred_head_op]
         slice_task_ops.extend(pred_task_ops)
@@ -198,7 +198,7 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
 
     master_combiner_op = Operation(module_name=master_combiner_module_name, inputs=[])
     master_head_op = Operation(
-        module_name=master_head_module_name, inputs=[(master_combiner_op.name, 0)]
+        module_name=master_head_module_name, inputs=[master_combiner_op.name]
     )
 
     # NOTE: See note in doc string about module_pool polution

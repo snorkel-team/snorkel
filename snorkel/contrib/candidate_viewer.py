@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Viewing/Printing information of extracted candidates in Snorkel
 """

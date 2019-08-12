@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import sqlite3
 
 __author__ = "Pedram Hosseini"

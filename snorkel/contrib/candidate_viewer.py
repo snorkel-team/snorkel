@@ -1,4 +1,33 @@
+#!/usr/bin/env python
+"""
+Viewing/Printing information of extracted candidates in Snorkel
+"""
+
 import sqlite3
+
+__author__ = "Pedram Hosseini"
+__email__ = 'pdr.hosseini@gmail.com'
+
+"""
+-------------------------------------------
+============== Example usage ==============
+-------------------------------------------
+from candidate_viewer import CandidateViewer
+
+# creating an object of CandidateViewer class
+cv = CandidateViewer("snorkel.db")
+
+# printing extracted candidates
+# where 'bio_rel' in the name of relation defined using Snorkel's candidate_subclass and 'entity1' and 'entity2'
+# are arguments of the relation
+cv.print_candidates(['bio_rel', ['entity1', 'entity2']], "article-1", max_output=10, keywords=["macrophages", "iNOS"])
+
+# getting a document's text and sentences
+doc_text, doc_sents, doc_sents_start_idx = cv.get_doc_text("article-1")
+print("==Document Text\n" + doc_text, "\n")
+print("==Document Sentences (count: {0})\n".format(len(doc_sents)), doc_sents, "\n")
+print("==Document Sentences Start Indexes\n", doc_sents_start_idx, "\n")
+"""
 
 
 class CandidateViewer:
@@ -15,7 +44,7 @@ class CandidateViewer:
             conn = sqlite3.connect(db_path)
             return conn
         except sqlite3.Error as e:
-            print("[log-SnorkelPrint] error in creating connection to snorkel database. [Details]: " + str(e))
+            print("[log-CandidateViewer] error in creating connection to snorkel database. [Details]: " + str(e))
             return None
 
     def _db_select(self, query):
@@ -25,7 +54,7 @@ class CandidateViewer:
             rows = cur.fetchall()
             return rows
         except Exception as e:
-            print("[log-SnorkelPrint] failed to execute select query. [Details]: " + str(e))
+            print("[log-CandidateViewer] failed to execute select query. [Details]: " + str(e))
             return None
 
     def _get_span_text(self, span_id):
@@ -46,7 +75,7 @@ class CandidateViewer:
 
             return sentence_text[char_start:char_end + 1]
         except Exception as e:
-            print("[log-SnorkelPrint] failed to get span string from database. [Details]: " + str(e))
+            print("[log-CandidateViewer] failed to get span string from database. [Details]: " + str(e))
             return None
 
     def print_candidates(self, rel_info, doc_id, max_output=20, keywords=[]):
@@ -79,7 +108,7 @@ class CandidateViewer:
                     if i >= max_output - 1:
                         break
         except Exception as e:
-            print("[log-SnorkelPrint] error in printing candidates. [Details]: " + str(e))
+            print("[log-CandidateViewer] error in printing candidates. [Details]: " + str(e))
 
     def get_doc_text(self, doc_name):
         """
@@ -91,14 +120,14 @@ class CandidateViewer:
         doc_sents_start_idx = []
 
         tmp = self._db_select("SELECT id FROM document WHERE name = \"" + doc_name + "\"")
-        if tmp is not None:
+        if tmp:
             doc_id = tmp[0][0]
             doc_sent_query = "SELECT stable_id FROM context WHERE type = \"sentence\" and stable_id like \"" + doc_name + "::%\""
             doc_sent_info = self._db_select(doc_sent_query)
             doc_sent_query = "SELECT text FROM sentence WHERE document_id = " + str(doc_id) + ""
             doc_sent_text = self._db_select(doc_sent_query)
 
-            if doc_sent_info is not None and doc_sent_text is not None:
+            if doc_sent_info and doc_sent_text:
                 doc_text = ""
                 for i in range(len(doc_sent_info)):
                     if i < len(doc_sent_info) - 1:

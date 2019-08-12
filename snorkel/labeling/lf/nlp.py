@@ -63,7 +63,7 @@ class BaseNLPLabelingFunction(LabelingFunction):
             cls._nlp_config = SpacyPreprocessorConfig(nlp=nlp, parameters=parameters)
         elif parameters != cls._nlp_config.parameters:
             raise ValueError(
-                "{cls.__name__} already configured with different parameters: "
+                f"{cls.__name__} already configured with different parameters: "
                 f"{cls._nlp_config.parameters}"
             )
 

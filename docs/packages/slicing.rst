@@ -10,6 +10,7 @@ Programmatic data set slicing: SF creation, monitoring utilities, and representa
    :nosignatures:
 
    apply.dask.DaskSFApplier
+   sf.nlp.NLPSlicingFunction
    apply.dask.PandasParallelSFApplier
    PandasSFApplier
    SFApplier
@@ -19,6 +20,6 @@ Programmatic data set slicing: SF creation, monitoring utilities, and representa
    apply.spark.SparkSFApplier
    add_slice_labels
    convert_to_slice_tasks
-   nlp_slicing_function
+   sf.nlp.nlp_slicing_function
    slice_dataframe
    slicing_function

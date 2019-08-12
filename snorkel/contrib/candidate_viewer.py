@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import sqlite3
 
 __author__ = "Pedram Hosseini"
@@ -38,7 +40,7 @@ class CandidateViewer:
             conn = sqlite3.connect(db_path)
             return conn
         except sqlite3.Error as e:
-            print("[log-CandidateViewer] error in creating connection to snorkel database. [Details]: " + str(e))
+            print("[log-CandidateViewer] error in creating connection to snorkel database. [Details]: {0}".format(str(e)))
             return None
 
     def _db_select(self, query):
@@ -48,7 +50,7 @@ class CandidateViewer:
             rows = cur.fetchall()
             return rows
         except Exception as e:
-            print("[log-CandidateViewer] failed to execute select query. [Details]: " + str(e))
+            print("[log-CandidateViewer] failed to execute select query. [Details]: {0}".format(str(e)))
             return None
 
     def _get_span_text(self, span_id):
@@ -59,25 +61,26 @@ class CandidateViewer:
         """
         try:
             span_result = self._db_select(
-                "SELECT sentence_id, char_start, char_end FROM span WHERE id = " + str(span_id) + "")
-            sentence_id = span_result[0][0]
-            char_start = span_result[0][1]
-            char_end = span_result[0][2]
+                "SELECT sentence_id, char_start, char_end FROM span WHERE id = {0}".format(str(span_id)))
+            if span_result:
+                sentence_id = span_result[0][0]
+                char_start = span_result[0][1]
+                char_end = span_result[0][2]
 
-            sentence_result = self._db_select("SELECT id, text FROM sentence WHERE id = " + str(sentence_id) + "")
-            sentence_text = sentence_result[0][1]
-
-            return sentence_text[char_start:char_end + 1]
+                sentence_result = self._db_select("SELECT id, text FROM sentence WHERE id = {0}".format(str(sentence_id)))
+                if sentence_result:
+                    sentence_text = sentence_result[0][1]
+                    return sentence_text[char_start:char_end + 1]
         except Exception as e:
-            print("[log-CandidateViewer] failed to get span string from database. [Details]: " + str(e))
+            print("[log-CandidateViewer] failed to get span string from database. [Details]: {0}".format(str(e)))
             return None
 
-    def print_candidates(self, rel_info, doc_id, max_output=20, keywords=[]):
+    def print_candidates(self, rel_info, doc_name="", max_output=20, keywords=[]):
         """
         printing extracted candidates in a document
         :param rel_info: [x, [y, z]] where x is the table name and y, and z are the relation arguments (take a look at
         the candidate class you defined using candidate_subclass to find these two names)
-        :param doc_id: id of document in input file
+        :param doc_name: id of document in input file
         :param max_output: maximum number of candidates to show in the output
         :param keywords: list of keyword strings to be used in searching arg1 and arg1 in a relation
         :return:
@@ -85,24 +88,33 @@ class CandidateViewer:
 
         try:
             # getting list of extracted candidates
-            candidates_query = "SELECT id, " + rel_info[1][0] + "_id, " + rel_info[1][1] + "_id FROM " + rel_info[0] + ""
-            # [id, entity1_id, entity2_id]
+            if doc_name == "":
+                candidates_query = "SELECT id, {0}_id, {1}_id FROM {2}".format(rel_info[1][0], rel_info[1][1], rel_info[0])
+            else:
+                candidates_query = """
+                SELECT id, {0}_id, {1}_id FROM {2} 
+                WHERE id IN 
+                (SELECT id FROM span WHERE sentence_id IN 
+                (SELECT id FROM sentence WHERE document_id == (SELECT id FROM document WHERE name = '{3}')))   
+                """.format(rel_info[1][0], rel_info[1][1], rel_info[0], doc_name)
+
             candidates_results = self._db_select(candidates_query)
 
-            # printing
-            for i in range(len(candidates_results)):
-                arg1 = candidates_results[i][1]
-                arg2 = candidates_results[i][2]
-                arg1_text = self._get_span_text(arg1)
-                arg2_text = self._get_span_text(arg2)
+            if candidates_results:
+                # printing
+                for i in range(len(candidates_results)):
+                    arg1 = candidates_results[i][1]
+                    arg2 = candidates_results[i][2]
+                    arg1_text = self._get_span_text(arg1)
+                    arg2_text = self._get_span_text(arg2)
 
-                if not len(keywords) or (any(k in arg1_text for k in keywords) or any(k in arg2_text for k in keywords)):
-                    print("[" + doc_id + "] " + arg1_text + " <-----> " + arg2_text)
-                    # check the max print for the output
-                    if i >= max_output - 1:
-                        break
+                    if not len(keywords) or (any(k in arg1_text for k in keywords) or any(k in arg2_text for k in keywords)):
+                        print("[" + doc_name + "] " + arg1_text + " <-----> " + arg2_text)
+                        # check the max print for the output
+                        if i >= max_output - 1:
+                            break
         except Exception as e:
-            print("[log-CandidateViewer] error in printing candidates. [Details]: " + str(e))
+            print("[log-CandidateViewer] error in printing candidates. [Details]: {0}".format(str(e)))
 
     def get_doc_text(self, doc_name):
         """
@@ -113,12 +125,12 @@ class CandidateViewer:
         doc_sents = []
         doc_sents_start_idx = []
 
-        tmp = self._db_select("SELECT id FROM document WHERE name = \"" + doc_name + "\"")
+        tmp = self._db_select("SELECT id FROM document WHERE name = \"{0}\"".format(doc_name))
         if tmp:
             doc_id = tmp[0][0]
-            doc_sent_query = "SELECT stable_id FROM context WHERE type = \"sentence\" and stable_id like \"" + doc_name + "::%\""
+            doc_sent_query = "SELECT stable_id FROM context WHERE type = \"sentence\" and stable_id like \"{0}::%\"".format(doc_name)
             doc_sent_info = self._db_select(doc_sent_query)
-            doc_sent_query = "SELECT text FROM sentence WHERE document_id = " + str(doc_id) + ""
+            doc_sent_query = "SELECT text FROM sentence WHERE document_id = {0}".format(str(doc_id))
             doc_sent_text = self._db_select(doc_sent_query)
 
             if doc_sent_info and doc_sent_text:
@@ -149,3 +161,5 @@ class CandidateViewer:
                 doc_sents_start_idx.append(int(id_info[3]))
 
                 return doc_text, doc_sents, doc_sents_start_idx
+            return "", [], []
+        return "", [], []

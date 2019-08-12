@@ -82,7 +82,7 @@ class TestAnalysis(unittest.TestCase):
         np.testing.assert_array_almost_equal(P, P_emp)
 
     def test_lf_summary(self) -> None:
-        df = self.lfa.lf_summary(self.Y, est_accs=None)
+        df = self.lfa.lf_summary(self.Y, est_weights=None)
         df_expected = pd.DataFrame(
             {
                 "Polarity": [[1, 2], [], [0, 2], [2], [0, 1], [0]],
@@ -96,7 +96,7 @@ class TestAnalysis(unittest.TestCase):
         )
         pd.testing.assert_frame_equal(df.round(6), df_expected.round(6))
 
-        df = self.lfa.lf_summary(Y=None, est_accs=None)
+        df = self.lfa.lf_summary(Y=None, est_weights=None)
         df_expected = pd.DataFrame(
             {
                 "Polarity": [[1, 2], [], [0, 2], [2], [0, 1], [0]],
@@ -107,11 +107,11 @@ class TestAnalysis(unittest.TestCase):
         )
         pd.testing.assert_frame_equal(df.round(6), df_expected.round(6))
 
-        est_accs = [1, 0, 1, 1, 1, 0.5]
+        est_weights = [1, 0, 1, 1, 1, 0.5]
         names = list("abcdef")
         lfs = [LabelingFunction(s, f) for s in names]
         lfa = LFAnalysis(np.array(L), lfs)
-        df = lfa.lf_summary(self.Y, est_accs=est_accs)
+        df = lfa.lf_summary(self.Y, est_weights=est_weights)
         df_expected = pd.DataFrame(
             {
                 "j": [0, 1, 2, 3, 4, 5],
@@ -122,7 +122,7 @@ class TestAnalysis(unittest.TestCase):
                 "Correct": [1, 0, 1, 1, 1, 2],
                 "Incorrect": [2, 0, 2, 1, 1, 2],
                 "Emp. Acc.": [1 / 3, 0, 1 / 3, 1 / 2, 1 / 2, 2 / 4],
-                "Learned Acc.": [1, 0, 1, 1, 1, 0.5],
+                "Learned Weight": [1, 0, 1, 1, 1, 0.5],
             }
         ).set_index(pd.Index(names))
         pd.testing.assert_frame_equal(df.round(6), df_expected.round(6))

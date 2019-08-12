@@ -7,7 +7,7 @@ To test on AWS EMR:
     2. Clone and pip install snorkel on the master node
         ```
         sudo yum install git
-        git clone https://github.com/HazyResearch/snorkel
+        git clone https://github.com/snorkel-team/snorkel
         cd snorkel
         python3 -m pip install -t snorkel-package .
         cd snorkel-package

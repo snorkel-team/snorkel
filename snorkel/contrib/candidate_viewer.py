@@ -91,7 +91,7 @@ class CandidateViewer:
             else:
                 candidates_query = """
                 SELECT id, {0}_id, {1}_id FROM {2} 
-                WHERE id IN 
+                WHERE {0}_id IN 
                 (SELECT id FROM span WHERE sentence_id IN 
                 (SELECT id FROM sentence WHERE document_id == (SELECT id FROM document WHERE name = '{3}')))   
                 """.format(rel_info[1][0], rel_info[1][1], rel_info[0], doc_name)

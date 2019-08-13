@@ -25,68 +25,83 @@ DATA = [3, 43, 12, 9, 3]
 class SliceCombinerTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        # Define S_matrix
         data_points = [SimpleNamespace(num=num) for num in DATA]
         applier = SFApplier([f, g])
         cls.S = applier.apply(data_points, progress_bar=False)
 
-    def test_classifier(self):
-        hidden_dim = 10
-        input_dim = 2
-
-        mlp = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim),
-            nn.Linear(hidden_dim, hidden_dim),
+        # Define base architecture
+        cls.hidden_dim = 10
+        cls.mlp = nn.Sequential(
+            nn.Linear(2, cls.hidden_dim),
+            nn.Linear(cls.hidden_dim, cls.hidden_dim),
             nn.ReLU(),
         )
 
-        input_data_key = "test_data"
-        task_name = "test_task"
-        slice_names = ["hello", "world"]
-        slicing_cls = BinarySlicingClassifier(
-            base_architecture=mlp,
-            head_dim=hidden_dim,
-            slice_names=slice_names,
-            input_data_key=input_data_key,
-            task_name=task_name,
-            scorer=Scorer(metrics=["f1"]),
-        )
+        # Define model parameters
+        cls.data_name = "test_data"
+        cls.task_name = "test_task"
 
+        # Define slice metadata
+        cls.slice_names = ["hello", "world"]
+
+        # Define datasets
         # Repeated data value for [N x 2] dim Tensor
         X = torch.FloatTensor([(x, x) for x in DATA])
         # Alternating labels
         Y = torch.LongTensor([int(i % 2 == 0) for i in range(len(DATA))])
 
         dataset_name = "test_dataset"
-
         splits = ["train", "valid"]
-        datasets = [
-            create_dataset(X, Y, split, dataset_name, input_data_key, task_name)
+        cls.datasets = [
+            create_dataset(X, Y, split, dataset_name, cls.data_name, cls.task_name)
             for split in splits
         ]
 
+    def test_scores(self):
+        slice_model = BinarySlicingClassifier(
+            base_architecture=self.mlp,
+            head_dim=self.hidden_dim,
+            slice_names=self.slice_names,
+            input_data_key=self.data_name,
+            task_name=self.task_name,
+            scorer=Scorer(metrics=["f1"]),
+        )
+
+        # Make dataloaders
         dataloaders = [
-            slicing_cls.make_slice_dataloader(dataset=ds, S=self.S, batch_size=4)
-            for ds in datasets
+            slice_model.make_slice_dataloader(dataset=ds, S=self.S, batch_size=4)
+            for ds in self.datasets
         ]
+        train_dl, valid_dl = tuple(dataloaders)
 
+        # Train model
         trainer = Trainer(n_epochs=1)
-        trainer.fit(slicing_cls, dataloaders)
+        trainer.fit(slice_model, [train_dl])
 
-        results = slicing_cls.score_slices(dataloaders)
+        # Eval overall
+        scores = slice_model.score([valid_dl])
+        # All labels should appears in .score() output
+        self.assertIn("test_task/test_dataset/valid/f1", scores)
+        self.assertIn("test_task_slice:hello_pred/test_dataset/valid/f1", scores)
+        self.assertIn("test_task_slice:world_pred/test_dataset/valid/f1", scores)
+        self.assertIn("test_task_slice:hello_ind/test_dataset/valid/f1", scores)
+        self.assertIn("test_task_slice:world_ind/test_dataset/valid/f1", scores)
 
-        # Check that we eval on 'pred' labels
-        self.assertIn(f"{task_name}/test_dataset/train/f1", results)
-        self.assertIn(f"{task_name}/test_dataset/valid/f1", results)
-        self.assertIn(f"{task_name}_slice:hello_pred/test_dataset/train/f1", results)
-        self.assertIn(f"{task_name}_slice:hello_pred/test_dataset/valid/f1", results)
-        self.assertIn(f"{task_name}_slice:world_pred/test_dataset/train/f1", results)
-        self.assertIn(f"{task_name}_slice:world_pred/test_dataset/valid/f1", results)
+        # Eval on slices
+        slice_scores = slice_model.score_slices([valid_dl])
+        # Check that we eval on 'pred' labels in .score_slices() output
+        self.assertIn("test_task/test_dataset/valid/f1", slice_scores)
+        self.assertIn("test_task_slice:hello_pred/test_dataset/valid/f1", slice_scores)
+        self.assertIn("test_task_slice:world_pred/test_dataset/valid/f1", slice_scores)
 
         # No 'ind' labels!
-        self.assertNotIn(f"{task_name}_slice:hello_ind/test_dataset/train/f1", results)
-        self.assertNotIn(f"{task_name}_slice:hello_ind/test_dataset/valid/f1", results)
-        self.assertNotIn(f"{task_name}_slice:world_ind/test_dataset/train/f1", results)
-        self.assertNotIn(f"{task_name}_slice:world_ind/test_dataset/valid/f1", results)
+        self.assertNotIn(
+            "test_task_slice:hello_ind/test_dataset/valid/f1", slice_scores
+        )
+        self.assertNotIn(
+            "test_task_slice:world_ind/test_dataset/valid/f1", slice_scores
+        )
 
 
 def create_dataset(X, Y, split, dataset_name, input_name, task_name):

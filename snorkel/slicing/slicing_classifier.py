@@ -30,11 +30,8 @@ class BinarySlicingClassifier(MultitaskClassifier):
 
     Attributes
     ----------
-    base_input_name
-        A naming convention for input data field key required in DictDataset.X_dict
-    base_task_name
-        A naming convention for label_name key required in DictDataset.Y_dict
     base_task
+        A base ``snorkel.classification.Task`` that the model will learn
     slice_names
         See above
     """
@@ -47,7 +44,6 @@ class BinarySlicingClassifier(MultitaskClassifier):
         input_data_key: str,
         task_name: str,
         scorer: Scorer = Scorer(metrics=["accuracy", "f1"]),
-        slice_aware: bool = True,
         **multitask_kwargs: Any,
     ) -> None:
 
@@ -77,14 +73,11 @@ class BinarySlicingClassifier(MultitaskClassifier):
             scorer=scorer,
         )
 
-        if slice_aware:
-            tasks = convert_to_slice_tasks(self.base_task, slice_names)
-        else:
-            tasks = [self.base_task]
+        slice_tasks = convert_to_slice_tasks(self.base_task, slice_names)
 
         # Initialize a MultitaskClassifier under the hood
         model_name = f"{task_name}_slicing_classifier"
-        super().__init__(tasks=tasks, name=model_name, **multitask_kwargs)
+        super().__init__(tasks=slice_tasks, name=model_name, **multitask_kwargs)
         self.slice_names = slice_names
 
     def make_slice_dataloader(

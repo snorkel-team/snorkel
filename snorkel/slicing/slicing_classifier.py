@@ -23,11 +23,12 @@ class BinarySlicingClassifier(MultitaskClassifier):
         Output feature dimension of the base_architecture, and input dimension of the
         internal prediction head: ``nn.Linear(head_dim, 2)``.
     slice_names
-        A list of slice names that the model will accept as tasks/labels
+        A list of slice names that the model will accept initialize as tasks
+        and accept as corresponding labels
     scorer
-        A Scorer to be used for initialization of the ``BaseMultitaskClassifier`` superclass.
+        A Scorer to be used for initialization of the ``MultitaskClassifier`` superclass.
     **multitask_kwargs
-        Arbitrary key-word arguments to be passed to the ``BaseMultitaskClassifier`` superclass.
+        Arbitrary keyword arguments to be passed to the ``MultitaskClassifier`` superclass.
 
     Attributes
     ----------
@@ -100,7 +101,7 @@ class BinarySlicingClassifier(MultitaskClassifier):
             A [num_examples, num_slices] slice matrix indicating whether
             each example is in every slice
         slice_names
-            A list of slice names corresponding to columsn of ``S``
+            A list of slice names corresponding to columns of ``S``
 
         dataloader_kwargs
             Arbitrary kwargs to be passed to DictDataLoader
@@ -129,7 +130,9 @@ class BinarySlicingClassifier(MultitaskClassifier):
     def score_slices(
         self, dataloaders: List[DictDataLoader], as_dataframe: bool = False
     ) -> Union[Dict[str, float], pd.DataFrame]:
-        """Scores appropriate slice labels using the base_task (NOT ``slice_tasks``).
+        """Scores appropriate slice labels using the overall prediction head.
+
+        In other words, uses ``base_task`` (NOT ``slice_tasks``) to evaluate slices.
 
         In practice, we'd like to use a final prediction from a _single_ task head.
         To do so, ``self.base_task`` leverages reweighted slice representation to

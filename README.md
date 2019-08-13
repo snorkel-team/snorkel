@@ -31,8 +31,17 @@ If you want to set up a development environment in order to contribute back to S
 see our [Contributing doc](./CONTRIBUTING.md).
 
 
-## Issues and Q & A
-We use [GitHub Issues](https://github.com/snorkel-team/snorkel/issues) as a place to put bugs, questions, feature requests, and other stuff.
-Don't be shy about posting!
+## Issues and feature requests
+We use [GitHub Issues](https://github.com/snorkel-team/snorkel/issues) as a place to post bugs and feature requests — anything code-related.
 Just make sure you search for related issues first and use our Issues templates.
-We tag questions with "Q&A", and you can see them [here](https://github.com/snorkel-team/snorkel/issues?utf8=%E2%9C%93&q=is%3Aissue+label%3A%22Q%26A%22+).
+
+## Community
+### Spectrum
+For broader Q&A, discussions about using Snorkel, tutorial requests, etc., we have a community forum: https://spectrum.chat/snorkel
+
+We hope this will be a venue for you to interact with other Snorkel users — please don't be shy about posting!
+
+### Google Group
+To stay up-to-date on only the biggest Snorkel-related announcements (e.g., version releases, upcoming workshops, etc.), join the Google Group mailing list: https://groups.google.com/forum/#!forum/snorkel-ml
+
+We promise to respect your inboxes — communication will be sparse!

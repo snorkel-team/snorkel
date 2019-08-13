@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 
 from snorkel.analysis import Scorer
-from snorkel.classification import DictDataset, Trainer
+from snorkel.classification import DictDataset
 from snorkel.slicing import BinarySlicingClassifier, SFApplier, slicing_function
 
 
@@ -23,50 +23,55 @@ def g(x) -> int:
 DATA = [3, 43, 12, 9, 3]
 
 
+def create_dataset(X, Y, split, dataset_name, input_name, task_name):
+    return DictDataset(
+        name=dataset_name, split=split, X_dict={input_name: X}, Y_dict={task_name: Y}
+    )
+
+
 class SliceCombinerTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         # Define S_matrix
         data_points = [SimpleNamespace(num=num) for num in DATA]
         applier = SFApplier([f, g])
-        cls.S = applier.apply(data_points, progress_bar=False)
+        self.S = applier.apply(data_points, progress_bar=False)
 
         # Define base architecture
-        cls.hidden_dim = 10
-        cls.mlp = nn.Sequential(
-            nn.Linear(2, cls.hidden_dim),
-            nn.Linear(cls.hidden_dim, cls.hidden_dim),
+        self.hidden_dim = 10
+        self.mlp = nn.Sequential(
+            nn.Linear(2, self.hidden_dim),
+            nn.Linear(self.hidden_dim, self.hidden_dim),
             nn.ReLU(),
         )
 
         # Define model parameters
-        cls.data_name = "test_data"
-        cls.task_name = "test_task"
+        self.data_name = "test_data"
+        self.task_name = "test_task"
 
         # Define slice metadata
-        cls.slice_names = ["hello", "world"]
+        self.slice_names = ["hello", "world"]
 
         # Define datasets
         # Repeated data value for [N x 2] dim Tensor
-        cls.X = torch.FloatTensor([(x, x) for x in DATA])
+        self.X = torch.FloatTensor([(x, x) for x in DATA])
         # Alternating labels
-        cls.Y = torch.LongTensor([int(i % 2 == 0) for i in range(len(DATA))])
+        self.Y = torch.LongTensor([int(i % 2 == 0) for i in range(len(DATA))])
 
         dataset_name = "test_dataset"
         splits = ["train", "valid"]
-        cls.datasets = [
+        self.datasets = [
             create_dataset(
-                cls.X, cls.Y, split, dataset_name, cls.data_name, cls.task_name
+                self.X, self.Y, split, dataset_name, self.data_name, self.task_name
             )
             for split in splits
         ]
 
-        cls.slice_model = BinarySlicingClassifier(
-            base_architecture=cls.mlp,
-            head_dim=cls.hidden_dim,
-            slice_names=cls.slice_names,
-            input_data_key=cls.data_name,
-            task_name=cls.task_name,
+        self.slice_model = BinarySlicingClassifier(
+            base_architecture=self.mlp,
+            head_dim=self.hidden_dim,
+            slice_names=self.slice_names,
+            input_data_key=self.data_name,
+            task_name=self.task_name,
             scorer=Scorer(metrics=["f1"]),
         )
 
@@ -121,16 +126,10 @@ class SliceCombinerTest(unittest.TestCase):
 
     def test_scores_pipeline(self):
         """Ensure that the appropriate scores are returned with .score and .score_slices."""
-        # Make dataloaders
-        dataloaders = [
-            self.slice_model.make_slice_dataloader(dataset=ds, S=self.S, batch_size=4)
-            for ds in self.datasets
-        ]
-        train_dl, valid_dl = tuple(dataloaders)
-
-        # Train model
-        trainer = Trainer(n_epochs=1)
-        trainer.fit(self.slice_model, [train_dl])
+        # Make valid dataloader
+        valid_dl = self.slice_model.make_slice_dataloader(
+            dataset=self.datasets[1], S=self.S, batch_size=4
+        )
 
         # Eval overall
         scores = self.slice_model.score([valid_dl])
@@ -155,9 +154,3 @@ class SliceCombinerTest(unittest.TestCase):
         self.assertNotIn(
             "test_task_slice:world_ind/test_dataset/valid/f1", slice_scores
         )
-
-
-def create_dataset(X, Y, split, dataset_name, input_name, task_name):
-    return DictDataset(
-        name=dataset_name, split=split, X_dict={input_name: X}, Y_dict={task_name: Y}
-    )

@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Optional, Set, Union
 
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 
@@ -19,7 +20,7 @@ class BinarySlicingClassifier(MultitaskClassifier):
     base_architecture
         A network architecture that accepts input data and outputs a representation
     head_dim
-        Output feature dimension of the representation_net, and input dimension of the
+        Output feature dimension of the base_architecture, and input dimension of the
         internal prediction head: ``nn.Linear(head_dim, 2)``.
     slice_names
         A list of slice names that the model will accept as tasks/labels
@@ -96,7 +97,7 @@ class BinarySlicingClassifier(MultitaskClassifier):
         dataset
             A DictDataset that will be converted into a slice-aware dataloader
         S
-            A [num_examples by num_slices] slice matrix indicating whether
+            A [num_examples, num_slices] slice matrix indicating whether
             each example is in every slice
         slice_names
             A list of slice names corresponding to columsn of ``S``
@@ -127,8 +128,8 @@ class BinarySlicingClassifier(MultitaskClassifier):
     @torch.no_grad()
     def score_slices(
         self, dataloaders: List[DictDataLoader], as_dataframe: bool = False
-    ) -> Dict[str, float]:
-        """Scores appropriate slice labels using the base_task (NOT slice_tasks).
+    ) -> Union[Dict[str, float], pd.DataFrame]:
+        """Scores appropriate slice labels using the base_task (NOT ``slice_tasks``).
 
         In practice, we'd like to use a final prediction from a _single_ task head.
         To do so, ``self.base_task`` leverages reweighted slice representation to

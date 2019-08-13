@@ -16,6 +16,7 @@ from typing import (
 )
 
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 
@@ -381,7 +382,7 @@ class MultitaskClassifier(nn.Module):
         dataloaders: List[DictDataLoader],
         remap_labels: Dict[str, Optional[str]] = {},
         as_dataframe: bool = False,
-    ) -> Dict[str, float]:
+    ) -> Union[Dict[str, float], pd.DataFrame]:
         """Calculate scores for the provided DictDataLoaders.
 
         Parameters

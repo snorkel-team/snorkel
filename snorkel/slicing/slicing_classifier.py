@@ -31,7 +31,9 @@ class BinarySlicingClassifier(MultitaskClassifier):
     Attributes
     ----------
     base_task
-        A base ``snorkel.classification.Task`` that the model will learn
+        A base ``snorkel.classification.Task`` that the model will learn.
+        This becomes a ``master_head_module`` that combines slice tasks information.
+        For more, see ``snorkel.slicing.convert_to_slice_tasks``.
     slice_names
         See above
     """
@@ -47,14 +49,16 @@ class BinarySlicingClassifier(MultitaskClassifier):
         **multitask_kwargs: Any,
     ) -> None:
 
+        # Initialize module_pool with 1) base_architecture and 2) prediction_head
+        # Assuming `head_dim` can be used to map base_architecture to prediction_head
         module_pool = nn.ModuleDict(
             {
                 "base_architecture": base_architecture,
-                # By convention, initialize binary classification as 2-dim output
                 "prediction_head": nn.Linear(head_dim, 2),
             }
         )
 
+        # Create op_sequence from base_architecture -> prediction_head
         op_sequence = [
             Operation(
                 name="input_op",
@@ -66,6 +70,7 @@ class BinarySlicingClassifier(MultitaskClassifier):
             ),
         ]
 
+        # Initialize base_task using specified base_architecture
         self.base_task = Task(
             name=task_name,
             module_pool=module_pool,
@@ -73,9 +78,10 @@ class BinarySlicingClassifier(MultitaskClassifier):
             scorer=scorer,
         )
 
+        # Convert base_task to associated slice_tasks
         slice_tasks = convert_to_slice_tasks(self.base_task, slice_names)
 
-        # Initialize a MultitaskClassifier under the hood
+        # Initialize a MultitaskClassifier with all slice_tasks
         model_name = f"{task_name}_slicing_classifier"
         super().__init__(tasks=slice_tasks, name=model_name, **multitask_kwargs)
         self.slice_names = slice_names
@@ -83,27 +89,37 @@ class BinarySlicingClassifier(MultitaskClassifier):
     def make_slice_dataloader(
         self, dataset: DictDataset, S: np.ndarray, **dataloader_kwargs: Any
     ) -> DictDataLoader:
-        """Create DictDataLoaders with slice labels for initialized slice tasks.
+        """Create DictDataLoader with slice labels, initialized from specified dataset.
 
         Parameters
         ----------
-        datasets
-            A list of DictDataset
+        dataset
+            A DictDataset that will be converted into a slice-aware dataloader
         S
+            A [num_examples by num_slices] slice matrix indicating whether
+            each example is in every slice
         slice_names
+            A list of slice names corresponding to columsn of ``S``
 
         dataloader_kwargs
-            Arbitrary kwargs to be passed to DictDataloader
+            Arbitrary kwargs to be passed to DictDataLoader
+            See ``DictDataLoader.__init__``.
         """
-        if S.shape[1] != len(self.slice_names):
-            raise ValueError("Num columns in S matrix does not match num slice_names.")
 
+        # Validate inputs
+        if S.shape[1] != len(self.slice_names):
+            raise ValueError("Num. columns in S matrix does not match num. slice_names")
+
+        # Base task must have corresponding labels in dataset
         if self.base_task.name not in dataset.Y_dict:  # type: ignore
             raise ValueError(
                 f"Base task ({self.base_task.name}) labels missing from {dataset}"
             )
 
+        # Initialize dataloader
         dataloader = DictDataLoader(dataset, **dataloader_kwargs)
+
+        # Make dataloader slice-aware
         add_slice_labels(dataloader, self.base_task, S, self.slice_names)
 
         return dataloader
@@ -112,9 +128,12 @@ class BinarySlicingClassifier(MultitaskClassifier):
     def score_slices(
         self, dataloaders: List[DictDataLoader], as_dataframe: bool = False
     ) -> Dict[str, float]:
-        """Create label mapping from appropriate slice labels to base task, and calls _score.
+        """Scores appropriate slice labels using the base_task (NOT slice_tasks).
 
-        For more, see ``BaseMultitaskClassifier._score``.
+        In practice, we'd like to use a final prediction from a _single_ task head.
+        To do so, ``self.base_task`` leverages reweighted slice representation to
+        make a prediction. In this method, we remap all slice-specific ``pred``
+        labels to ``self.base_task`` for evaluation.
 
         Parameters
         ----------
@@ -149,6 +168,7 @@ class BinarySlicingClassifier(MultitaskClassifier):
             elif "ind" in label:
                 eval_mapping[label] = None
 
+        # Call score on the original remapped set of labels
         return super().score(
             dataloaders=dataloaders,
             remap_labels=eval_mapping,

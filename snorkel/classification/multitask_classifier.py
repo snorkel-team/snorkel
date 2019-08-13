@@ -16,6 +16,7 @@ from typing import (
 )
 
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 
@@ -315,7 +316,7 @@ class MultitaskClassifier(nn.Module):
         self,
         dataloader: DictDataLoader,
         return_preds: bool = False,
-        remap_labels: Dict[str, str] = {},
+        remap_labels: Dict[str, Optional[str]] = {},
     ) -> Dict[str, Dict[str, torch.Tensor]]:
         """Calculate probabilities, (optionally) predictions, and pull out gold labels.
 
@@ -379,9 +380,9 @@ class MultitaskClassifier(nn.Module):
     def score(
         self,
         dataloaders: List[DictDataLoader],
-        remap_labels: Dict[str, str] = {},
+        remap_labels: Dict[str, Optional[str]] = {},
         as_dataframe: bool = False,
-    ) -> Dict[str, float]:
+    ) -> Union[Dict[str, float], pd.DataFrame]:
         """Calculate scores for the provided DictDataLoaders.
 
         Parameters
@@ -416,7 +417,7 @@ class MultitaskClassifier(nn.Module):
             # What labels in Y_dict are we ignoring?
             extra_labels = set(Y_dict.keys()).difference(set(labels_to_tasks.keys()))
             if extra_labels:
-                logging.warning(
+                logging.info(
                     f"Ignoring extra labels in dataloader ({dataloader.dataset.split}): {extra_labels}"  # type: ignore
                 )
 
@@ -453,7 +454,7 @@ class MultitaskClassifier(nn.Module):
             return metric_score_dict
 
     def _get_labels_to_tasks(
-        self, label_names: Iterable[str], remap_labels: Dict[str, str] = {}
+        self, label_names: Iterable[str], remap_labels: Dict[str, Optional[str]] = {}
     ) -> Dict[str, str]:
         """Map each label to its corresponding task outputs based on whether the task is available.
 

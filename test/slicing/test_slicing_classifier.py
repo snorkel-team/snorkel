@@ -33,7 +33,7 @@ class SliceCombinerTest(unittest.TestCase):
         hidden_dim = 10
         input_dim = 2
 
-        representation_net = nn.Sequential(
+        mlp = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
@@ -43,7 +43,7 @@ class SliceCombinerTest(unittest.TestCase):
         task_name = "test_task"
         slice_names = ["hello", "world"]
         slicing_cls = BinarySlicingClassifier(
-            representation_net=representation_net,
+            base_architecture=mlp,
             head_dim=hidden_dim,
             slice_names=slice_names,
             input_data_key=input_data_key,

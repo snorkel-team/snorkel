@@ -16,9 +16,8 @@ class BinarySlicingClassifier(MultitaskClassifier):
 
     Parameters
     ----------
-    representation_net
-        A representation network architecture that accepts input data and
-        outputs a representation of ``head_dim``
+    base_architecture
+        A network architecture that accepts input data and outputs a representation
     head_dim
         Output feature dimension of the representation_net, and input dimension of the
         internal prediction head: ``nn.Linear(head_dim, 2)``.
@@ -42,18 +41,19 @@ class BinarySlicingClassifier(MultitaskClassifier):
 
     def __init__(
         self,
-        representation_net: nn.Module,
+        base_architecture: nn.Module,
         head_dim: int,
         slice_names: List[str],
         input_data_key: str,
         task_name: str,
         scorer: Scorer = Scorer(metrics=["accuracy", "f1"]),
+        slice_aware: bool = True,
         **multitask_kwargs: Any,
     ) -> None:
 
         module_pool = nn.ModuleDict(
             {
-                "representation_net": representation_net,
+                "base_architecture": base_architecture,
                 # By convention, initialize binary classification as 2-dim output
                 "prediction_head": nn.Linear(head_dim, 2),
             }
@@ -62,7 +62,7 @@ class BinarySlicingClassifier(MultitaskClassifier):
         op_sequence = [
             Operation(
                 name="input_op",
-                module_name="representation_net",
+                module_name="base_architecture",
                 inputs=[("_input_", input_data_key)],
             ),
             Operation(
@@ -77,11 +77,14 @@ class BinarySlicingClassifier(MultitaskClassifier):
             scorer=scorer,
         )
 
-        slice_tasks = convert_to_slice_tasks(self.base_task, slice_names)
+        if slice_aware:
+            tasks = convert_to_slice_tasks(self.base_task, slice_names)
+        else:
+            tasks = [self.base_task]
 
         # Initialize a MultitaskClassifier under the hood
         model_name = f"{task_name}_slicing_classifier"
-        super().__init__(tasks=slice_tasks, name=model_name, **multitask_kwargs)
+        super().__init__(tasks=tasks, name=model_name, **multitask_kwargs)
         self.slice_names = slice_names
 
     def make_slice_dataloader(

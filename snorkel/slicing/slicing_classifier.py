@@ -40,16 +40,13 @@ class BinarySlicingClassifier(MultitaskClassifier):
         See above
     """
 
-    # Default string for dataset naming conventions
-    base_input_name = "_base_input_"
-    base_task_name = "base_task"
-
     def __init__(
         self,
         representation_net: nn.Module,
         head_dim: int,
         slice_names: List[str],
-        name: str = "BinarySlicingClassifier",
+        input_data_key: str,
+        task_name: str,
         scorer: Scorer = Scorer(metrics=["accuracy", "f1"]),
         **multitask_kwargs: Any,
     ) -> None:
@@ -66,7 +63,7 @@ class BinarySlicingClassifier(MultitaskClassifier):
             Operation(
                 name="input_op",
                 module_name="representation_net",
-                inputs=[("_input_", self.base_input_name)],
+                inputs=[("_input_", input_data_key)],
             ),
             Operation(
                 name="head_op", module_name="prediction_head", inputs=["input_op"]
@@ -74,7 +71,7 @@ class BinarySlicingClassifier(MultitaskClassifier):
         ]
 
         self.base_task = Task(
-            name=self.base_task_name,
+            name=task_name,
             module_pool=module_pool,
             op_sequence=op_sequence,
             scorer=scorer,
@@ -83,12 +80,13 @@ class BinarySlicingClassifier(MultitaskClassifier):
         slice_tasks = convert_to_slice_tasks(self.base_task, slice_names)
 
         # Initialize a MultitaskClassifier under the hood
-        super().__init__(tasks=slice_tasks, name=name, **multitask_kwargs)
+        model_name = f"{task_name}_slicing_classifier"
+        super().__init__(tasks=slice_tasks, name=model_name, **multitask_kwargs)
         self.slice_names = slice_names
 
-    def make_slice_dataloaders(
-        self, datasets: List[DictDataset], S: np.ndarray, **dataloader_kwargs: Any
-    ) -> List[DictDataLoader]:
+    def make_slice_dataloader(
+        self, dataset: DictDataset, S: np.ndarray, **dataloader_kwargs: Any
+    ) -> DictDataLoader:
         """Create DictDataLoaders with slice labels for initialized slice tasks.
 
         Parameters
@@ -104,21 +102,15 @@ class BinarySlicingClassifier(MultitaskClassifier):
         if S.shape[1] != len(self.slice_names):
             raise ValueError("Num columns in S matrix does not match num slice_names.")
 
-        dataloaders = []
-        for ds in datasets:
-            if self.base_task_name not in ds.Y_dict:
-                raise ValueError(
-                    f"Base task ({self.base_task_name}) labels missing from {ds}"
-                )
+        if self.base_task.name not in dataset.Y_dict:  # type: ignore
+            raise ValueError(
+                f"Base task ({self.base_task.name}) labels missing from {dataset}"
+            )
 
-            if self.base_input_name not in ds.X_dict:
-                raise ValueError(f"{ds} must have {self.base_input_name} as X_dict key")
+        dataloader = DictDataLoader(dataset, **dataloader_kwargs)
+        add_slice_labels(dataloader, self.base_task, S, self.slice_names)
 
-            dl = DictDataLoader(ds, **dataloader_kwargs)
-            add_slice_labels(dl, self.base_task, S, self.slice_names)
-            dataloaders.append(dl)
-
-        return dataloaders
+        return dataloader
 
     @torch.no_grad()
     def score_slices(
@@ -157,7 +149,7 @@ class BinarySlicingClassifier(MultitaskClassifier):
         # See ``snorkel.slicing.utils.add_slice_labels`` for more about label creation
         for label in all_labels:
             if "pred" in label:
-                eval_mapping[label] = self.base_task_name
+                eval_mapping[label] = self.base_task.name
             elif "ind" in label:
                 eval_mapping[label] = None
 

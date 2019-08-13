@@ -39,12 +39,15 @@ class SliceCombinerTest(unittest.TestCase):
             nn.ReLU(),
         )
 
+        input_data_key = "test_data"
+        task_name = "test_task"
         slice_names = ["hello", "world"]
         slicing_cls = BinarySlicingClassifier(
             representation_net=representation_net,
             head_dim=hidden_dim,
             slice_names=slice_names,
-            name="BinarySlicingClassifier",
+            input_data_key=input_data_key,
+            task_name=task_name,
             scorer=Scorer(metrics=["f1"]),
         )
 
@@ -54,16 +57,17 @@ class SliceCombinerTest(unittest.TestCase):
         Y = torch.LongTensor([int(i % 2 == 0) for i in range(len(DATA))])
 
         dataset_name = "test_dataset"
-        input_name = BinarySlicingClassifier.base_input_name
-        label_name = BinarySlicingClassifier.base_task_name
 
+        splits = ["train", "valid"]
         datasets = [
-            create_dataset(X, Y, "train", dataset_name, input_name, label_name),
-            create_dataset(X, Y, "valid", dataset_name, input_name, label_name),
+            create_dataset(X, Y, split, dataset_name, input_data_key, task_name)
+            for split in splits
         ]
-        dataloaders = slicing_cls.make_slice_dataloaders(
-            datasets=datasets, S=self.S, batch_size=4
-        )
+
+        dataloaders = [
+            slicing_cls.make_slice_dataloader(dataset=ds, S=self.S, batch_size=4)
+            for ds in datasets
+        ]
 
         trainer = Trainer(n_epochs=1)
         trainer.fit(slicing_cls, dataloaders)
@@ -71,21 +75,21 @@ class SliceCombinerTest(unittest.TestCase):
         results = slicing_cls.score_slices(dataloaders)
 
         # Check that we eval on 'pred' labels
-        self.assertIn(f"{label_name}/test_dataset/train/f1", results)
-        self.assertIn(f"{label_name}/test_dataset/valid/f1", results)
-        self.assertIn(f"{label_name}_slice:hello_pred/test_dataset/train/f1", results)
-        self.assertIn(f"{label_name}_slice:hello_pred/test_dataset/valid/f1", results)
-        self.assertIn(f"{label_name}_slice:world_pred/test_dataset/train/f1", results)
-        self.assertIn(f"{label_name}_slice:world_pred/test_dataset/valid/f1", results)
+        self.assertIn(f"{task_name}/test_dataset/train/f1", results)
+        self.assertIn(f"{task_name}/test_dataset/valid/f1", results)
+        self.assertIn(f"{task_name}_slice:hello_pred/test_dataset/train/f1", results)
+        self.assertIn(f"{task_name}_slice:hello_pred/test_dataset/valid/f1", results)
+        self.assertIn(f"{task_name}_slice:world_pred/test_dataset/train/f1", results)
+        self.assertIn(f"{task_name}_slice:world_pred/test_dataset/valid/f1", results)
 
         # No 'ind' labels!
-        self.assertNotIn(f"{label_name}_slice:hello_ind/test_dataset/train/f1", results)
-        self.assertNotIn(f"{label_name}_slice:hello_ind/test_dataset/valid/f1", results)
-        self.assertNotIn(f"{label_name}_slice:world_ind/test_dataset/train/f1", results)
-        self.assertNotIn(f"{label_name}_slice:world_ind/test_dataset/valid/f1", results)
+        self.assertNotIn(f"{task_name}_slice:hello_ind/test_dataset/train/f1", results)
+        self.assertNotIn(f"{task_name}_slice:hello_ind/test_dataset/valid/f1", results)
+        self.assertNotIn(f"{task_name}_slice:world_ind/test_dataset/train/f1", results)
+        self.assertNotIn(f"{task_name}_slice:world_ind/test_dataset/valid/f1", results)
 
 
-def create_dataset(X, Y, split, dataset_name, input_name, label_name):
+def create_dataset(X, Y, split, dataset_name, input_name, task_name):
     return DictDataset(
-        name=dataset_name, split=split, X_dict={input_name: X}, Y_dict={label_name: Y}
+        name=dataset_name, split=split, X_dict={input_name: X}, Y_dict={task_name: Y}
     )

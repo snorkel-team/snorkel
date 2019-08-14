@@ -12,8 +12,10 @@ from snorkel.classification.multitask_classifier import MultitaskClassifier
 from .utils import add_slice_labels, convert_to_slice_tasks
 
 
-class BinarySlicingClassifier(MultitaskClassifier):
-    """A slice-aware binary classifier that supports training + scoring on slice labels.
+class SlicingClassifier(MultitaskClassifier):
+    """A slice-aware classifier that supports training + scoring on slice labels.
+
+    NOTE: This model currently only supports binary classification.
 
     Parameters
     ----------

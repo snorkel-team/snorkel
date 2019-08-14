@@ -14,7 +14,7 @@ Programmatically Building & Managing Training Data
 * [Snorkel documentation](https://snorkel.readthedocs.io/en/master/)
 * [Snorkel community forum](https://spectrum.chat/snorkel)
 * [Snorkel mailing list](https://groups.google.com/forum/#!forum/snorkel-ml)
-* [Snorkel twitter](https://twitter.com/SnorkelML)
+* [Snorkel Twitter](https://twitter.com/SnorkelML)
 
 # Installation
 

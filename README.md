@@ -16,6 +16,11 @@ Programmatically Building & Managing Training Data
 * [Snorkel mailing list](https://groups.google.com/forum/#!forum/snorkel-ml)
 * [Snorkel Twitter](https://twitter.com/SnorkelML)
 
+# Getting Started
+The quickest way to familiarize yourself with the Snorkel library is to walk through the [Get Started](http://snorkel.org/get-started/) page on the Snorkel website, followed by the full-length tutorials in the [Snorkel tutorials](https://github.com/snorkel-team/snorkel-tutorials) repository.
+These tutorials demonstrate a variety of tasks, domains, labeling techniques, and integrations that can serve as templates as you apply Snorkel to your own applications.
+
+
 # Installation
 
 To install Snorkel, we recommend using `pip`:
@@ -34,9 +39,6 @@ pip3 install -U .
 
 We're updating our PyPi and Conda Forge packages, so those will be available soon.
 
-# Tutorials
-The quickest way to familiarize yourself with the Snorkel library is to walk through the tutorials in the [Snorkel tutorials](https://github.com/snorkel-team/snorkel-tutorials) repository.
-These tutorials demonstrate a variety of tasks, domains, labeling techniques, and integrations that can serve as templates as you apply Snorkel to your own problems.
 
 # Discussion
 

@@ -11,7 +11,7 @@ Programmatically Building & Managing Training Data
 # Quick Links
 * [Snorkel website](http://snorkel.org)
 * [Snorkel tutorials](https://github.com/snorkel-team/snorkel-tutorials)
-* [Snorkel documentation](https://snorkel.readthedocs.io/en/master/)
+* [Snorkel documentation](https://snorkel.readthedocs.io/)
 * [Snorkel community forum](https://spectrum.chat/snorkel)
 * [Snorkel mailing list](https://groups.google.com/forum/#!forum/snorkel-ml)
 * [Snorkel Twitter](https://twitter.com/SnorkelML)
@@ -43,7 +43,7 @@ We're updating our PyPi and Conda Forge packages, so those will be available soo
 # Discussion
 
 ## Issues
-We use [GitHub Issues](https://github.com/snorkel-team/snorkel/issues) for posting bugs and feature requests — anything code-related. 
+We use [GitHub Issues](https://github.com/snorkel-team/snorkel/issues) for posting bugs and feature requests — anything code-related.
 Just make sure you search for related issues first and use our Issues templates.
 We may ask for contributions if a prompt fix doesn't fit into the immediate roadmap of the core development team.
 

@@ -34,7 +34,7 @@ class DictDataset(Dataset):
     Raises
     ------
     ValueError
-        All values in the Y_dict must be of type torch.Tensor
+        All values in the ``Y_dict`` must be of type torch.Tensor
 
     Attributes
     ----------
@@ -89,7 +89,7 @@ class DictDataset(Dataset):
         task_name: str = DEFAULT_TASK_NAME,
         dataset_name: str = DEFAULT_DATASET_NAME,
     ) -> "DictDataset":
-        """Initialize a DictDataset from PyTorch Tensors.
+        """Initialize a ``DictDataset`` from PyTorch Tensors.
 
         Parameters
         ----------
@@ -100,9 +100,9 @@ class DictDataset(Dataset):
         split
             Name of data split corresponding to this dataset.
         input_data_key
-            Name of data field to initialize in X_dict
+            Name of data field to initialize in ``X_dict``
         task_name
-            Name of task and corresponding label key in Y_dict
+            Name of task and corresponding label key in ``Y_dict``
         dataset_name
             Name of DictDataset to be initialized; See ``__init__`` above.
 

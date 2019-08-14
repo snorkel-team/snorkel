@@ -21,7 +21,6 @@ or
 ```bash
 git clone https://github.com/snorkel-team/snorkel
 cd snorkel
-git checkout my-favorite-branch
 pip3 install -U .
 ```
 

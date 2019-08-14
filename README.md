@@ -34,15 +34,26 @@ pip3 install -U .
 
 We're updating our PyPi and Conda Forge packages, so those will be available soon.
 
-We welcome contributions! 
-If you want to set up a development environment in order to contribute back to Snorkel,
-see our [contributing guidelines](./CONTRIBUTING.md).
+# Tutorials
+The quickest way to familiarize yourself with the Snorkel library is to walk through the tutorials in the [Snorkel tutorials](https://github.com/snorkel-team/snorkel-tutorials) repository.
+These tutorials demonstrate a variety of tasks, domains, labeling techniques, and integrations that can serve as templates as you apply Snorkel to your own problems.
 
 # Discussion
 
-## Issues and feature requests
-We use [GitHub Issues](https://github.com/snorkel-team/snorkel/issues) for posting bugs and feature requests — anything code-related.
+## Issues
+We use [GitHub Issues](https://github.com/snorkel-team/snorkel/issues) for posting bugs and feature requests — anything code-related. 
 Just make sure you search for related issues first and use our Issues templates.
+We may ask for contributions if a prompt fix doesn't fit into the immediate roadmap of the core development team.
+
+## Contributions
+We welcome contributions from the Snorkel community! 
+This is likely the fastest way to get a change you'd like to see into the library.
+
+Small contributions can be made directly in a pull request (PR).
+If you would like to contribute a larger feature, we recommend first creating an issue with a proposed design for discussion. 
+
+To set up a development environment for contributing back to Snorkel, see our [contributing guidelines](./CONTRIBUTING.md).
+All PRs must pass the continuous integration tests and receive approval from a member of the Snorkel development team before they will be merged.
 
 ## Community Forum
 For broader Q&A, discussions about using Snorkel, tutorial requests, etc., use the [Snorkel community forum](https://spectrum.chat/snorkel) hosted on Spectrum.

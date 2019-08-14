@@ -6,10 +6,11 @@
 [![style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
 [![license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
+Programmatically Building & Managing Training Data 
 
 # Quick Links
-* [Snorkel website](snorkel.org)
-* [Snorkel tutorials](snorkel-team/snorkel-tutorials)
+* [Snorkel website](http://snorkel.org)
+* [Snorkel tutorials](https://github.com/snorkel-team/snorkel-tutorials)
 * [Snorkel documentation](https://snorkel.readthedocs.io/en/master/)
 * [Snorkel community forum](https://spectrum.chat/snorkel)
 * [Snorkel mailing list](https://groups.google.com/forum/#!forum/snorkel-ml)
@@ -35,7 +36,7 @@ We're updating our PyPi and Conda Forge packages, so those will be available soo
 
 We welcome contributions! 
 If you want to set up a development environment in order to contribute back to Snorkel,
-see our [Contributing doc](./CONTRIBUTING.md).
+see our [contributing guidelines](./CONTRIBUTING.md).
 
 # Discussion
 
@@ -44,11 +45,11 @@ We use [GitHub Issues](https://github.com/snorkel-team/snorkel/issues) for posti
 Just make sure you search for related issues first and use our Issues templates.
 
 ## Community Forum
-For broader Q&A, discussions about using Snorkel, tutorial requests, etc., we have a community forum: https://spectrum.chat/snorkel
-
+For broader Q&A, discussions about using Snorkel, tutorial requests, etc., use the [Snorkel community forum](https://spectrum.chat/snorkel) hosted on Spectrum.
 We hope this will be a venue for you to interact with other Snorkel users — please don't be shy about posting!
 
 ## Email List
-To stay up-to-date on only the biggest Snorkel-related announcements (e.g. version releases, upcoming workshops), join the Google Group mailing list: https://groups.google.com/forum/#!forum/snorkel-ml
+To stay up-to-date on Snorkel-related announcements (e.g. version releases, upcoming workshops), subscribe to the [Snorkel mailing list](https://groups.google.com/forum/#!forum/snorkel-ml). We promise to respect your inboxes — communication will be sparse!
 
-We promise to respect your inboxes — communication will be sparse!
+## Twitter
+Follow us on Twitter [@SnorkelML](https://twitter.com/SnorkelML).

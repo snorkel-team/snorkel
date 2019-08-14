@@ -152,6 +152,7 @@ to merge into master.
 By convention, the Snorkel maintainers will review PRs when:
   * An initial review has been requested
   * A maintainer is tagged in the PR comments and asked to complete a review
+
 We ask that you make sure initial CI checks are passing before requesting a review.
 
 

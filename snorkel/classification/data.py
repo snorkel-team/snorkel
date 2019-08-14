@@ -10,6 +10,11 @@ XDict = Dict[str, Any]
 YDict = Dict[str, Tensor]
 Batch = Tuple[XDict, YDict]
 
+# Default string names for initializing a DictDataset
+DEFAULT_INPUT_DATA_KEY = "input_data"
+DEFAULT_DATASET_NAME = "SnorkelDataset"
+DEFAULT_TASK_NAME = "task"
+
 
 class DictDataset(Dataset):
     """A dataset where both the data fields and labels are stored in as dictionaries.
@@ -72,6 +77,45 @@ class DictDataset(Dataset):
             f"(name={self.name}, "
             f"X_keys={list(self.X_dict.keys())}, "
             f"Y_keys={list(self.Y_dict.keys())})"
+        )
+
+    @classmethod
+    def from_tensors(
+        cls,
+        X_tensor: Tensor,
+        Y_tensor: Tensor,
+        split: str,
+        input_data_key: str = DEFAULT_INPUT_DATA_KEY,
+        task_name: str = DEFAULT_TASK_NAME,
+        dataset_name: str = DEFAULT_DATASET_NAME,
+    ) -> "DictDataset":
+        """Initialize a DictDataset from PyTorch Tensors.
+
+        Parameters
+        ----------
+        X_tensor
+            Input data of shape [num_examples, feature_dim]
+        Y_tensor
+            Labels of shape [num_samples, num_classes]
+        split
+            Name of data split corresponding to this dataset.
+        input_data_key
+            Name of data field to initialize in X_dict
+        task_name
+            Name of task and corresponding label key in Y_dict
+        dataset_name
+            Name of DictDataset to be initialized; See ``__init__`` above.
+
+        Returns
+        -------
+        DictDataset
+            Class initialized with single task and label corresponding to input data
+        """
+        return cls(
+            name=dataset_name,
+            split=split,
+            X_dict={input_data_key: X_tensor},
+            Y_dict={task_name: Y_tensor},
         )
 
 

@@ -7,6 +7,7 @@ import torch.nn as nn
 
 from snorkel.analysis import Scorer
 from snorkel.classification import DictDataLoader, DictDataset, Operation, Task
+from snorkel.classification.data import DEFAULT_INPUT_DATA_KEY, DEFAULT_TASK_NAME
 from snorkel.classification.multitask_classifier import MultitaskClassifier
 
 from .utils import add_slice_labels, convert_to_slice_tasks
@@ -47,8 +48,8 @@ class SlicingClassifier(MultitaskClassifier):
         base_architecture: nn.Module,
         head_dim: int,
         slice_names: List[str],
-        input_data_key: str,
-        task_name: str,
+        input_data_key: str = DEFAULT_INPUT_DATA_KEY,
+        task_name: str = DEFAULT_TASK_NAME,
         scorer: Scorer = Scorer(metrics=["accuracy", "f1"]),
         **multitask_kwargs: Any,
     ) -> None:

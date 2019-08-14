@@ -3,6 +3,11 @@ import unittest
 import torch
 
 from snorkel.classification import DictDataLoader, DictDataset
+from snorkel.classification.data import (
+    DEFAULT_DATASET_NAME,
+    DEFAULT_INPUT_DATA_KEY,
+    DEFAULT_TASK_NAME,
+)
 
 
 class DatasetTest(unittest.TestCase):
@@ -29,6 +34,14 @@ class DatasetTest(unittest.TestCase):
         self.assertEqual(
             repr(dataset),
             "DictDataset(name=new_data, X_keys=['data1'], Y_keys=['task1'])",
+        )
+
+        # Test from_tensors inits with default values
+        dataset = DictDataset.from_tensors(x1, y1, "train")
+        self.assertEqual(
+            repr(dataset),
+            f"DictDataset(name={DEFAULT_DATASET_NAME}, "
+            f"X_keys=['{DEFAULT_INPUT_DATA_KEY}'], Y_keys=['{DEFAULT_TASK_NAME}'])",
         )
 
     def test_classifier_dataloader(self):

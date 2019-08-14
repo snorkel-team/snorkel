@@ -42,6 +42,6 @@ For broader Q&A, discussions about using Snorkel, tutorial requests, etc., we h
 We hope this will be a venue for you to interact with other Snorkel users — please don't be shy about posting!
 
 ### Google Group
-To stay up-to-date on only the biggest Snorkel-related announcements (e.g. version releases, upcoming workshops, etc.), join the Google Group mailing list: https://groups.google.com/forum/#!forum/snorkel-ml
+To stay up-to-date on only the biggest Snorkel-related announcements (e.g. version releases, upcoming workshops), join the Google Group mailing list: https://groups.google.com/forum/#!forum/snorkel-ml
 
 We promise to respect your inboxes — communication will be sparse!

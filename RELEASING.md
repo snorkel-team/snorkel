@@ -92,6 +92,9 @@ You'll also need to have permissions to push directly to the `master` branch.
        git add . -u
        git commit -m "[BUMP]: v0.9.1+dev"
        git push origin master
+       
+1. Add the new tag to [the Snorkel project on ReadTheDocs](https://readthedocs.org/projects/snorkel),
+   set it as the default version, and make sure a build is triggered.
 
 
 ## Credit

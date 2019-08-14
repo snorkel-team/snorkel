@@ -117,8 +117,13 @@ def linkcode_resolve(domain, info):
         return None
     if not info["module"]:
         return None
-    filename = info["module"].replace(".", "/")
-    return f"https://github.com/snorkel-team/snorkel/blob/master/{filename}.py"
+    module_path = info["module"].replace(".", "/")
+    # If only one `.`, assume it's a package
+    if info["module"].count(".") == 1:
+        return f"https://github.com/snorkel-team/snorkel/tree/master/{module_path}"
+    # Otherwise, it's a module
+    else:
+        return f"https://github.com/snorkel-team/snorkel/blob/master/{module_path}.py"
 
 
 # -- Exclude PyTorch methods -------------------------------------------------

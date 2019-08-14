@@ -9,7 +9,6 @@ Programmatic data set slicing: SF creation, monitoring utilities, and representa
    :toctree: _autosummary/slicing/
    :nosignatures:
 
-   BinarySlicingClassifier
    apply.dask.DaskSFApplier
    sf.nlp.NLPSlicingFunction
    apply.dask.PandasParallelSFApplier
@@ -17,6 +16,7 @@ Programmatic data set slicing: SF creation, monitoring utilities, and representa
    SFApplier
    SliceCombinerModule
    SliceScorer
+   SlicingClassifier
    SlicingFunction
    apply.spark.SparkSFApplier
    add_slice_labels

@@ -61,7 +61,7 @@ All PRs must pass the continuous integration tests and receive approval from a m
 For broader Q&A, discussions about using Snorkel, tutorial requests, etc., use the [Snorkel community forum](https://spectrum.chat/snorkel) hosted on Spectrum.
 We hope this will be a venue for you to interact with other Snorkel users — please don't be shy about posting!
 
-## Email List
+## Announcements
 To stay up-to-date on Snorkel-related announcements (e.g. version releases, upcoming workshops), subscribe to the [Snorkel mailing list](https://groups.google.com/forum/#!forum/snorkel-ml). We promise to respect your inboxes — communication will be sparse!
 
 ## Twitter

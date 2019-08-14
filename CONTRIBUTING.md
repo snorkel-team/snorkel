@@ -28,7 +28,7 @@ For example, you can simply activate this environment and start using Snorkel:
 ```bash
 source .env/bin/activate
 
-python3 -c "import snorkel; print(dir(snorkel))"
+python3 -c "import snorkel; print(dir(snorkel.labeling))"
 ```
 
 ### Testing and committing
@@ -59,6 +59,7 @@ We use the following packages:
 * [flake8](http://flake8.pycqa.org/en/latest/): PEP8 linting
 * [mypy](http://mypy-lang.org/): static type checking
 * [pydocstyle](http://mypy-lang.org/): docstring compliance
+* [doctest-plus](https://github.com/astropy/pytest-doctestplus): check docstring code examples
 
 The Snorkel maintainers are big fans of [VSCode](https://code.visualstudio.com/)'s Python tooling.
 Here's a `settings.json` that takes advantage of the packages above (except isort) with in-line linting:
@@ -90,6 +91,17 @@ Note that we use PEP 484 type hints, so parameter types should be removed from t
     "autoDocstring.guessTypes": false
 }
 ```
+
+There are some standards we follow that our tooling doesn't automatically check/initialize:
+
+* Examples, examples, examples.
+  We love examples in docstrings; it's often the best form of documentation.
+  The `Example` or `Examples` section should come after `Parameters` but before `Attributes`.
+  Running `tox -e doctest` will test your docstring examples.
+* Make sure to add `Attributes` sections to docstrings to document public attributes of
+  classes.
+  The `Attributes` section should be the last part of the docstring.
+* No need to document private methods or attributes.
 
 
 ### Complex/integration/long-running tests
@@ -124,15 +136,23 @@ action (e.g. `.collect()`).
 ### Submitting PRs
 
 When submitting a PR, make sure to use the preformatted template.
+Except in special cases, all PRs should be against `master`.
+Avoid using "staging branches" as much as possible.
+If you want to add complicated features, please
+[stack your PRs](https://graysonkoonce.com/stacked-pull-requests-keeping-github-diffs-small/)
+to ensure an effective review process.
+It's unlikely that we'll approve any
+[single PR over 500 lines](https://www.ibm.com/developerworks/rational/library/11-proven-practices-for-peer-review/index.html).
 
 
 ### Requesting reviews
 
-Direct commits to master are blocked, and PRs require a approving review
+Direct commits to master are blocked, and PRs require an approving review
 to merge into master.
 By convention, the Snorkel maintainers will review PRs when:
   * An initial review has been requested
   * A maintainer is tagged in the PR comments and asked to complete a review
+We ask that you make sure initial CI checks are passing before requesting a review.
 
 
 ### Merging

@@ -1,9 +1,7 @@
 <img src="figs/logo_01.png" width="150"/>
 
-<!--
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/snorkel)
 ![PyPI](https://img.shields.io/pypi/v/snorkel)
--->
 ![Conda](https://img.shields.io/conda/v/conda-forge/snorkel)
 [![build](https://travis-ci.com/snorkel-team/snorkel.svg?branch=master)](https://travis-ci.com/snorkel-team/snorkel?branch=master)
 [![docs](https://readthedocs.org/projects/snorkel/badge/?version=master)](https://snorkel.readthedocs.io/en/master)

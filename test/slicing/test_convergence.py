@@ -83,12 +83,13 @@ class SlicingConvergenceTest(unittest.TestCase):
         S_train = applier.apply(self.df_train, progress_bar=False)
         S_valid = applier.apply(self.df_valid, progress_bar=False)
 
-        self.assertEqual(S_train.shape, (self.N_TRAIN, len(slicing_functions)))
-        self.assertEqual(S_valid.shape, (self.N_VALID, len(slicing_functions)))
+        self.assertEqual(S_train.shape, (self.N_TRAIN,))
+        self.assertEqual(S_valid.shape, (self.N_VALID,))
+        self.assertIn("h", S_train.dtype.names)
 
         # Add slice labels
-        add_slice_labels(dataloaders[0], base_task, S_train, slice_names)
-        add_slice_labels(dataloaders[1], base_task, S_valid, slice_names)
+        add_slice_labels(dataloaders[0], base_task, S_train)
+        add_slice_labels(dataloaders[1], base_task, S_valid)
 
         # Convert to slice tasks
         tasks = convert_to_slice_tasks(base_task, slice_names)
@@ -137,8 +138,8 @@ class SlicingConvergenceTest(unittest.TestCase):
         S_valid = applier.apply(self.df_valid, progress_bar=False)
 
         # Add slice labels
-        add_slice_labels(dataloaders[0], base_task, S_train, slice_names)
-        add_slice_labels(dataloaders[1], base_task, S_valid, slice_names)
+        add_slice_labels(dataloaders[0], base_task, S_train)
+        add_slice_labels(dataloaders[1], base_task, S_valid)
 
         # Convert to slice tasks
         tasks = convert_to_slice_tasks(base_task, slice_names)

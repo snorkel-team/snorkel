@@ -90,4 +90,4 @@ class PandasLFApplier(BaseLFApplier):
             call_fn = df.progress_apply
         labels = call_fn(apply_fn, axis=1)
         labels_with_index = rows_to_triplets(labels)
-        return self._matrix_from_row_data(labels_with_index)
+        return self._numpy_from_row_data(labels_with_index)

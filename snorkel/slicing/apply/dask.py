@@ -10,7 +10,7 @@ class DaskSFApplier(DaskLFApplier):  # pragma: no cover
     See ``snorkel.labeling.apply.dask.DaskLFApplier`` for details.
     """
 
-    pass
+    _use_recarray = True
 
 
 class PandasParallelSFApplier(PandasParallelLFApplier):  # pragma: no cover
@@ -19,4 +19,4 @@ class PandasParallelSFApplier(PandasParallelLFApplier):  # pragma: no cover
     See ``snorkel.labeling.apply.dask.PandasParallelLFApplier`` for details.
     """
 
-    pass
+    _use_recarray = True

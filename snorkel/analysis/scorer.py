@@ -1,7 +1,8 @@
 from functools import partial
-from typing import Callable, Dict, List, Mapping, Optional
+from typing import Callable, Dict, List, Mapping, Optional, Union
 
 import numpy as np
+import pandas as pd
 
 from snorkel.analysis.metrics import METRICS, metric_score
 
@@ -98,3 +99,54 @@ class Scorer:
                 metric_dict[metric_name] = score
 
         return metric_dict
+
+    def score_slices(
+        self,
+        S: np.recarray,
+        golds: np.ndarray,
+        preds: np.ndarray,
+        probs: np.ndarray,
+        as_dataframe: bool = False,
+    ) -> Union[Dict[str, Dict[str, float]], pd.DataFrame]:
+        """Calculate user-specified and/or user-defined metrics overall + slices.
+
+        Parameters
+        ----------
+        S
+            A recarray with entries of length n_examples corresponding to slice names
+        golds
+            Gold (aka ground truth) labels (integers)
+        preds
+            Predictions (integers)
+        probs:
+            Probabilities (floats)
+        as_dataframe
+            A boolean indicating whether to return results as pandas ``DataFrame`` (True)
+            or dict (False)
+
+        Returns
+        -------
+        Union[Dict, pd.DataFrame]
+            A dictionary mapping slice_name to metric names to metric scores
+            or metrics formatted as pandas ``DataFrame``
+        """
+
+        correct_shapes = S.shape[0] == len(golds) == len(preds) == len(probs)
+        if not correct_shapes:
+            raise ValueError(
+                "S, golds, preds, and probs must have the same number of elements"
+            )
+
+        # Include overall metrics
+        metrics_dict = {"overall": self.score(golds, preds, probs)}
+
+        # Include slice metrics
+        slice_names = S.dtype.names
+        for slice_name in slice_names:
+            mask = S[slice_name].astype(bool)
+            metrics_dict[slice_name] = self.score(golds[mask], preds[mask], probs[mask])
+
+        if as_dataframe:
+            return pd.DataFrame.from_dict(metrics_dict).transpose()
+
+        return metrics_dict

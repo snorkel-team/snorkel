@@ -1,9 +1,13 @@
 import unittest
+from types import SimpleNamespace
 from typing import Tuple
 
 import numpy as np
+import pandas as pd
 
 from snorkel.analysis import Scorer
+from snorkel.slicing import SFApplier, slicing_function
+from snorkel.utils import preds_to_probs
 
 
 class ScorerTest(unittest.TestCase):
@@ -70,6 +74,49 @@ class ScorerTest(unittest.TestCase):
         results = scorer.score(golds, preds, probs)
         results_expected = dict(accuracy=0.6)
         self.assertEqual(results, results_expected)
+
+    def test_score_slices(self):
+        DATA = [5, 10, 19, 22, 25]
+
+        @slicing_function()
+        def sf(x):
+            return x.num < 20
+
+        # We expect 3/5 correct -> 0.6 accuracy
+        golds = np.array([0, 1, 0, 1, 0])
+        preds = np.array([0, 0, 0, 0, 0])
+        probs = preds_to_probs(preds, 2)
+
+        # In the slice, we expect the last 2 elements to masked
+        # We expect 2/3 correct -> 0.666 accuracy
+        data = [SimpleNamespace(num=x) for x in DATA]
+        S = SFApplier([sf]).apply(data)
+        scorer = Scorer(metrics=["accuracy"])
+
+        # Test normal score
+        metrics = scorer.score(golds=golds, preds=preds, probs=probs)
+        self.assertEqual(metrics["accuracy"], 0.6)
+
+        # Test score_slices
+        slice_metrics = scorer.score_slices(S=S, golds=golds, preds=preds, probs=probs)
+        self.assertEqual(slice_metrics["overall"]["accuracy"], 0.6)
+        self.assertEqual(slice_metrics["sf"]["accuracy"], 2.0 / 3.0)
+
+        # Test as_dataframe=True
+        metrics_df = scorer.score_slices(
+            S=S, golds=golds, preds=preds, probs=probs, as_dataframe=True
+        )
+        self.assertTrue(isinstance(metrics_df, pd.DataFrame))
+        self.assertEqual(metrics_df["accuracy"]["overall"], 0.6)
+        self.assertEqual(metrics_df["accuracy"]["sf"], 2.0 / 3.0)
+
+        # Test wrong shapes
+        with self.assertRaisesRegex(
+            ValueError, "must have the same number of elements"
+        ):
+            scorer.score_slices(
+                S=S, golds=golds[:1], preds=preds, probs=probs, as_dataframe=True
+            )
 
 
 if __name__ == "__main__":

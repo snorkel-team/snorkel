@@ -34,14 +34,13 @@ class UtilsTest(unittest.TestCase):
         # Apply SFs with PandasSFApplier
         df = pd.DataFrame({"val": x, "y": y})
         slicing_functions = [f]
-        slice_names = [sf.name for sf in slicing_functions]
         applier = PandasSFApplier(slicing_functions)
         S = applier.apply(df, progress_bar=False)
 
         dataloader = DictDataLoader(dataset)
 
         dummy_task = create_dummy_task(task_name="TestTask")
-        add_slice_labels(dataloader, dummy_task, S, slice_names)
+        add_slice_labels(dataloader, dummy_task, S)
 
         # Ensure that all the fields are present
         labelsets = dataloader.dataset.Y_dict

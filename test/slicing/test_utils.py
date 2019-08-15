@@ -18,6 +18,11 @@ def f(x):
     return x.val < 0.25
 
 
+@slicing_function()
+def base(x):
+    return True
+
+
 class UtilsTest(unittest.TestCase):
     def test_add_slice_labels(self):
         # Create dummy data

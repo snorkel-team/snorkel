@@ -29,6 +29,7 @@ def add_slice_labels(
     """
     # Add the base task if it's missing
     if "base" not in S.dtype.names:
+        # Create a new np.recarray with an additional "base" data field
         S = rfn.append_fields(
             [S], names=[("base")], data=[np.ones(S.shape)], asrecarray=True
         )

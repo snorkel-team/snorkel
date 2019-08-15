@@ -128,25 +128,25 @@ class Scorer:
         -------
         Union[Dict, pd.DataFrame]
             A dictionary mapping slice_name to metric names to metric scores
-            or aforementioned dictionary formatted as pandas ``DataFrame``
+            or metrics formatted as pandas ``DataFrame``
         """
-        assert S.shape[0] == len(golds) == len(preds) == len(probs)
-        if not isinstance(S, np.recarray):
-            raise ValueError(f"S should be {np.recarray} type.")
+
+        correct_shapes = S.shape[0] == len(golds) == len(preds) == len(probs)
+        if not correct_shapes:
+            raise ValueError(
+                "S, golds, preds, and probs must have the same number of elements"
+            )
 
         # Include overall metrics
-        metrics_dict = dict()
-        metrics_dict.update({"overall": self.score(golds, preds, probs)})
+        metrics_dict = {"overall": self.score(golds, preds, probs)}
 
         # Include slice metrics
         slice_names = S.dtype.names
         for slice_name in slice_names:
             mask = S[slice_name].astype(bool)
-            metrics_dict.update(
-                {slice_name: self.score(golds[mask], preds[mask], probs[mask])}
-            )
+            metrics_dict[slice_name] = self.score(golds[mask], preds[mask], probs[mask])
 
         if as_dataframe:
             return pd.DataFrame.from_dict(metrics_dict).transpose()
-        else:
-            return metrics_dict
+
+        return metrics_dict

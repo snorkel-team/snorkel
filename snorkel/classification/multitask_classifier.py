@@ -450,8 +450,8 @@ class MultitaskClassifier(nn.Module):
 
         if as_dataframe:
             return metrics_dict_to_dataframe(metric_score_dict)
-        else:
-            return metric_score_dict
+
+        return metric_score_dict
 
     def _get_labels_to_tasks(
         self, label_names: Iterable[str], remap_labels: Dict[str, Optional[str]] = {}

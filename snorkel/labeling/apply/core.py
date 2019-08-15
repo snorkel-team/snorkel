@@ -24,40 +24,33 @@ class BaseLFApplier:
     lfs
         LFs that this applier executes on examples
 
-    Attributes
-    ----------
-        use_recarray
-            Whether to initialize applier outputs as [n_examples, n_lfs] matrix
-            or as ``np.recarray`` with n_examples in each data field
-
     Raises
     ------
     ValueError
         If names of LFs are not unique
     """
 
-    use_recarray = False
+    _use_recarray = False
 
     def __init__(self, lfs: List[LabelingFunction]) -> None:
         self._lfs = lfs
         self._lf_names = [lf.name for lf in lfs]
         check_unique_names(self._lf_names)
 
-    def _numpy_from_row_data(
-        self, labels: List[RowData]
-    ) -> Union[np.ndarray, np.recarray]:
+    def _numpy_from_row_data(self, labels: List[RowData]) -> np.ndarray:
         L = np.zeros((len(labels), len(self._lfs)), dtype=int) - 1
         # NB: this check will short-circuit, so ok for large L
         if any(map(len, labels)):
             row, col, data = zip(*chain.from_iterable(labels))
             L[row, col] = data
 
-        if self.use_recarray:
-            n_rows, n_cols = L.shape
-            dtype = [(name, L.dtype) for name in self._lf_names]
+        if self._use_recarray:
+            n_rows, _ = L.shape
+            dtype = [(name, np.int64) for name in self._lf_names]
             recarray = np.recarray(n_rows, dtype=dtype)
             for idx, name in enumerate(self._lf_names):
                 recarray[name] = L[:, idx]
+
             return recarray
         else:
             return L

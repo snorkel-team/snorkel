@@ -90,7 +90,7 @@ class ScorerTest(unittest.TestCase):
         # In the slice, we expect the last 2 elements to masked
         # We expect 2/3 correct -> 0.666 accuracy
         data = [SimpleNamespace(num=x) for x in DATA]
-        S_matrix = SFApplier([sf]).apply(data)
+        S = SFApplier([sf]).apply(data)
         scorer = Scorer(metrics=["accuracy"])
 
         # Test normal score
@@ -98,19 +98,25 @@ class ScorerTest(unittest.TestCase):
         self.assertEqual(metrics["accuracy"], 0.6)
 
         # Test score_slices
-        slice_metrics = scorer.score_slices(
-            S=S_matrix, golds=golds, preds=preds, probs=probs
-        )
+        slice_metrics = scorer.score_slices(S=S, golds=golds, preds=preds, probs=probs)
         self.assertEqual(slice_metrics["overall"]["accuracy"], 0.6)
         self.assertEqual(slice_metrics["sf"]["accuracy"], 2.0 / 3.0)
 
         # Test as_dataframe=True
         metrics_df = scorer.score_slices(
-            S=S_matrix, golds=golds, preds=preds, probs=probs, as_dataframe=True
+            S=S, golds=golds, preds=preds, probs=probs, as_dataframe=True
         )
         self.assertTrue(isinstance(metrics_df, pd.DataFrame))
         self.assertEqual(metrics_df["accuracy"]["overall"], 0.6)
         self.assertEqual(metrics_df["accuracy"]["sf"], 2.0 / 3.0)
+
+        # Test wrong shapes
+        with self.assertRaisesRegex(
+            ValueError, "must have the same number of elements"
+        ):
+            scorer.score_slices(
+                S=S, golds=golds[:1], preds=preds, probs=probs, as_dataframe=True
+            )
 
 
 if __name__ == "__main__":

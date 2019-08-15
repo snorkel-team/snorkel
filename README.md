@@ -1,11 +1,14 @@
 <img src="figs/logo_01.png" width="150"/>
 
+
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/snorkel)
+![PyPI](https://img.shields.io/pypi/v/snorkel)
 [![build](https://travis-ci.com/snorkel-team/snorkel.svg?branch=master)](https://travis-ci.com/snorkel-team/snorkel?branch=master)
 [![docs](https://readthedocs.org/projects/snorkel/badge/?version=master)](https://snorkel.readthedocs.io/en/master)
 [![coverage](https://codecov.io/gh/snorkel-team/snorkel/branch/master/graph/badge.svg)](https://codecov.io/gh/snorkel-team/snorkel/branch/master)
 [![license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Programmatically Building & Managing Training Data 
+***Programmatically Build and Manage Training Data***
 
 # Quick Links
 * [Snorkel website](http://snorkel.org)
@@ -25,18 +28,17 @@ These tutorials demonstrate a variety of tasks, domains, labeling techniques, an
 To install Snorkel, we recommend using `pip`:
 
 ```bash
-pip3 install -U git+https://github.com/snorkel-team/snorkel#egg=snorkel
+pip install snorkel
 ```
 
-Or to install from source:
+or `conda`:
 
 ```bash
-git clone https://github.com/snorkel-team/snorkel
-cd snorkel
-pip3 install -U .
+conda install snorkel -c conda-forge
 ```
 
-We're updating our PyPi and Conda Forge packages, so those will be available soon.
+For information on installing from source and contributing to Snorkel, see our
+[contributing guidelines](./CONTRIBUTING.md).
 
 
 # Discussion

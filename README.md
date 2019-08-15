@@ -11,7 +11,7 @@
 ***Programmatically Build and Manage Training Data***
 
 # Quick Links
-* [Snorkel website](http://snorkel.org)
+* [Snorkel website](https://snorkel.org)
 * [Snorkel tutorials](https://github.com/snorkel-team/snorkel-tutorials)
 * [Snorkel documentation](https://snorkel.readthedocs.io/)
 * [Snorkel community forum](https://spectrum.chat/snorkel)
@@ -19,7 +19,7 @@
 * [Snorkel Twitter](https://twitter.com/SnorkelML)
 
 # Getting Started
-The quickest way to familiarize yourself with the Snorkel library is to walk through the [Get Started](http://snorkel.org/get-started/) page on the Snorkel website, followed by the full-length tutorials in the [Snorkel tutorials](https://github.com/snorkel-team/snorkel-tutorials) repository.
+The quickest way to familiarize yourself with the Snorkel library is to walk through the [Get Started](https://snorkel.org/get-started/) page on the Snorkel website, followed by the full-length tutorials in the [Snorkel tutorials](https://github.com/snorkel-team/snorkel-tutorials) repository.
 These tutorials demonstrate a variety of tasks, domains, labeling techniques, and integrations that can serve as templates as you apply Snorkel to your own applications.
 
 

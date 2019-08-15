@@ -41,7 +41,7 @@ class DaskLFApplier(BaseLFApplier):
         map_fn = df.map_partitions(lambda p_df: p_df.apply(apply_fn, axis=1))
         labels = map_fn.compute(scheduler=scheduler)
         labels_with_index = rows_to_triplets(labels)
-        return self._matrix_from_row_data(labels_with_index)
+        return self._numpy_from_row_data(labels_with_index)
 
 
 class PandasParallelLFApplier(DaskLFApplier):

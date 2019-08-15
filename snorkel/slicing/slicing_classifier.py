@@ -92,7 +92,7 @@ class SlicingClassifier(MultitaskClassifier):
         self.slice_names = slice_names
 
     def make_slice_dataloader(
-        self, dataset: DictDataset, S: np.ndarray, **dataloader_kwargs: Any
+        self, dataset: DictDataset, S: np.recarray, **dataloader_kwargs: Any
     ) -> DictDataLoader:
         """Create DictDataLoader with slice labels, initialized from specified dataset.
 
@@ -111,10 +111,6 @@ class SlicingClassifier(MultitaskClassifier):
             See ``DictDataLoader.__init__``.
         """
 
-        # Validate inputs
-        if S.shape[1] != len(self.slice_names):
-            raise ValueError("Num. columns in S matrix does not match num. slice_names")
-
         # Base task must have corresponding labels in dataset
         if self.base_task.name not in dataset.Y_dict:  # type: ignore
             raise ValueError(
@@ -125,7 +121,7 @@ class SlicingClassifier(MultitaskClassifier):
         dataloader = DictDataLoader(dataset, **dataloader_kwargs)
 
         # Make dataloader slice-aware
-        add_slice_labels(dataloader, self.base_task, S, self.slice_names)
+        add_slice_labels(dataloader, self.base_task, S)
 
         return dataloader
 

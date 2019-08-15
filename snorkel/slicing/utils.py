@@ -1,7 +1,8 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import numpy as np
 import torch
+from numpy.lib import recfunctions as rfn
 from torch import nn
 
 from snorkel.analysis import Scorer
@@ -12,10 +13,7 @@ from .modules.slice_combiner import SliceCombinerModule
 
 
 def add_slice_labels(
-    dataloader: DictDataLoader,
-    base_task: Task,
-    S_matrix: np.ndarray,
-    slice_names: List[str],
+    dataloader: DictDataLoader, base_task: Task, S: np.ndarray
 ) -> None:
     """Modify a dataloader in-place, adding labels for slice tasks.
 
@@ -25,20 +23,24 @@ def add_slice_labels(
         A DictDataLoader whose dataset.Y_dict attribute will be modified in place
     base_task
        The Task for which we want corresponding slice tasks/labels
-       S_matrix
-        A [num_examples x num_slices] slice matrix (output of SFApplier)
-    slice_names
-        A list of slice names corresponding to columns of ``slice_labels``
+    S
+        A recarray (output of SFApplier) containing data fields with slice 
+        indicator information
     """
+    slice_names = S.dtype.names
 
-    slice_labels, slice_names = _add_base_slice(S_matrix, slice_names)
-    assert slice_labels.shape[1] == len(slice_names)
+    # Add the base task if it's missing
+    if "base" not in slice_names:
+        S = rfn.append_fields(
+            [S], names=[("base")], data=[np.ones(S.shape)], asrecarray=True
+        )
 
     Y_dict: Dict[str, np.ndarray] = dataloader.dataset.Y_dict  # type: ignore
     labels = Y_dict[base_task.name]
-    for i, slice_name in enumerate(slice_names):
+
+    for slice_name in slice_names:
         # Gather ind labels
-        ind_labels = torch.LongTensor(slice_labels[:, i])  # type: ignore
+        ind_labels = torch.LongTensor(S[slice_name])  # type: ignore
 
         # Mask out "inactive" pred_labels as specified by ind_labels
         pred_labels = labels.clone()
@@ -215,18 +217,3 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
         scorer=base_task.scorer,
     )
     return slice_tasks + [master_task]
-
-
-def _add_base_slice(
-    slice_labels: np.ndarray, slice_names: List[str]
-) -> Tuple[np.ndarray, List[str]]:
-    """Add the base slice to a list of slice_labels/slice_names (if unspecified)."""
-
-    # Add base slice
-    if "base" not in slice_names:
-        num_points, num_slices = slice_labels.shape
-        base_labels = np.ones((num_points, 1), dtype=int)
-        slice_labels = np.hstack([slice_labels, base_labels])
-        # Make a copy so we don't modify in place
-        slice_names = slice_names + ["base"]
-    return slice_labels, slice_names

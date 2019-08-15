@@ -7,7 +7,7 @@ class SFApplier(LFApplier):
     See ``snorkel.labeling.core.LFApplier`` for details.
     """
 
-    pass
+    use_recarray = True
 
 
 class PandasSFApplier(PandasLFApplier):
@@ -16,4 +16,4 @@ class PandasSFApplier(PandasLFApplier):
     See ``snorkel.labeling.core.PandasLFApplier`` for details.
     """
 
-    pass
+    use_recarray = True

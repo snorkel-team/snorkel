@@ -36,4 +36,4 @@ class SparkLFApplier(BaseLFApplier):
             return apply_lfs_to_data_point(*args, lfs=self._lfs)
 
         labels = data_points.zipWithIndex().map(map_fn).collect()
-        return self._matrix_from_row_data(labels)
+        return self._numpy_from_row_data(labels)

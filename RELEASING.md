@@ -73,7 +73,7 @@ You'll also need to have permissions to push directly to the `master` branch.
    [`meta.yml`](https://github.com/conda-forge/snorkel-feedstock/blob/master/recipe/meta.yaml),
    submit a PR upstream and follow conda-forge's PR instructions.
 
-1. Copy the release notes in `CHANGELOG.md` to the GitHub tag
+1. Copy the release notes in `CHANGELOG.md` to the GitHub tag and publish a release.
 
 1. Update version to, e.g. 0.9.1+dev in `snorkel/VERSION.py`.
 

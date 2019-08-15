@@ -13,7 +13,7 @@ from .modules.slice_combiner import SliceCombinerModule
 
 
 def add_slice_labels(
-    dataloader: DictDataLoader, base_task: Task, S: np.ndarray
+    dataloader: DictDataLoader, base_task: Task, S: np.recarray
 ) -> None:
     """Modify a dataloader in-place, adding labels for slice tasks.
 
@@ -24,16 +24,16 @@ def add_slice_labels(
     base_task
        The Task for which we want corresponding slice tasks/labels
     S
-        A recarray (output of SFApplier) containing data fields with slice 
+        A recarray (output of SFApplier) containing data fields with slice
         indicator information
     """
-    slice_names = S.dtype.names
-
     # Add the base task if it's missing
-    if "base" not in slice_names:
+    if "base" not in S.dtype.names:
         S = rfn.append_fields(
             [S], names=[("base")], data=[np.ones(S.shape)], asrecarray=True
         )
+
+    slice_names = S.dtype.names
 
     Y_dict: Dict[str, np.ndarray] = dataloader.dataset.Y_dict  # type: ignore
     labels = Y_dict[base_task.name]

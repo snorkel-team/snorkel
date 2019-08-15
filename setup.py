@@ -27,7 +27,7 @@ setup(
         "Programming Language :: Python :: 3",
     ],
     project_urls={
-        "Homepage": "http://snorkel.org",
+        "Homepage": "https://snorkel.org",
         "Source": "https://github.com/snorkel-team/snorkel/",
         "Bug Reports": "https://github.com/snorkel-team/snorkel/issues",
         "Citation": "https://doi.org/10.14778/3157794.3157797",

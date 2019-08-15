@@ -3,6 +3,7 @@
 
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/snorkel)
 ![PyPI](https://img.shields.io/pypi/v/snorkel)
+![Conda](https://img.shields.io/conda/v/conda-forge/snorkel)
 [![build](https://travis-ci.com/snorkel-team/snorkel.svg?branch=master)](https://travis-ci.com/snorkel-team/snorkel?branch=master)
 [![docs](https://readthedocs.org/projects/snorkel/badge/?version=master)](https://snorkel.readthedocs.io/en/master)
 [![coverage](https://codecov.io/gh/snorkel-team/snorkel/branch/master/graph/badge.svg)](https://codecov.io/gh/snorkel-team/snorkel/branch/master)
@@ -28,7 +29,10 @@ These tutorials demonstrate a variety of tasks, domains, labeling techniques, an
 To install Snorkel, we recommend using `pip`:
 
 ```bash
-pip install snorkel
+# We're working on resolving the "snorkel" project on PyPI,
+# but you can use the GitHub release version in the meantime. 
+
+pip install https://github.com/snorkel-team/snorkel/releases/download/v0.9.0/snorkel-0.9.0-py3-none-any.whl
 ```
 
 or `conda`:

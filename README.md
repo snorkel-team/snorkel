@@ -30,10 +30,7 @@ These tutorials demonstrate a variety of tasks, domains, labeling techniques, an
 To install Snorkel, we recommend using `pip`:
 
 ```bash
-# We're working on resolving the "snorkel" project on PyPI,
-# but you can use the GitHub release version in the meantime. 
-
-pip install https://github.com/snorkel-team/snorkel/releases/download/v0.9.0/snorkel-0.9.0-py3-none-any.whl
+pip install snorkel
 ```
 
 or `conda`:

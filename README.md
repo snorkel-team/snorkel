@@ -40,6 +40,38 @@ conda install snorkel -c conda-forge
 For information on installing from source and contributing to Snorkel, see our
 [contributing guidelines](./CONTRIBUTING.md).
 
+<details><summary><b>Details on installing with <tt>conda</tt></b></summary>
+<p>
+
+The following example commands give some more color on installing with `conda`.
+These commands assume that your `conda` installation is Python 3.6,
+and that you want to use a virtual environment called `snorkel-env`.
+
+```bash
+# [OPTIONAL] Activate a virtual environment called "snorkel"
+conda create --yes -n snorkel-env python=3.6
+conda activate snorkel-env
+
+# We specify PyTorch here to ensure compatibility, but it may not be necessary.
+conda install pytorch==1.1.0 -c pytorch
+conda install snorkel==0.9.0 -c conda-forge
+```
+
+</p>
+</details>
+
+<details><summary><b>A quick note for Windows users</b></summary>
+<p>
+
+If you're using Windows, we highly recommend using Docker
+(you can find an example in our
+[tutorials repo](https://github.com/snorkel-team/snorkel-tutorials/blob/master/Dockerfile))
+or the [Linux subsystem](https://docs.microsoft.com/en-us/windows/wsl/faq).
+We've done limited testing on Windows, so if you want to contribute instructions
+or improvements, feel free to open a PR!
+
+</p>
+</details>
 
 # Discussion
 

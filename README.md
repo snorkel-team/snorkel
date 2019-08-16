@@ -65,7 +65,7 @@ conda install snorkel==0.9.0 -c conda-forge
 
 If you're using Windows, we highly recommend using Docker
 (you can find an example in our
-[tutorials repo](https://github.com/HazyResearch/snorkel-tutorials))
+[tutorials repo](https://github.com/snorkel-team/snorkel-tutorials/blob/master/Dockerfile))
 or the [Linux subsystem](https://docs.microsoft.com/en-us/windows/wsl/faq).
 We've done limited testing on Windows, so if you want to contribute instructions
 or improvements, feel free to open a PR!

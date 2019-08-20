@@ -2,7 +2,9 @@
 
 We love contributors, so first and foremost, thank you!
 We're actively working on our contributing guidelines, so this document is subject to change.
-First things first: read our [Code of Conduct](./CODE_OF_CONDUCT.md).
+First things first: we adhere to the
+[Contributor Covenant Code of Conduct](http://contributor-covenant.org/version/1/4/),
+and expect all of our contributors to adhere to it as well.
 
 ## Development environment
 
@@ -28,7 +30,7 @@ For example, you can simply activate this environment and start using Snorkel:
 ```bash
 source .env/bin/activate
 
-python3 -c "import snorkel; print(dir(snorkel.labeling))"
+python3 -c "import snorkel.labeling; print(dir(snorkel.labeling))"
 ```
 
 ### Testing and committing

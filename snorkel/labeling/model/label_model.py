@@ -394,7 +394,7 @@ class LabelModel(nn.Module):
         """Return predicted labels, with ties broken according to policy.
 
         Policies to break ties include:
-        "abstain": return an abstain vote (0)
+        "abstain": return an abstain vote (-1)
         "true-random": randomly choose among the tied options
         "random": randomly choose among tied option using deterministic hash
 

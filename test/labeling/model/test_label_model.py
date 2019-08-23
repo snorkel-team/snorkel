@@ -38,6 +38,10 @@ class LabelModelTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "L_train has cardinality"):
             label_model.fit(L, n_epochs=1)
 
+        L = np.array([[0], [1], [-1]])
+        with self.assertRaisesRegex(ValueError, "L_train should have at least 3"):
+            label_model.fit(L, n_epochs=1)
+
     def test_class_balance(self):
         label_model = LabelModel(cardinality=2, verbose=False)
         # Test class balance

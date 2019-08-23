@@ -547,6 +547,8 @@ class LabelModel(nn.Module):
 
     def _set_constants(self, L: np.ndarray) -> None:
         self.n, self.m = L.shape
+        if self.m < 3:
+            raise ValueError(f"L_train should have at least 3 labeling functions")
         self.t = 1
 
     def _create_tree(self) -> None:

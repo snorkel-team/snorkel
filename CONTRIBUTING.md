@@ -60,7 +60,7 @@ We use the following packages:
 * [black](https://black.readthedocs.io/en/stable/): automatic code formatting
 * [flake8](http://flake8.pycqa.org/en/latest/): PEP8 linting
 * [mypy](http://mypy-lang.org/): static type checking
-* [pydocstyle](https://readthedocs.org/projects/pydocstyle/): docstring compliance
+* [pydocstyle](http://www.pydocstyle.org/): docstring compliance
 * [doctest-plus](https://github.com/astropy/pytest-doctestplus): check docstring code examples
 
 The Snorkel maintainers are big fans of [VSCode](https://code.visualstudio.com/)'s Python tooling.

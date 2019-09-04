@@ -23,7 +23,7 @@ tox --devenv .env
 
 Running `tox --devenv .env` will install create a virtual environment with Snorkel
 and all of its dependencies installed in the directory `.env`.
-This can be used in a number of ways, e.g. with `conda activate`
+This can be used in a number of ways, e.g. with `source .env/bin/activate`
 or for [linting in VSCode](https://code.visualstudio.com/docs/python/environments#_where-the-extension-looks-for-environments).
 For example, you can simply activate this environment and start using Snorkel:
 

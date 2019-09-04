@@ -355,10 +355,9 @@ class TestLabelModelAdvanced(unittest.TestCase):
         self.n = 10000  # Number of data points
         self.cardinality = 2  # Number of classes
 
-    def test_label_model(self) -> None:
+    def _test_label_model(self, P : np.ndarray, Y : np.ndarray, L : np.ndarray) -> None:
         """Test the LabelModel's estimate of P and Y."""
         np.random.seed(123)
-        P, Y, L = generate_simple_label_matrix(self.n, self.m, self.cardinality)
 
         # Train LabelModel
         label_model = LabelModel(cardinality=self.cardinality, verbose=False)
@@ -374,6 +373,23 @@ class TestLabelModelAdvanced(unittest.TestCase):
         Y_lm = label_model.predict_proba(L).argmax(axis=1)
         err = np.where(Y != Y_lm, 1, 0).sum() / self.n
         self.assertLess(err, 0.1)
+
+    def test_label_model_basic(self):
+        """Test the LabelModel's estimate of P and Y on a simple synthetic dataset."""
+        P, Y, L = generate_simple_label_matrix(self.n, self.m, self.cardinality)
+        self._test_label_model(P, Y, L)
+
+    def test_label_model_sparse(self):
+        """Test the LabelModel's estimate of P and Y on a sparse synthetic dataset.
+        
+        This tests the common setting where LFs abstain most of the time, which can
+        cause issues for example if parameter clamping set too high (e.g. see Issue
+        #1422).
+        """
+        P, Y, L = generate_simple_label_matrix(
+            self.n, self.m, self.cardinality, abstain_multiplier=1000.0
+        )
+        self._test_label_model(P, Y, L)
 
 
 if __name__ == "__main__":

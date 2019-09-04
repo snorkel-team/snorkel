@@ -19,28 +19,31 @@ from snorkel.classification import (
 from snorkel.utils import set_seed
 
 
+N_TRAIN = 1000
+N_VALID = 300
+
+
 class ClassifierConvergenceTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Ensure deterministic runs
         set_seed(123)
 
-        # Create raw data
-        cls.N_TRAIN = 1000
-        cls.N_VALID = 300
-
-        cls.df_train = create_data(cls.N_TRAIN)
-        cls.df_valid = create_data(cls.N_VALID)
-
     @pytest.mark.complex
     def test_convergence(self):
         """ Test multitask classifier convergence with two tasks."""
 
         dataloaders = []
-        for df, split in [(self.df_train, "train"), (self.df_valid, "valid")]:
-            for task_name in ["task1", "task2"]:
-                dataloader = create_dataloader(df, split, task_name)
-                dataloaders.append(dataloader)
+
+        for offset, task_name in zip([0.0, 0.25], ["task1", "task2"]):
+            df = create_data(N_TRAIN, offset)
+            dataloader = create_dataloader(df, "train", task_name)
+            dataloaders.append(dataloader)
+
+        for offset, task_name in zip([0.0, 0.25], ["task1", "task2"]):
+            df = create_data(N_VALID, offset)
+            dataloader = create_dataloader(df, "valid", task_name)
+            dataloaders.append(dataloader)
 
         task1 = create_task("task1", module_suffixes=["A", "A"])
         task2 = create_task("task2", module_suffixes=["A", "B"])
@@ -71,9 +74,9 @@ class ClassifierConvergenceTest(unittest.TestCase):
             self.assertLess(val_loss, 0.05)
 
 
-def create_data(n: int) -> pd.DataFrame:
+def create_data(n: int, offset=0) -> pd.DataFrame:
     X = np.random.random((n, 2)) * 2 - 1
-    Y = (X[:, 0] < X[:, 1] + 0.25).astype(int)
+    Y = (X[:, 0] < X[:, 1] + offset).astype(int)
 
     df = pd.DataFrame({"x1": X[:, 0], "x2": X[:, 1], "y": Y})
     return df

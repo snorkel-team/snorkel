@@ -63,7 +63,10 @@ class Scorer:
         self.abstain_label = abstain_label
 
     def score(
-        self, golds: np.ndarray, preds: np.ndarray, probs: np.ndarray
+        self,
+        golds: np.ndarray,
+        preds: Optional[np.ndarray] = None,
+        probs: Optional[np.ndarray] = None,
     ) -> Dict[str, float]:
         """Calculate one or more scores from user-specified and/or user-defined metrics.
 

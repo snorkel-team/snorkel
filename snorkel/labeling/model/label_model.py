@@ -46,6 +46,8 @@ class TrainConfig(Config):
         A random seed to initialize the random number generator with
     log_freq
         Report loss every this many epochs (steps)
+    mu_clamp_min
+        Restrict the learned conditional probabilities to [mu_clamp_min, 1-mu_clamp-min]
     """
 
     n_epochs: int = 100
@@ -58,6 +60,7 @@ class TrainConfig(Config):
     prec_init: float = 0.7
     seed: int = np.random.randint(1e6)
     log_freq: int = 10
+    mu_clamp_min: float = 0.0001
 
 
 class LabelModelConfig(Config):
@@ -319,7 +322,6 @@ class LabelModel(nn.Module):
             # The 0th row (corresponding to abstains) is the difference between
             # the sums of the other rows and one, by law of total prob
             c_probs[i * (self.cardinality + 1), :] = 1 - mu_i.sum(axis=0)
-        c_probs = np.clip(c_probs, 0.01, 0.99)
 
         if source is not None:
             return c_probs[
@@ -377,7 +379,7 @@ class LabelModel(nn.Module):
         L_shift = L + 1  # convert to {0, 1, ..., k}
         self._set_constants(L_shift)
         L_aug = self._get_augmented_label_matrix(L_shift)
-        mu = np.clip(self.mu.detach().clone().numpy(), 0.01, 0.99)
+        mu = self.mu.detach().clone().numpy()
         jtm = np.ones(L_aug.shape[1])
 
         # Note: We omit abstains, effectively assuming uniform distribution here
@@ -801,6 +803,15 @@ class LabelModel(nn.Module):
             # Update learning rate
             self._update_lr_scheduler(epoch)
 
+        # Clamp learned parameters
+        # Note: If mu_clamp_min is set too high, e.g. in sparse settings where LFs
+        # mostly abstain, this will cause null results!
+        self.mu.data = self.mu.clamp(
+            self.train_config.mu_clamp_min,
+            1 - self.train_config.mu_clamp_min
+        )
+
+        # Return model to eval mode
         self.eval()
 
         # Print confusion matrix if applicable

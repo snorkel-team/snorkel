@@ -425,7 +425,6 @@ class MultitaskClassifier(nn.Module):
             results = self.predict(
                 dataloader, return_preds=True, remap_labels=remap_labels
             )
-
             # Score and record metrics for each set of predictions
             for label_name, task_name in labels_to_tasks.items():
                 metric_scores = self.scorers[task_name].score(

@@ -355,7 +355,7 @@ class TestLabelModelAdvanced(unittest.TestCase):
         self.n = 10000  # Number of data points
         self.cardinality = 2  # Number of classes
 
-    def _test_label_model(self, P : np.ndarray, Y : np.ndarray, L : np.ndarray) -> None:
+    def _test_label_model(self, P: np.ndarray, Y: np.ndarray, L: np.ndarray) -> None:
         """Test the LabelModel's estimate of P and Y."""
         np.random.seed(123)
 
@@ -381,7 +381,7 @@ class TestLabelModelAdvanced(unittest.TestCase):
 
     def test_label_model_sparse(self):
         """Test the LabelModel's estimate of P and Y on a sparse synthetic dataset.
-        
+
         This tests the common setting where LFs abstain most of the time, which can
         cause issues for example if parameter clamping set too high (e.g. see Issue
         #1422).

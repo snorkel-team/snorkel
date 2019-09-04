@@ -807,8 +807,7 @@ class LabelModel(nn.Module):
         # Note: If mu_clamp_min is set too high, e.g. in sparse settings where LFs
         # mostly abstain, this will cause null results!
         self.mu.data = self.mu.clamp(  # type: ignore
-            self.train_config.mu_clamp_min,
-            1 - self.train_config.mu_clamp_min
+            self.train_config.mu_clamp_min, 1 - self.train_config.mu_clamp_min
         )
 
         # Return model to eval mode

@@ -81,7 +81,7 @@ class LogWriter:
         Parameters
         ----------
         config
-            JSON-compatible config to write to TensorBoard
+            JSON-compatible config to write to file
         config_filename
             Name of file in logging directory to write to
         """

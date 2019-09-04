@@ -1,4 +1,6 @@
 import copy
+import json
+import os
 import tempfile
 import unittest
 
@@ -141,6 +143,24 @@ class TrainerTest(unittest.TestCase):
                     log_writer_config=log_writer_config,
                 )
                 trainer.fit(model, [dataloaders[0]])
+
+    def test_log_writer_json(self):
+        # Addresses issue #1439
+        # Confirm that a log file is written to the specified location after training
+        run_name = "log.json"
+        with tempfile.TemporaryDirectory() as temp_dir:
+            log_writer_config = {"log_dir": temp_dir, "run_name": run_name}
+            trainer = Trainer(
+                **base_config,
+                logging=True,
+                log_writer="json",
+                log_writer_config=log_writer_config,
+            )
+            trainer.fit(model, [dataloaders[0]])
+            log_path = os.path.join(trainer.log_writer.log_dir, run_name)
+            with open(log_path, "r") as f:
+                log = json.load(f)
+            self.assertIn("model/all/train/loss", log)
 
     def test_optimizer_init(self):
         trainer = Trainer(**base_config, optimizer="sgd")

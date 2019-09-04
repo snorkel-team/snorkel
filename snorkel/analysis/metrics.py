@@ -30,7 +30,7 @@ def metric_score(
     preds
         An array of (int) predictions
     probs
-        An [n_datapoints, n_classes] array of probabilistic predictions
+        An [n_datapoints, n_classes] array of probabilistic (float) predictions
     metric
         The name of the metric to calculate
     filter_dict

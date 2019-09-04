@@ -51,6 +51,11 @@ class ScorerTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Cannot score"):
             scorer.score([], [], [])
 
+    def test_no_probs(self) -> None:
+        scorer = Scorer()
+        golds, preds, probs = self._get_labels()
+        self.assertEqual(scorer.score(golds, preds), scorer.score(golds, preds, probs))
+
     def test_abstain_labels(self) -> None:
         # We abstain on the last example by convention (label=-1)
         golds = np.array([1, 0, 1, 0, -1])

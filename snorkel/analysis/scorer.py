@@ -63,18 +63,25 @@ class Scorer:
         self.abstain_label = abstain_label
 
     def score(
-        self, golds: np.ndarray, preds: np.ndarray, probs: np.ndarray
+        self,
+        golds: np.ndarray,
+        preds: Optional[np.ndarray] = None,
+        probs: Optional[np.ndarray] = None,
     ) -> Dict[str, float]:
-        """Calculate one or more scores from user-specified and/or user-defined metrics.
+        """Calculate scores for one or more user-specified metrics.
 
         Parameters
         ----------
         golds
-            Gold (aka ground truth) labels (integers)
+            An array of gold (int) labels to base scores on
         preds
-            Predictions (integers)
-        probs:
-            Probabilities (floats)
+            An [n_datapoints,] or [n_datapoints, 1] array of (int) predictions to score
+        probs
+            An [n_datapoints, n_classes] array of probabilistic (float) predictions
+
+        Because most metrics require either `preds` or `probs`, but not both, these
+        values are optional; it is up to the metric function that will be called  to
+        raise an exception if a field it requires is not passed to the `score()` method.
 
         Returns
         -------

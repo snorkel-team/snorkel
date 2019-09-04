@@ -18,7 +18,6 @@ from snorkel.classification import (
 )
 from snorkel.utils import set_seed
 
-
 N_TRAIN = 1000
 N_VALID = 300
 

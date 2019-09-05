@@ -345,14 +345,14 @@ class LabelModelTest(unittest.TestCase):
             label_model.fit(L, lr_scheduler_config=lr_scheduler_config)
 
     def test_set_mu_eps(self):
-        MU_EPS = 0.0123
+        mu_eps = 0.0123
 
         # Construct a label matrix such that P(\lambda_1 = 0 | Y) = 0.0, so it will hit
         # the mu_eps floor
         L = np.array([[1, 1, 1], [1, 1, 1]])
         label_model = LabelModel(verbose=False)
-        label_model.fit(L, mu_eps=MU_EPS)
-        self.assertAlmostEqual(label_model._get_conditional_probs(0)[1, 0], MU_EPS)
+        label_model.fit(L, mu_eps=mu_eps)
+        self.assertAlmostEqual(label_model._get_conditional_probs(0)[1, 0], mu_eps)
 
 
 @pytest.mark.complex
@@ -372,7 +372,7 @@ class TestLabelModelAdvanced(unittest.TestCase):
 
         # Train LabelModel
         label_model = LabelModel(cardinality=self.cardinality, verbose=False)
-        label_model.fit(L, n_epochs=1000, lr=0.01, seed=123)
+        label_model.fit(L, n_epochs=200, lr=0.01, seed=123)
 
         # Test estimated LF conditional probabilities
         P_lm = label_model._get_conditional_probs().reshape(

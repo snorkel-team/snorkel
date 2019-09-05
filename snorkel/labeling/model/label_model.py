@@ -60,7 +60,7 @@ class TrainConfig(Config):
     prec_init: float = 0.7
     seed: int = np.random.randint(1e6)
     log_freq: int = 10
-    mu_eps: float = -1.0
+    mu_eps: Optional[float] = None
 
 
 class LabelModelConfig(Config):
@@ -810,10 +810,10 @@ class LabelModel(nn.Module):
         # Note: Use user-provided value, else default to 1 / n', where n' is n rounded
         # to the closest power of ten; this rounding is done to make it more obvious
         # when the parameters have been clamped.
-        if self.train_config.mu_eps >= 0:
+        if self.train_config.mu_eps is not None:
             mu_eps = self.train_config.mu_eps
         else:
-            mu_eps = min(0.01, 1 / 10 ** np.round(np.log10(self.n)))
+            mu_eps = min(0.01, 1 / 10 ** np.ceil(np.log10(self.n)))
         self.mu.data = self.mu.clamp(mu_eps, 1 - mu_eps)  # type: ignore
 
         # Return model to eval mode

@@ -131,4 +131,4 @@ class LogWriter:
 
     def close(self) -> None:
         """Close writer if necessary."""
-        pass
+        self.write_log("log.json")

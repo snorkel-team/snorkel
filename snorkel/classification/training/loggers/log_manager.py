@@ -1,5 +1,4 @@
 import logging
-import os
 from typing import Any, Optional
 
 from snorkel.classification.multitask_classifier import MultitaskClassifier
@@ -131,7 +130,6 @@ class LogManager:
     def close(self, model: MultitaskClassifier) -> MultitaskClassifier:
         """Close the log writer and checkpointer if needed. Reload best model."""
         if self.log_writer is not None:
-            self.log_writer.write_log(os.path.join(self.log_writer.log_dir, "log.json"))
             self.log_writer.close()
         if self.checkpointer is not None:
             self.checkpointer.clear()

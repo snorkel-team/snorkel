@@ -355,13 +355,14 @@ class TestLabelModelAdvanced(unittest.TestCase):
         self.n = 10000  # Number of data points
         self.cardinality = 2  # Number of classes
 
-    def _test_label_model(self, P: np.ndarray, Y: np.ndarray, L: np.ndarray) -> None:
-        """Test the LabelModel's estimate of P and Y."""
+    def test_label_model_basic(self) -> None:
+        """Test the LabelModel's estimate of P and Y on a simple synthetic dataset."""
         np.random.seed(123)
+        P, Y, L = generate_simple_label_matrix(self.n, self.m, self.cardinality)
 
         # Train LabelModel
         label_model = LabelModel(cardinality=self.cardinality, verbose=False)
-        label_model.fit(L, n_epochs=200, lr=0.01, seed=123)
+        label_model.fit(L, n_epochs=1000, lr=0.01, seed=123)
 
         # Test estimated LF conditional probabilities
         P_lm = label_model._get_conditional_probs().reshape(
@@ -370,26 +371,39 @@ class TestLabelModelAdvanced(unittest.TestCase):
         np.testing.assert_array_almost_equal(P, P_lm, decimal=2)
 
         # Test predicted labels
-        Y_lm = label_model.predict_proba(L).argmax(axis=1)
-        err = np.where(Y != Y_lm, 1, 0).sum() / self.n
-        self.assertLess(err, 0.1)
+        score = label_model.score(L, Y)
+        self.assertGreaterEqual(score["accuracy"], 0.9)
 
-    def test_label_model_basic(self):
-        """Test the LabelModel's estimate of P and Y on a simple synthetic dataset."""
-        P, Y, L = generate_simple_label_matrix(self.n, self.m, self.cardinality)
-        self._test_label_model(P, Y, L)
-
-    def test_label_model_sparse(self):
+    def test_label_model_sparse(self) -> None:
         """Test the LabelModel's estimate of P and Y on a sparse synthetic dataset.
 
         This tests the common setting where LFs abstain most of the time, which can
         cause issues for example if parameter clamping set too high (e.g. see Issue
         #1422).
         """
+        np.random.seed(123)
         P, Y, L = generate_simple_label_matrix(
             self.n, self.m, self.cardinality, abstain_multiplier=1000.0
         )
-        self._test_label_model(P, Y, L)
+
+        # Train LabelModel
+        label_model = LabelModel(cardinality=self.cardinality, verbose=False)
+        label_model.fit(L, n_epochs=1000, lr=0.01, seed=123)
+
+        # Test estimated LF conditional probabilities
+        P_lm = label_model._get_conditional_probs().reshape(
+            (self.m, self.cardinality + 1, -1)
+        )
+        np.testing.assert_array_almost_equal(P, P_lm, decimal=2)
+
+        # Test predicted labels *only on non-abstained data points*
+        Y_pred = label_model.predict(L, tie_break_policy="abstain")
+        idx, = np.where(Y_pred != -1)
+        acc = np.where(Y_pred[idx] == Y[idx], 1, 0).sum() / len(idx)
+        self.assertGreaterEqual(acc, 0.65)
+
+        # Make sure that we don't output abstain when an LF votes, per issue #1422
+        self.assertEqual(len(idx), np.where((L + 1).sum(axis=1) != 0, 1, 0).sum())
 
 
 if __name__ == "__main__":

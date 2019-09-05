@@ -201,7 +201,7 @@ class LabelModelTest(unittest.TestCase):
         L = np.array([[0, 1, 0], [0, 1, 0]])
         label_model = self._set_up_model(L)
 
-        label_model.mu = nn.Parameter(label_model.mu_init.clone())
+        label_model.mu = nn.Parameter(label_model.mu_init.clone().clamp(0.01, 0.99))
         probs = label_model.predict_proba(L)
 
         # with matching labels from 3 LFs, predicted probs clamped at (0.99,0.01)
@@ -212,7 +212,7 @@ class LabelModelTest(unittest.TestCase):
         L = np.array([[0, 1, 0], [0, 1, 0]])
         label_model = self._set_up_model(L)
 
-        label_model.mu = nn.Parameter(label_model.mu_init.clone())
+        label_model.mu = nn.Parameter(label_model.mu_init.clone().clamp(0.01, 0.99))
         preds = label_model.predict(L)
 
         true_preds = np.array([0, 0])
@@ -225,7 +225,7 @@ class LabelModelTest(unittest.TestCase):
     def test_score(self):
         L = np.array([[1, 0, 1], [1, 0, 1]])
         label_model = self._set_up_model(L)
-        label_model.mu = nn.Parameter(label_model.mu_init.clone())
+        label_model.mu = nn.Parameter(label_model.mu_init.clone().clamp(0.01, 0.99))
 
         results = label_model.score(L, Y=np.array([0, 1]))
         results_expected = dict(accuracy=0.5)

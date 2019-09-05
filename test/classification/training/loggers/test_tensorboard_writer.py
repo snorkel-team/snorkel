@@ -32,4 +32,4 @@ class TestTensorBoardWriter(unittest.TestCase):
         with open(log_path, "r") as f:
             file_config = json.load(f)
         self.assertEqual(config._asdict(), file_config)
-        writer.close()
+        writer.cleanup()

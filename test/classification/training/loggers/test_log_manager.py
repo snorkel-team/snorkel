@@ -3,7 +3,7 @@ import tempfile
 import unittest
 
 from snorkel.classification.multitask_classifier import MultitaskClassifier
-from snorkel.classification.training.loggers import Checkpointer, LogManager, LogWriter
+from snorkel.classification.training.loggers import Checkpointer, LogManager
 
 
 class TestLogManager(unittest.TestCase):
@@ -109,16 +109,15 @@ class TestLogManager(unittest.TestCase):
         self.assertEqual(log_manager.batch_total, 4)
         self.assertEqual(log_manager.epoch_total, 2)
 
-    def test_close(self) -> None:
+    def test_load_on_cleanup(self) -> None:
         log_manager_config = {"counter_unit": "epochs", "evaluation_freq": 1}
-        log_writer = LogWriter()
         checkpointer = Checkpointer(**log_manager_config, checkpoint_dir=self.test_dir)
         log_manager = LogManager(
-            n_batches_per_epoch=2, checkpointer=checkpointer, log_writer=log_writer
+            n_batches_per_epoch=2, checkpointer=checkpointer, log_writer=None
         )
 
         classifier = MultitaskClassifier([])
-        best_classifier = log_manager.close(classifier)
+        best_classifier = log_manager.cleanup(classifier)
         self.assertEqual(best_classifier, classifier)
 
     def test_bad_unit(self) -> None:

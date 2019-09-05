@@ -56,6 +56,6 @@ class TensorBoardWriter(LogWriter):
         super().write_config(config, config_filename)
         self.writer.add_text(tag="config", text_string=str(config))
 
-    def close(self) -> None:
+    def cleanup(self) -> None:
         """Close the ``SummaryWriter``."""
         self.writer.close()

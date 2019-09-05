@@ -48,7 +48,7 @@ class TestLogWriter(unittest.TestCase):
 
     def test_write_config(self) -> None:
         run_name = "my_run"
-        config = TempConfig(b="bar")
+        config = TempConfig(b="bar")  # type: ignore
         log_writer = LogWriter(run_name=run_name, log_dir=self.test_dir)
         log_writer.write_config(config)
         log_path = os.path.join(self.test_dir, run_name, "config.json")

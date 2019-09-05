@@ -244,7 +244,7 @@ class Trainer:
 
                 batches.set_postfix(self.metrics)
 
-        model = self.log_manager.close(model)
+        model = self.log_manager.cleanup(model)
 
     def _check_dataloaders(self, dataloaders: List["DictDataLoader"]) -> None:
         """Validate the dataloader splits."""

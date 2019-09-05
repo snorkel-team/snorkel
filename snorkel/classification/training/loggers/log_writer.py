@@ -81,7 +81,7 @@ class LogWriter:
         Parameters
         ----------
         config
-            JSON-compatible config to write to TensorBoard
+            JSON-compatible config to write to file
         config_filename
             Name of file in logging directory to write to
         """
@@ -129,6 +129,6 @@ class LogWriter:
         with open(log_path, "w") as f:
             json.dump(dict_to_write, f)
 
-    def close(self) -> None:
-        """Close writer if necessary."""
-        pass
+    def cleanup(self) -> None:
+        """Perform final operations and close writer if necessary."""
+        self.write_log("log.json")

@@ -286,12 +286,12 @@ class LabelModel(nn.Module):
     def _get_conditional_probs(self, mu: np.ndarray) -> np.ndarray:
         r"""Return the estimated conditional probabilities table given parameters mu.
 
-        Given a parameter vector mu, return the estimated conditional probabilites 
+        Given a parameter vector mu, return the estimated conditional probabilites
         table cprobs, where cprobs is an (m, k+1, k)-dim np.ndarray with:
 
             cprobs[i, j, k] = P(\lf_i = j-1 | Y = k)
 
-        where m is the number of LFs, k is the cardinality, and cprobs includes the 
+        where m is the number of LFs, k is the cardinality, and cprobs includes the
         conditional abstain probabilities P(\lf_i = -1 | Y = y).
 
         Parameters
@@ -325,7 +325,7 @@ class LabelModel(nn.Module):
 
             cprobs[i, j, k] = P(\lf_i = j-1 | Y = k)
 
-        where m is the number of LFs, k is the cardinality, and cprobs includes the 
+        where m is the number of LFs, k is the cardinality, and cprobs includes the
         conditional abstain probabilities P(\lf_i = -1 | Y = y).
 
         Returns

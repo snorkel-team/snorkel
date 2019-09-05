@@ -130,6 +130,8 @@ class LogManager:
     def close(self, model: MultitaskClassifier) -> MultitaskClassifier:
         """Close the log writer and checkpointer if needed. Reload best model."""
         if self.log_writer is not None:
+            # The close method may also include writing a log file to disk, depending
+            # on the LogWriter being used.
             self.log_writer.close()
         if self.checkpointer is not None:
             self.checkpointer.clear()

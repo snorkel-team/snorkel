@@ -130,5 +130,5 @@ class LogWriter:
             json.dump(dict_to_write, f)
 
     def close(self) -> None:
-        """Close writer if necessary."""
+        """Perform final operations and close writer if necessary."""
         self.write_log("log.json")

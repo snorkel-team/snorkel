@@ -243,7 +243,9 @@ class LabelModelTest(unittest.TestCase):
         L = np.array([[-1, 1, 0], [0, -1, 1], [1, 0, -1]])
         label_model = LabelModel(cardinality=2, verbose=False)
         label_model.fit(L, n_epochs=100)
-        np.testing.assert_array_almost_equal(label_model.predict(L), np.array([-1, -1, -1]))
+        np.testing.assert_array_almost_equal(
+            label_model.predict(L), np.array([-1, -1, -1])
+        )
 
         L = np.array([[0, 1, 0], [0, 1, 0]])
         label_model = self._set_up_model(L)
@@ -264,7 +266,9 @@ class LabelModelTest(unittest.TestCase):
         label_model = LabelModel(cardinality=2, verbose=False)
         label_model.fit(L, n_epochs=100)
         results = label_model.score(L, Y)
-        np.testing.assert_array_almost_equal(label_model.predict(L), np.array([1, -1, 1]))
+        np.testing.assert_array_almost_equal(
+            label_model.predict(L), np.array([1, -1, 1])
+        )
 
         results_expected = dict(accuracy=1.0)
         self.assertEqual(results, results_expected)

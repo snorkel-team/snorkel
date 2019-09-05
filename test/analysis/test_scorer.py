@@ -68,10 +68,17 @@ class ScorerTest(unittest.TestCase):
         results_expected = dict(accuracy=0.6)
         self.assertEqual(results, results_expected)
 
-        # Test abstain=-1
+        # Test abstain=-1 for gold
         scorer = Scorer(metrics=["accuracy"], abstain_label=-1)
         results = scorer.score(golds, preds, probs)
         results_expected = dict(accuracy=0.75)
+        self.assertEqual(results, results_expected)
+
+        # Test abstain=-1 for preds and gold
+        abstain_preds = np.array([-1, -1, 1, 1, 0])
+        abstain_probs = np.array([0.5, 0.5, 0.9, 0.7, 0.4])
+        results = scorer.score(golds, abstain_preds, abstain_probs)
+        results_expected = dict(accuracy=0.5)
         self.assertEqual(results, results_expected)
 
         # Test abstain set to different value

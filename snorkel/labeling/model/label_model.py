@@ -477,8 +477,10 @@ class LabelModel(nn.Module):
         >>> label_model.score(L, Y=np.array([1, 1, 1]), metrics=["f1"])
         {'f1': 0.8}
         """
-        if tie_break_policy == 'abstain':
-            logging.warning(f"Metrics calculated over datapoints with non-abstain labels only")
+        if tie_break_policy == "abstain":
+            logging.warning(
+                f"Metrics calculated over datapoints with non-abstain labels only"
+            )
 
         Y_pred, Y_prob = self.predict(
             L, return_probs=True, tie_break_policy=tie_break_policy

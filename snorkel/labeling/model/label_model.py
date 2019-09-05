@@ -546,10 +546,14 @@ class LabelModel(nn.Module):
         else:
             self.p = (1 / self.cardinality) * np.ones(self.cardinality)
 
-        if np.any(self.p) == 0:
+        if np.any(self.p == 0):
             raise ValueError(
-                f"No examples for class(es) {np.where(self.p)[0]}."
+                f"Class balance prior is 0 for class(es) {np.where(self.p)[0]}."
             )
+        if len(sorted_counts) != self.cardinality:
+                raise ValueError(
+                    f"Y_dev has {len(sorted_counts)} classes. Does not match LabelModel cardinality {self.cardinality}."
+                )
 
         self.P = torch.diag(torch.from_numpy(self.p)).float()
 
@@ -752,16 +756,6 @@ class LabelModel(nn.Module):
         self._set_class_balance(class_balance, Y_dev)
 
         lf_analysis = LFAnalysis(L_train)
-        # if lf_analysis.label_overlap() == 0.:
-        #     raise ValueError(
-        #         f"LFs have no overlap. Consider using MajorityVote."
-        #     )
-
-        # if lf_analysis.label_conflict() == 0.:
-        #     raise ValueError(
-        #         f"LFs have no conflicts. Consider using MajorityVote."
-        #     )
-
         if np.sum(lf_analysis.lf_overlaps() != 0.) <= 2:
             raise ValueError(
                 f"Less than 2 LFs have overlaps. LabelModel performance may be affected. Consider using MajorityVote."

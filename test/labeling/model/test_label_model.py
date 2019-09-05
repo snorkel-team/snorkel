@@ -57,6 +57,14 @@ class LabelModelTest(unittest.TestCase):
         label_model._set_class_balance(class_balance=None, Y_dev=Y_dev)
         np.testing.assert_array_almost_equal(label_model.p, np.array([0.6, 0.4]))
 
+        class_balance = np.array([0.0, 1.0])
+        with self.assertRaisesRegex(ValueError, "Class balance prior is 0"):
+            label_model._set_class_balance(class_balance=class_balance, Y_dev=Y_dev)
+
+        Y_dev_one_class = np.array([0, 0, 0])
+        with self.assertRaisesRegex(ValueError, "Y_dev has 1 classes"):
+            label_model._set_class_balance(class_balance=None, Y_dev=Y_dev_one_class)
+
     def test_generate_O(self):
         L = np.array([[0, 1, 0], [0, 1, 0], [1, 0, 0], [0, 1, 1]])
         label_model = self._set_up_model(L)

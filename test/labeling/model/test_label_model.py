@@ -124,9 +124,9 @@ class LabelModelTest(unittest.TestCase):
     def test_conditional_probs(self):
         L = np.array([[0, 1, 0], [0, 1, 0]])
         label_model = self._set_up_model(L, class_balance=[0.6, 0.4])
-        probs = label_model._get_conditional_probs()
-        self.assertLessEqual(probs.max(), 1.0)
-        self.assertGreaterEqual(probs.min(), 0.0)
+        cprobs = label_model.get_conditional_probs()
+        self.assertLessEqual(cprobs.max(), 1.0)
+        self.assertGreaterEqual(cprobs.min(), 0.0)
 
     def test_get_weight(self):
         # set up L matrix
@@ -352,7 +352,7 @@ class LabelModelTest(unittest.TestCase):
         L = np.array([[1, 1, 1], [1, 1, 1]])
         label_model = LabelModel(verbose=False)
         label_model.fit(L, mu_eps=mu_eps)
-        self.assertAlmostEqual(label_model._get_conditional_probs(0)[1, 0], mu_eps)
+        self.assertAlmostEqual(label_model.get_conditional_probs[0, 1, 0], mu_eps)
 
 
 @pytest.mark.complex
@@ -375,9 +375,7 @@ class TestLabelModelAdvanced(unittest.TestCase):
         label_model.fit(L, n_epochs=200, lr=0.01, seed=123)
 
         # Test estimated LF conditional probabilities
-        P_lm = label_model._get_conditional_probs().reshape(
-            (self.m, self.cardinality + 1, -1)
-        )
+        P_lm = LabelModel.get_conditional_probs()
         np.testing.assert_array_almost_equal(P, P_lm, decimal=2)
 
         # Test predicted labels
@@ -401,9 +399,7 @@ class TestLabelModelAdvanced(unittest.TestCase):
         label_model.fit(L, n_epochs=1000, lr=0.01, seed=123)
 
         # Test estimated LF conditional probabilities
-        P_lm = label_model._get_conditional_probs().reshape(
-            (self.m, self.cardinality + 1, -1)
-        )
+        P_lm = label_model.get_conditional_probs()
         np.testing.assert_array_almost_equal(P, P_lm, decimal=2)
 
         # Test predicted labels *only on non-abstained data points*

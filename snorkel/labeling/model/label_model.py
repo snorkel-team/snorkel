@@ -1,6 +1,6 @@
 import logging
 from collections import Counter
-from itertools import chain
+from itertools import chain, permutations
 from typing import Any, Dict, List, NamedTuple, Optional, Set, Tuple, Union
 
 import numpy as np
@@ -283,52 +283,57 @@ class LabelModel(nn.Module):
         # Build the mask over O^{-1}
         self._build_mask()
 
-    def _get_conditional_probs(self, source: Optional[int] = None) -> np.ndarray:
-        r"""Return the full conditional probabilities table.
+    def _get_conditional_probs(self, mu: np.ndarray) -> np.ndarray:
+        r"""Return the estimated conditional probabilities table given parameters mu.
 
-        In cond. prob. table, row i*(k+1) + ly is the conditional probabilities of source i
-        emmiting label ly (including abstains 0), conditioned on different
-        values of Y, i.e.:
+        Given a parameter vector mu, return the estimated conditional probabilites 
+        table cprobs, where cprobs is an (m, k+1, k)-dim np.ndarray with:
 
-            c_probs[i*(k+1) + ly, y] = P(\lambda_i = ly | Y = y)
+            cprobs[i, j, k] = P(\lf_i = j-1 | Y = k)
 
-        Note that this simply involves inferring the kth row by law of total
-        probability and adding in to mu.
-
-        If ``source`` is not None, returns only the corresponding block.
+        where m is the number of LFs, k is the cardinality, and cprobs includes the 
+        conditional abstain probabilities P(\lf_i = -1 | Y = y).
 
         Parameters
         ----------
-        source
-            Index of source to generate conditional probabilities for, by default None
+        mu
+            An [m * k, k] np.ndarray with entries in [0, 1]
 
         Returns
         -------
         np.ndarray
             Conditional probabilities table if source is None, else corresponding block
         """
-        c_probs = np.zeros((self.m * (self.cardinality + 1), self.cardinality))
-        mu = self.mu.detach().clone().numpy()
-
+        cprobs = np.zeros((self.m, self.cardinality + 1, self.cardinality))
         for i in range(self.m):
             # si = self.c_data[(i,)]['start_index']
             # ei = self.c_data[(i,)]['end_index']
             # mu_i = mu[si:ei, :]
             mu_i = mu[i * self.cardinality : (i + 1) * self.cardinality, :]
-            c_probs[
-                i * (self.cardinality + 1) + 1 : (i + 1) * (self.cardinality + 1), :
-            ] = mu_i
+            cprobs[i, 1:, :] = mu_i
 
             # The 0th row (corresponding to abstains) is the difference between
-            # the sums of the other rows and one, by law of total prob
-            c_probs[i * (self.cardinality + 1), :] = 1 - mu_i.sum(axis=0)
+            # the sums of the other rows and one, by law of total probability
+            cprobs[i, 0, :] = 1 - mu_i.sum(axis=0)
+        return cprobs
 
-        if source is not None:
-            return c_probs[
-                source * (self.cardinality + 1) : (source + 1) * (self.cardinality + 1)
-            ]
-        else:
-            return c_probs
+    def get_conditional_probs(self) -> np.ndarray:
+        r"""Return the estimated conditional probabilities table.
+
+        Return the estimated conditional probabilites table cprobs, where cprobs is an
+        (m, k+1, k)-dim np.ndarray with:
+
+            cprobs[i, j, k] = P(\lf_i = j-1 | Y = k)
+
+        where m is the number of LFs, k is the cardinality, and cprobs includes the 
+        conditional abstain probabilities P(\lf_i = -1 | Y = y).
+
+        Returns
+        -------
+        np.ndarray
+            Conditional probabilities table if source is None, else corresponding block
+        """
+        return self._get_conditional_probs(self.mu.detach().clone().numpy())
 
     def get_weights(self) -> np.ndarray:
         """Return the vector of learned LF weights for combining LFs.
@@ -347,10 +352,9 @@ class LabelModel(nn.Module):
         array([0.99, 0.99, 0.99])
         """
         accs = np.zeros(self.m)
+        cprobs = self.get_conditional_probs()
         for i in range(self.m):
-            cps = self._get_conditional_probs(source=i)[1:, :]
-            accs[i] = np.diag(cps @ self.P.numpy()).sum()
-
+            accs[i] = np.diag(cprobs[i, 1:, :] @ self.P.numpy()).sum()
         return np.clip(accs / self.coverage, 1e-6, 1.0)
 
     def predict_proba(self, L: np.ndarray) -> np.ndarray:
@@ -693,6 +697,64 @@ class LabelModel(nn.Module):
             if min_lr and self.optimizer.param_groups[0]["lr"] < min_lr:
                 self.optimizer.param_groups[0]["lr"] = min_lr
 
+    def _clamp_params(self) -> None:
+        """Clamp the values of the learned parameter vector.
+
+        Clamp the entries of self.mu to be in [mu_eps, 1 - mu_eps], where mu_eps is
+        either set by the user, or defaults to 1 / 10 ** np.ceil(np.log10(self.n)).
+
+        Note that if mu_eps is set too high, e.g. in sparse settings where LFs
+        mostly abstain, this will result in learning conditional probabilities all
+        equal to mu_eps (and/or 1 - mu_eps)!  See issue #1422.
+
+        Note: Use user-provided value of mu_eps in train_config, else default to
+            mu_eps = 1 / 10 ** np.ceil(np.log10(self.n))
+        this rounding is done to make it more obvious when the parameters have been
+        clamped.
+        """
+        if self.train_config.mu_eps is not None:
+            mu_eps = self.train_config.mu_eps
+        else:
+            mu_eps = min(0.01, 1 / 10 ** np.ceil(np.log10(self.n)))
+        self.mu.data = self.mu.clamp(mu_eps, 1 - mu_eps)  # type: ignore
+
+    def _break_col_permutation_symmetry(self) -> None:
+        r"""Heuristically choose amongst (possibly) several valid mu values.
+
+        If there are several values of mu that equivalently satisfy the optimization
+        objective, as there often are due to column permutation symmetries, then pick
+        the solution that trusts the user-written LFs most.
+
+        In more detail, suppose that mu satisfies (minimizes) the two loss objectives:
+            1. O = mu @ P @ mu.T
+            2. diag(O) = sum(mu @ P, axis=1)
+        Then any column permutation matrix Z that commutes with P will also equivalently
+        satisfy these objectives, and thus is an equally valid (symmetric) solution.
+        Therefore, we select the solution where the estimated values of the LFs being
+        correct, P(\lf = y, Y = y), are net highest. Note that this is not the only
+        possible heuristic (assumption) that we could use.
+        """
+        mu = self.mu.clone()
+        d, k = mu.shape
+
+        # Iterate through the possible perumation matrices and track heuristic scores
+        Zs = []
+        scores = []
+        for idxs in permutations(range(k)):
+            Z = torch.eye(k)[:, idxs]
+            Zs.append(Z)
+
+            # If Z and P commute, get heuristic score, else skip
+            if Z @ self.P == self.P @ self.Z:
+                cprobs = self._get_conditional_probs(mu @ Z)
+                s = np.sum([np.diagonal(cprobs[i, 1:, :]).sum() for i in range(self.m)])
+                scores.append(s)
+            else:
+                scores.append(-1)
+
+        # Set mu according to highest-scoring permutation
+        self.mu.data = mu @ Zs[np.argmax(scores)]  # type: ignore
+
     def fit(
         self,
         L_train: np.ndarray,
@@ -803,18 +865,9 @@ class LabelModel(nn.Module):
             # Update learning rate
             self._update_lr_scheduler(epoch)
 
-        # Clamp learned parameters
-        # Note: If mu_eps is set too high, e.g. in sparse settings where LFs
-        # mostly abstain, this will result in learning conditional probabilities all
-        # equal to mu_eps (and/or 1 - mu_eps)!
-        # Note: Use user-provided value, else default to 1 / n', where n' is n rounded
-        # to the closest power of ten; this rounding is done to make it more obvious
-        # when the parameters have been clamped.
-        if self.train_config.mu_eps is not None:
-            mu_eps = self.train_config.mu_eps
-        else:
-            mu_eps = min(0.01, 1 / 10 ** np.ceil(np.log10(self.n)))
-        self.mu.data = self.mu.clamp(mu_eps, 1 - mu_eps)  # type: ignore
+        # Post-processing operations on mu
+        self._clamp_params()
+        self._break_col_permutation_symmetry()
 
         # Return model to eval mode
         self.eval()

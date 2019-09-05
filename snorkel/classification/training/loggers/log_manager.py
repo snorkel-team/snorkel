@@ -127,12 +127,10 @@ class LogManager:
         self.epoch_count = 0
         self.unit_count = 0
 
-    def close(self, model: MultitaskClassifier) -> MultitaskClassifier:
+    def cleanup(self, model: MultitaskClassifier) -> MultitaskClassifier:
         """Close the log writer and checkpointer if needed. Reload best model."""
         if self.log_writer is not None:
-            # The close method may also include writing a log file to disk, depending
-            # on the LogWriter being used.
-            self.log_writer.close()
+            self.log_writer.cleanup()
         if self.checkpointer is not None:
             self.checkpointer.clear()
             model = self.checkpointer.load_best_model(model)

@@ -109,7 +109,7 @@ class TestLogManager(unittest.TestCase):
         self.assertEqual(log_manager.batch_total, 4)
         self.assertEqual(log_manager.epoch_total, 2)
 
-    def test_load_on_close(self) -> None:
+    def test_load_on_cleanup(self) -> None:
         log_manager_config = {"counter_unit": "epochs", "evaluation_freq": 1}
         checkpointer = Checkpointer(**log_manager_config, checkpoint_dir=self.test_dir)
         log_manager = LogManager(
@@ -117,7 +117,7 @@ class TestLogManager(unittest.TestCase):
         )
 
         classifier = MultitaskClassifier([])
-        best_classifier = log_manager.close(classifier)
+        best_classifier = log_manager.cleanup(classifier)
         self.assertEqual(best_classifier, classifier)
 
     def test_bad_unit(self) -> None:

@@ -344,6 +344,16 @@ class LabelModelTest(unittest.TestCase):
             lr_scheduler_config = {"warmup_steps": 1, "warmup_unit": "batches"}
             label_model.fit(L, lr_scheduler_config=lr_scheduler_config)
 
+    def test_set_mu_eps(self):
+        MU_EPS = 0.0123
+
+        # Construct a label matrix such that P(\lambda_1 = 0 | Y) = 0.0, so it will hit
+        # the mu_eps floor
+        L = np.array([[1, 1, 1], [1, 1, 1]])
+        label_model = LabelModel(verbose=False)
+        label_model.fit(L, mu_eps=MU_EPS)
+        self.assertAlmostEqual(label_model._get_conditional_probs(0)[1, 0], MU_EPS)
+
 
 @pytest.mark.complex
 class TestLabelModelAdvanced(unittest.TestCase):

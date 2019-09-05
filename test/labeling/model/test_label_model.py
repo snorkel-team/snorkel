@@ -29,17 +29,25 @@ class LabelModelTest(unittest.TestCase):
 
     def test_L_form(self):
         label_model = LabelModel(cardinality=2, verbose=False)
-        L = np.array([[0, 1, 0], [0, 1, 0], [1, 0, 0], [0, 1, 0]])
+        L = np.array([[-1, 1, -1], [-1, 1, -1], [1, -1, -1], [-1, 1, -1]])
         label_model._set_constants(L)
         self.assertEqual(label_model.n, 4)
         self.assertEqual(label_model.m, 3)
 
-        L = np.array([[0, 1, 2], [0, 1, 2], [1, 0, 2], [0, 1, 0]])
+        L = np.array([[-1, 0, 1], [-1, 0, 2], [0, -1, 2], [-1, 0, -1]])
         with self.assertRaisesRegex(ValueError, "L_train has cardinality"):
             label_model.fit(L, n_epochs=1)
 
-        L = np.array([[0], [1], [-1]])
+        L = np.array([[0, 1], [1, 1], [0, 1]])
         with self.assertRaisesRegex(ValueError, "L_train should have at least 3"):
+            label_model.fit(L, n_epochs=1)
+
+        L = np.array([[-1, -1, 1], [-1, 1, -1], [0, -1, -1]])
+        with self.assertRaisesRegex(ValueError, "Less than 2 LFs have overlaps"):
+            label_model.fit(L, n_epochs=1)
+
+        L = np.array([[-1, -1, 1], [-1, 1, 1], [1, 1, 1]])
+        with self.assertRaisesRegex(ValueError, "Less than 2 LFs have conflicts"):
             label_model.fit(L, n_epochs=1)
 
     def test_class_balance(self):

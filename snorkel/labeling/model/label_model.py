@@ -545,6 +545,12 @@ class LabelModel(nn.Module):
             self.p = sorted_counts / sum(sorted_counts)
         else:
             self.p = (1 / self.cardinality) * np.ones(self.cardinality)
+
+        if np.any(self.p) == 0:
+            raise ValueError(
+                f"No examples for class(es) {np.where(self.p)[0]}."
+            )
+
         self.P = torch.diag(torch.from_numpy(self.p)).float()
 
     def _set_constants(self, L: np.ndarray) -> None:
@@ -742,10 +748,31 @@ class LabelModel(nn.Module):
                 f"L_train has cardinality {L_shift.max()}, cardinality={self.cardinality} passed in."
             )
 
-        self._set_class_balance(class_balance, Y_dev)
         self._set_constants(L_shift)
-        self._create_tree()
+        self._set_class_balance(class_balance, Y_dev)
+
         lf_analysis = LFAnalysis(L_train)
+        # if lf_analysis.label_overlap() == 0.:
+        #     raise ValueError(
+        #         f"LFs have no overlap. Consider using MajorityVote."
+        #     )
+
+        # if lf_analysis.label_conflict() == 0.:
+        #     raise ValueError(
+        #         f"LFs have no conflicts. Consider using MajorityVote."
+        #     )
+
+        if np.sum(lf_analysis.lf_overlaps() != 0.) <= 2:
+            raise ValueError(
+                f"Less than 2 LFs have overlaps. LabelModel performance may be affected. Consider using MajorityVote."
+            )
+
+        if np.sum(lf_analysis.lf_conflicts() != 0) <= 2:
+            raise ValueError(
+                f"Less than 2 LFs have conflicts. LabelModel performance may be affected. Consider using MajorityVote."
+            )
+
+        self._create_tree()
         self.coverage = lf_analysis.lf_coverages()
 
         # Compute O and initialize params

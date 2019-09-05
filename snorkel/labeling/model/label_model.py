@@ -46,8 +46,8 @@ class TrainConfig(Config):
         A random seed to initialize the random number generator with
     log_freq
         Report loss every this many epochs (steps)
-    mu_clamp_min
-        Restrict the learned conditional probabilities to [mu_clamp_min, 1-mu_clamp-min]
+    mu_clamp_eps
+        Restrict the learned conditional probabilities to [mu_clamp_eps, 1-mu_clamp_eps]
     """
 
     n_epochs: int = 100
@@ -60,7 +60,7 @@ class TrainConfig(Config):
     prec_init: float = 0.7
     seed: int = np.random.randint(1e6)
     log_freq: int = 10
-    mu_clamp_min: float = 0.0001
+    mu_clamp_eps: float = 0.0001
 
 
 class LabelModelConfig(Config):
@@ -804,10 +804,11 @@ class LabelModel(nn.Module):
             self._update_lr_scheduler(epoch)
 
         # Clamp learned parameters
-        # Note: If mu_clamp_min is set too high, e.g. in sparse settings where LFs
-        # mostly abstain, this will cause null results!
+        # Note: If mu_clamp_eps is set too high, e.g. in sparse settings where LFs
+        # mostly abstain, this will result in learning conditional probabilities all
+        # equal to mu_clamp_eps (and/or 1 - mu_clamp_eps)!
         self.mu.data = self.mu.clamp(  # type: ignore
-            self.train_config.mu_clamp_min, 1 - self.train_config.mu_clamp_min
+            self.train_config.mu_clamp_eps, 1 - self.train_config.mu_clamp_eps
         )
 
         # Return model to eval mode

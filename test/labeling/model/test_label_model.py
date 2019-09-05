@@ -47,12 +47,16 @@ class LabelModelTest(unittest.TestCase):
         label_model = LabelModel(cardinality=2, verbose=False)
         L = np.array([[-1, -1, 1], [-1, 1, -1], [0, -1, -1]])
         label_model.fit(L, n_epochs=100)
-        np.testing.assert_array_almost_equal(label_model.predict(L), np.array([1, 1, 0]))
+        np.testing.assert_array_almost_equal(
+            label_model.predict(L), np.array([1, 1, 0])
+        )
 
         # less than 2 LFs have conflicts
         L = np.array([[-1, -1, 1], [-1, 1, 1], [1, 1, 1]])
         label_model.fit(L, n_epochs=100)
-        np.testing.assert_array_almost_equal(label_model.predict(L), np.array([1, 1, 1]))
+        np.testing.assert_array_almost_equal(
+            label_model.predict(L), np.array([1, 1, 1])
+        )
 
     def test_class_balance(self):
         label_model = LabelModel(cardinality=2, verbose=False)
@@ -66,7 +70,7 @@ class LabelModelTest(unittest.TestCase):
             label_model._set_class_balance(class_balance=class_balance, Y_dev=Y_dev)
 
         Y_dev_one_class = np.array([0, 0, 0])
-        with self.assertRaisesRegex(ValueError, "Y_dev has 1 classes"):
+        with self.assertRaisesRegex(ValueError, "Y_dev has"):
             label_model._set_class_balance(class_balance=None, Y_dev=Y_dev_one_class)
 
     def test_generate_O(self):

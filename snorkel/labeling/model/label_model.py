@@ -552,7 +552,7 @@ class LabelModel(nn.Module):
             )
         if len(self.p) != self.cardinality:
             raise ValueError(
-                f"Y_dev has {len(self.p)} classes. Does not match LabelModel cardinality {self.cardinality}."
+                f"Y_dev has {len(self.p)} class(es). Does not match LabelModel cardinality {self.cardinality}."
             )
 
         self.P = torch.diag(torch.from_numpy(self.p)).float()

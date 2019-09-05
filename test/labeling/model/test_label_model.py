@@ -42,13 +42,17 @@ class LabelModelTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "L_train should have at least 3"):
             label_model.fit(L, n_epochs=1)
 
+    def test_mv_default(self):
+        # less than 2 LFs have overlaps
+        label_model = LabelModel(cardinality=2, verbose=False)
         L = np.array([[-1, -1, 1], [-1, 1, -1], [0, -1, -1]])
-        with self.assertRaisesRegex(ValueError, "Less than 2 LFs have overlaps"):
-            label_model.fit(L, n_epochs=1)
+        label_model.fit(L, n_epochs=100)
+        np.testing.assert_array_almost_equal(label_model.predict(L), np.array([1, 1, 0]))
 
+        # less than 2 LFs have conflicts
         L = np.array([[-1, -1, 1], [-1, 1, 1], [1, 1, 1]])
-        with self.assertRaisesRegex(ValueError, "Less than 2 LFs have conflicts"):
-            label_model.fit(L, n_epochs=1)
+        label_model.fit(L, n_epochs=100)
+        np.testing.assert_array_almost_equal(label_model.predict(L), np.array([1, 1, 1]))
 
     def test_class_balance(self):
         label_model = LabelModel(cardinality=2, verbose=False)

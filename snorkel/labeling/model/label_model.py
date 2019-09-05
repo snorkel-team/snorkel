@@ -46,6 +46,8 @@ class TrainConfig(Config):
         A random seed to initialize the random number generator with
     log_freq
         Report loss every this many epochs (steps)
+    mu_eps
+        Restrict the learned conditional probabilities to [mu_eps, 1-mu_eps]
     """
 
     n_epochs: int = 100
@@ -58,6 +60,7 @@ class TrainConfig(Config):
     prec_init: float = 0.7
     seed: int = np.random.randint(1e6)
     log_freq: int = 10
+    mu_eps: Optional[float] = None
 
 
 class LabelModelConfig(Config):
@@ -319,7 +322,6 @@ class LabelModel(nn.Module):
             # The 0th row (corresponding to abstains) is the difference between
             # the sums of the other rows and one, by law of total prob
             c_probs[i * (self.cardinality + 1), :] = 1 - mu_i.sum(axis=0)
-        c_probs = np.clip(c_probs, 0.01, 0.99)
 
         if source is not None:
             return c_probs[
@@ -377,7 +379,7 @@ class LabelModel(nn.Module):
         L_shift = L + 1  # convert to {0, 1, ..., k}
         self._set_constants(L_shift)
         L_aug = self._get_augmented_label_matrix(L_shift)
-        mu = np.clip(self.mu.detach().clone().numpy(), 0.01, 0.99)
+        mu = self.mu.detach().clone().numpy()
         jtm = np.ones(L_aug.shape[1])
 
         # Note: We omit abstains, effectively assuming uniform distribution here
@@ -801,6 +803,20 @@ class LabelModel(nn.Module):
             # Update learning rate
             self._update_lr_scheduler(epoch)
 
+        # Clamp learned parameters
+        # Note: If mu_eps is set too high, e.g. in sparse settings where LFs
+        # mostly abstain, this will result in learning conditional probabilities all
+        # equal to mu_eps (and/or 1 - mu_eps)!
+        # Note: Use user-provided value, else default to 1 / n', where n' is n rounded
+        # to the closest power of ten; this rounding is done to make it more obvious
+        # when the parameters have been clamped.
+        if self.train_config.mu_eps is not None:
+            mu_eps = self.train_config.mu_eps
+        else:
+            mu_eps = min(0.01, 1 / 10 ** np.ceil(np.log10(self.n)))
+        self.mu.data = self.mu.clamp(mu_eps, 1 - mu_eps)  # type: ignore
+
+        # Return model to eval mode
         self.eval()
 
         # Print confusion matrix if applicable

@@ -4,7 +4,7 @@ import numpy as np
 
 
 def generate_simple_label_matrix(
-    n: int, m: int, cardinality: int
+    n: int, m: int, cardinality: int, abstain_multiplier: float = 1.0
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Generate a synthetic label matrix with true parameters and labels.
 
@@ -20,6 +20,8 @@ def generate_simple_label_matrix(
         Number of labeling functions
     cardinality
         Cardinality of true labels (i.e. not including abstains)
+    abstain_multiplier
+        Factor to multiply the probability of abstaining by
 
     Returns
     -------
@@ -34,7 +36,15 @@ def generate_simple_label_matrix(
     P = np.empty((m, cardinality + 1, cardinality))
     for i in range(m):
         p = np.random.rand(cardinality + 1, cardinality)
+
+        # Bias the LFs to being non-adversarial
         p[1:, :] += (cardinality - 1) * np.eye(cardinality)
+
+        # Optionally increase the abstain probability by some multiplier; note this is
+        # to simulate the common setting where LFs label very sparsely
+        p[0, :] *= abstain_multiplier
+
+        # Normalize the conditional probabilities table
         P[i] = p @ np.diag(1 / p.sum(axis=0))
 
     # Generate the true datapoint labels

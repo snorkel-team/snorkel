@@ -201,7 +201,7 @@ class LabelModelTest(unittest.TestCase):
         L = np.array([[0, 1, 0], [0, 1, 0]])
         label_model = self._set_up_model(L)
 
-        label_model.mu = nn.Parameter(label_model.mu_init.clone())
+        label_model.mu = nn.Parameter(label_model.mu_init.clone().clamp(0.01, 0.99))
         probs = label_model.predict_proba(L)
 
         # with matching labels from 3 LFs, predicted probs clamped at (0.99,0.01)
@@ -212,7 +212,7 @@ class LabelModelTest(unittest.TestCase):
         L = np.array([[0, 1, 0], [0, 1, 0]])
         label_model = self._set_up_model(L)
 
-        label_model.mu = nn.Parameter(label_model.mu_init.clone())
+        label_model.mu = nn.Parameter(label_model.mu_init.clone().clamp(0.01, 0.99))
         preds = label_model.predict(L)
 
         true_preds = np.array([0, 0])
@@ -225,7 +225,7 @@ class LabelModelTest(unittest.TestCase):
     def test_score(self):
         L = np.array([[1, 0, 1], [1, 0, 1]])
         label_model = self._set_up_model(L)
-        label_model.mu = nn.Parameter(label_model.mu_init.clone())
+        label_model.mu = nn.Parameter(label_model.mu_init.clone().clamp(0.01, 0.99))
 
         results = label_model.score(L, Y=np.array([0, 1]))
         results_expected = dict(accuracy=0.5)
@@ -344,6 +344,16 @@ class LabelModelTest(unittest.TestCase):
             lr_scheduler_config = {"warmup_steps": 1, "warmup_unit": "batches"}
             label_model.fit(L, lr_scheduler_config=lr_scheduler_config)
 
+    def test_set_mu_eps(self):
+        mu_eps = 0.0123
+
+        # Construct a label matrix such that P(\lambda_1 = 0 | Y) = 0.0, so it will hit
+        # the mu_eps floor
+        L = np.array([[1, 1, 1], [1, 1, 1]])
+        label_model = LabelModel(verbose=False)
+        label_model.fit(L, mu_eps=mu_eps)
+        self.assertAlmostEqual(label_model._get_conditional_probs(0)[1, 0], mu_eps)
+
 
 @pytest.mark.complex
 class TestLabelModelAdvanced(unittest.TestCase):
@@ -355,8 +365,8 @@ class TestLabelModelAdvanced(unittest.TestCase):
         self.n = 10000  # Number of data points
         self.cardinality = 2  # Number of classes
 
-    def test_label_model(self) -> None:
-        """Test the LabelModel's estimate of P and Y."""
+    def test_label_model_basic(self) -> None:
+        """Test the LabelModel's estimate of P and Y on a simple synthetic dataset."""
         np.random.seed(123)
         P, Y, L = generate_simple_label_matrix(self.n, self.m, self.cardinality)
 
@@ -371,9 +381,39 @@ class TestLabelModelAdvanced(unittest.TestCase):
         np.testing.assert_array_almost_equal(P, P_lm, decimal=2)
 
         # Test predicted labels
-        Y_lm = label_model.predict_proba(L).argmax(axis=1)
-        err = np.where(Y != Y_lm, 1, 0).sum() / self.n
-        self.assertLess(err, 0.1)
+        score = label_model.score(L, Y)
+        self.assertGreaterEqual(score["accuracy"], 0.9)
+
+    def test_label_model_sparse(self) -> None:
+        """Test the LabelModel's estimate of P and Y on a sparse synthetic dataset.
+
+        This tests the common setting where LFs abstain most of the time, which can
+        cause issues for example if parameter clamping set too high (e.g. see Issue
+        #1422).
+        """
+        np.random.seed(123)
+        P, Y, L = generate_simple_label_matrix(
+            self.n, self.m, self.cardinality, abstain_multiplier=1000.0
+        )
+
+        # Train LabelModel
+        label_model = LabelModel(cardinality=self.cardinality, verbose=False)
+        label_model.fit(L, n_epochs=1000, lr=0.01, seed=123)
+
+        # Test estimated LF conditional probabilities
+        P_lm = label_model._get_conditional_probs().reshape(
+            (self.m, self.cardinality + 1, -1)
+        )
+        np.testing.assert_array_almost_equal(P, P_lm, decimal=2)
+
+        # Test predicted labels *only on non-abstained data points*
+        Y_pred = label_model.predict(L, tie_break_policy="abstain")
+        idx, = np.where(Y_pred != -1)
+        acc = np.where(Y_pred[idx] == Y[idx], 1, 0).sum() / len(idx)
+        self.assertGreaterEqual(acc, 0.65)
+
+        # Make sure that we don't output abstain when an LF votes, per issue #1422
+        self.assertEqual(len(idx), np.where((L + 1).sum(axis=1) != 0, 1, 0).sum())
 
 
 if __name__ == "__main__":

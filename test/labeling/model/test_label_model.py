@@ -70,7 +70,7 @@ class LabelModelTest(unittest.TestCase):
             label_model._set_class_balance(class_balance=class_balance, Y_dev=Y_dev)
 
         Y_dev_one_class = np.array([0, 0, 0])
-        with self.assertRaisesRegex(ValueError, "Y_dev has"):
+        with self.assertRaisesRegex(ValueError, "Does not match LabelModel cardinality"):
             label_model._set_class_balance(class_balance=None, Y_dev=Y_dev_one_class)
 
     def test_generate_O(self):

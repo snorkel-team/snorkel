@@ -375,7 +375,7 @@ class TestLabelModelAdvanced(unittest.TestCase):
         label_model.fit(L, n_epochs=200, lr=0.01, seed=123)
 
         # Test estimated LF conditional probabilities
-        P_lm = LabelModel.get_conditional_probs()
+        P_lm = label_model.get_conditional_probs()
         np.testing.assert_array_almost_equal(P, P_lm, decimal=2)
 
         # Test predicted labels

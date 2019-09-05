@@ -813,7 +813,7 @@ class LabelModel(nn.Module):
         if self.train_config.mu_eps >= 0:
             mu_eps = self.train_config.mu_eps
         else:
-            mu_eps = 1 / 10 ** np.round(np.log10(self.n))
+            mu_eps = min(0.01, 1 / 10 ** np.round(np.log10(self.n)))
         self.mu.data = self.mu.clamp(mu_eps, 1 - mu_eps)  # type: ignore
 
         # Return model to eval mode

@@ -74,6 +74,10 @@ class ClassifierConvergenceTest(unittest.TestCase):
 
 
 def create_data(n: int, offset=0) -> pd.DataFrame:
+    """Create uniform X data from [-1, 1] on both axes.
+
+    Create labels with linear decision boundaries related to the two coordinates of X.
+    """
     X = np.random.random((n, 2)) * 2 - 1
     Y = (X[:, 0] < X[:, 1] + offset).astype(int)
 

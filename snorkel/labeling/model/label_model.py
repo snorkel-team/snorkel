@@ -730,12 +730,15 @@ class LabelModel(nn.Module):
             2. diag(O) = sum(mu @ P, axis=1)
         Then any column permutation matrix Z that commutes with P will also equivalently
         satisfy these objectives, and thus is an equally valid (symmetric) solution.
-        Therefore, we select the solution where the most LFs are estimated to have more
-        net probability of being correct, P(\lf = y, Y = y), than incorrect, which is
-        the standard assumption we have made to date.
+        Therefore, we select the solution where the most LFs are estimated to be more
+        accurate than not when not abstaining, i.e., where for the majority of LFs,
 
-        Note that this is not the only possible heuristic / assumption that we could
-        use, and in practice this may require further iteration.
+            P(\lf = Y) > P(\lf != Y, \lf != -1).
+
+        This is the standard assumption we have made in algorithmic and theoretical
+        work to date. Note however that this is not the only possible heuristic /
+        assumption that we could use, and in practice this may require further
+        iteration here.
         """
         mu = self.mu.detach().clone().numpy()
         P = self.P.clone().numpy()
@@ -753,7 +756,8 @@ class LabelModel(nn.Module):
                 cprobs = self._get_conditional_probs(mu @ Z)
                 score = 0
                 for i in range(self.m):
-                    if 2 * np.diagonal(cprobs[i, 1:]).sum() - cprobs[i, 1:].sum() > 0:
+                    probs = cprobs[i, 1:] @ P
+                    if 2 * np.diagonal(probs).sum() - probs.sum() > 0:
                         score += 1
                 scores.append(score)
             else:

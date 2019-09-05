@@ -16,6 +16,15 @@ L = [
 
 Y = [0, 1, 2, 0, 1, 2]
 
+L_wo_abstain = [
+    [3, 3, 3, 5, 4, 3],
+    [3, 4, 5, 5, 4, 3],
+    [5, 3, 4, 4, 5, 3],
+    [4, 4, 5, 4, 3, 3],
+    [3, 4, 3, 5, 4, 3],
+    [5, 3, 3, 4, 4, 3],
+]
+
 
 def f(x):
     return -1
@@ -24,6 +33,7 @@ def f(x):
 class TestAnalysis(unittest.TestCase):
     def setUp(self) -> None:
         self.lfa = LFAnalysis(np.array(L))
+        self.lfa_wo_abstain = LFAnalysis(np.array(L_wo_abstain))
         self.Y = np.array(Y)
 
     def test_label_coverage(self) -> None:
@@ -130,3 +140,18 @@ class TestAnalysis(unittest.TestCase):
     def test_wrong_number_of_lfs(self) -> None:
         with self.assertRaisesRegex(ValueError, "Number of LFs"):
             LFAnalysis(np.array(L), [LabelingFunction(s, f) for s in "ab"])
+
+    def test_lf_summary_without_abstain(self) -> None:
+        df = self.lfa_wo_abstain.lf_summary(self.Y + 4, est_weights=None)
+        df_expected = pd.DataFrame(
+            {
+                "Polarity": [[3, 4, 5], [3, 4], [3, 4, 5], [4, 5], [3, 4, 5], [3]],
+                "Coverage": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+                "Overlaps": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+                "Conflicts": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+                "Correct": [1, 1, 1, 3, 1, 0],
+                "Incorrect": [5, 5, 5, 3, 5, 6],
+                "Emp. Acc.": [1 / 6, 1 / 6, 1 / 6, 3 / 6, 1 / 6, 0],
+            }
+        )
+        pd.testing.assert_frame_equal(df.round(6), df_expected.round(6))

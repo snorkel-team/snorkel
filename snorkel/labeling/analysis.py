@@ -354,7 +354,12 @@ class LFAnalysis:
         d["Conflicts"] = Series(data=self.lf_conflicts(), index=lf_names)
 
         if Y is not None:
-            confusions = [confusion_matrix(Y, self.L[:, i])[1:, 1:] for i in range(m)]
+            labels = np.unique(
+                np.concatenate((Y.flatten(), self.L.flatten(), np.array([-1])))
+            )
+            confusions = [
+                confusion_matrix(Y, self.L[:, i], labels)[1:, 1:] for i in range(m)
+            ]
             corrects = [np.diagonal(conf).sum() for conf in confusions]
             incorrects = [
                 conf.sum() - correct for conf, correct in zip(confusions, corrects)

@@ -352,7 +352,7 @@ class LabelModelTest(unittest.TestCase):
         L = np.array([[1, 1, 1], [1, 1, 1]])
         label_model = LabelModel(verbose=False)
         label_model.fit(L, mu_eps=mu_eps)
-        self.assertAlmostEqual(label_model.get_conditional_probs[0, 1, 0], mu_eps)
+        self.assertAlmostEqual(label_model.get_conditional_probs()[0, 1, 0], mu_eps)
 
 
 @pytest.mark.complex

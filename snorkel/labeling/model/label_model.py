@@ -734,18 +734,19 @@ class LabelModel(nn.Module):
         correct, P(\lf = y, Y = y), are net highest. Note that this is not the only
         possible heuristic (assumption) that we could use.
         """
-        mu = self.mu.clone()
+        mu = self.mu.detach().clone().numpy()
+        P = self.P.clone().numpy()
         d, k = mu.shape
 
         # Iterate through the possible perumation matrices and track heuristic scores
         Zs = []
         scores = []
         for idxs in permutations(range(k)):
-            Z = torch.eye(k)[:, idxs]
+            Z = np.eye(k)[:, idxs]
             Zs.append(Z)
 
             # If Z and P commute, get heuristic score, else skip
-            if Z @ self.P == self.P @ self.Z:
+            if np.allclose(Z @ P, P @ Z):
                 cprobs = self._get_conditional_probs(mu @ Z)
                 s = np.sum([np.diagonal(cprobs[i, 1:, :]).sum() for i in range(self.m)])
                 scores.append(s)
@@ -753,7 +754,7 @@ class LabelModel(nn.Module):
                 scores.append(-1)
 
         # Set mu according to highest-scoring permutation
-        self.mu.data = mu @ Zs[np.argmax(scores)]  # type: ignore
+        self.mu.data = torch.Tensor(mu @ Zs[np.argmax(scores)])  # type: ignore
 
     def fit(
         self,

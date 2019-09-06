@@ -1,3 +1,4 @@
+import random
 import unittest
 from typing import List
 
@@ -23,7 +24,6 @@ from snorkel.slicing import (
     slicing_function,
 )
 from snorkel.types import DataPoint
-from snorkel.utils import set_seed
 
 
 # Define SFs specifying points inside a circle
@@ -55,7 +55,9 @@ class SlicingConvergenceTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Ensure deterministic runs
-        set_seed(123)
+        random.seed(123)
+        np.random.seed(123)
+        torch.manual_seed(123)
 
         # Create raw data
         cls.N_TRAIN = 1500

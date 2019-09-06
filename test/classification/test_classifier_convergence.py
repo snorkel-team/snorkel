@@ -1,3 +1,4 @@
+import random
 import unittest
 from typing import List
 
@@ -16,7 +17,6 @@ from snorkel.classification import (
     Task,
     Trainer,
 )
-from snorkel.utils import set_seed
 
 N_TRAIN = 1000
 N_VALID = 300
@@ -26,7 +26,9 @@ class ClassifierConvergenceTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Ensure deterministic runs
-        set_seed(123)
+        random.seed(123)
+        np.random.seed(123)
+        torch.manual_seed(123)
 
     @pytest.mark.complex
     def test_convergence(self):

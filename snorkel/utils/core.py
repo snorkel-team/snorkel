@@ -1,16 +1,7 @@
 import hashlib
-import random
 from typing import Dict, List
 
 import numpy as np
-import torch
-
-
-def set_seed(seed: int) -> None:
-    """Set the Python, NumPy, and PyTorch random seeds."""
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
 
 
 def _hash(i: int) -> int:

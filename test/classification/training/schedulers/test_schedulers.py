@@ -1,5 +1,7 @@
+import random
 import unittest
 
+import numpy as np
 import torch
 
 from snorkel.classification import DictDataLoader, DictDataset
@@ -7,7 +9,6 @@ from snorkel.classification.training.schedulers import (
     SequentialScheduler,
     ShuffledScheduler,
 )
-from snorkel.utils import set_seed
 
 dataset1 = DictDataset(
     "d1",
@@ -37,7 +38,9 @@ class SequentialTest(unittest.TestCase):
         self.assertEqual(data, sorted(data))
 
     def test_shuffled(self):
-        set_seed(123)
+        random.seed(123)
+        np.random.seed(123)
+        torch.manual_seed(123)
         scheduler = ShuffledScheduler()
         data = []
         for (batch, dl) in scheduler.get_batches(dataloaders):

@@ -5,6 +5,7 @@ from typing import List
 
 import numpy as np
 import pytest
+import torch
 import torch.nn as nn
 import torch.optim as optim
 
@@ -154,9 +155,9 @@ class LabelModelTest(unittest.TestCase):
     def test_conditional_probs(self):
         L = np.array([[0, 1, 0], [0, 1, 0]])
         label_model = self._set_up_model(L, class_balance=[0.6, 0.4])
-        probs = label_model._get_conditional_probs()
-        self.assertLessEqual(probs.max(), 1.0)
-        self.assertGreaterEqual(probs.min(), 0.0)
+        cprobs = label_model.get_conditional_probs()
+        self.assertLessEqual(cprobs.max(), 1.0)
+        self.assertGreaterEqual(cprobs.min(), 0.0)
 
     def test_get_weight(self):
         # set up L matrix
@@ -382,7 +383,68 @@ class LabelModelTest(unittest.TestCase):
         L = np.array([[1, 1, 1], [1, 1, 1]])
         label_model = LabelModel(verbose=False)
         label_model.fit(L, mu_eps=mu_eps)
-        self.assertAlmostEqual(label_model._get_conditional_probs(0)[1, 0], mu_eps)
+        self.assertAlmostEqual(label_model.get_conditional_probs()[0, 1, 0], mu_eps)
+
+    def test_count_accurate_lfs(self):
+        mu = np.array(
+            [
+                # LF 0
+                [0.75, 0.25],
+                [0.25, 0.75],
+                # LF 1
+                [0.25, 0.75],
+                [0.15, 0.25],
+                # LF 2
+                [0.75, 0.25],
+                [0.25, 0.75],
+            ]
+        )
+
+        # First test: Two "good" LFs
+        label_model = LabelModel(verbose=False)
+        label_model._set_class_balance(None, None)
+        label_model.m = 3
+        self.assertEqual(label_model._count_accurate_lfs(mu), 2)
+
+        # Second test: Now they should all be "good" due to class balance, since we're
+        # counting accuracy (not conditional probabilities)
+        label_model = LabelModel(verbose=False)
+        label_model._set_class_balance([0.9, 0.1], None)
+        label_model.m = 3
+        self.assertEqual(label_model._count_accurate_lfs(mu), 3)
+
+    def test_symmetry_breaking(self):
+        mu = np.array(
+            [
+                # LF 0
+                [0.75, 0.25],
+                [0.25, 0.75],
+                # LF 1
+                [0.25, 0.75],
+                [0.15, 0.25],
+                # LF 2
+                [0.75, 0.25],
+                [0.25, 0.75],
+            ]
+        )
+        mu = mu[:, [1, 0]]
+
+        # First test: Two "good" LFs
+        label_model = LabelModel(verbose=False)
+        label_model._set_class_balance(None, None)
+        label_model.m = 3
+        label_model.mu = nn.Parameter(torch.from_numpy(mu))
+        label_model._break_col_permutation_symmetry()
+        self.assertEqual(label_model.mu.data[0, 0], 0.75)
+
+        # Test with non-uniform class balance
+        # It should not consider the "correct" permutation as does not commute now
+        label_model = LabelModel(verbose=False)
+        label_model._set_class_balance([0.9, 0.1], None)
+        label_model.m = 3
+        label_model.mu = nn.Parameter(torch.from_numpy(mu))
+        label_model._break_col_permutation_symmetry()
+        self.assertEqual(label_model.mu.data[0, 0], 0.25)
 
 
 @pytest.mark.complex
@@ -405,9 +467,7 @@ class TestLabelModelAdvanced(unittest.TestCase):
         label_model.fit(L, n_epochs=200, lr=0.01, seed=123)
 
         # Test estimated LF conditional probabilities
-        P_lm = label_model._get_conditional_probs().reshape(
-            (self.m, self.cardinality + 1, -1)
-        )
+        P_lm = label_model.get_conditional_probs()
         np.testing.assert_array_almost_equal(P, P_lm, decimal=2)
 
         # Test predicted labels
@@ -431,9 +491,7 @@ class TestLabelModelAdvanced(unittest.TestCase):
         label_model.fit(L, n_epochs=1000, lr=0.01, seed=123)
 
         # Test estimated LF conditional probabilities
-        P_lm = label_model._get_conditional_probs().reshape(
-            (self.m, self.cardinality + 1, -1)
-        )
+        P_lm = label_model.get_conditional_probs()
         np.testing.assert_array_almost_equal(P, P_lm, decimal=2)
 
         # Test predicted labels *only on non-abstained data points*

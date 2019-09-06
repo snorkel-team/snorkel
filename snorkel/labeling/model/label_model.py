@@ -302,7 +302,7 @@ class LabelModel(nn.Module):
         Returns
         -------
         np.ndarray
-            Conditional probabilities table if source is None, else corresponding block
+            An [m, k + 1, k] np.ndarray conditional probabilities table.
         """
         cprobs = np.zeros((self.m, self.cardinality + 1, self.cardinality))
         for i in range(self.m):
@@ -331,9 +331,9 @@ class LabelModel(nn.Module):
         Returns
         -------
         np.ndarray
-            Conditional probabilities table if source is None, else corresponding block
+            An [m, k + 1, k] np.ndarray conditional probabilities table.
         """
-        return self._get_conditional_probs(self.mu.detach().clone().numpy())
+        return self._get_conditional_probs(self.mu.detach().numpy())
 
     def get_weights(self) -> np.ndarray:
         """Return the vector of learned LF weights for combining LFs.
@@ -383,7 +383,7 @@ class LabelModel(nn.Module):
         L_shift = L + 1  # convert to {0, 1, ..., k}
         self._set_constants(L_shift)
         L_aug = self._get_augmented_label_matrix(L_shift)
-        mu = self.mu.detach().clone().numpy()
+        mu = self.mu.detach().numpy()
         jtm = np.ones(L_aug.shape[1])
 
         # Note: We omit abstains, effectively assuming uniform distribution here
@@ -736,7 +736,7 @@ class LabelModel(nn.Module):
         int
             Number of LFs better than random
         """
-        P = self.P.clone().numpy()
+        P = self.P.numpy()
         cprobs = self._get_conditional_probs(mu)
         count = 0
         for i in range(self.m):
@@ -767,8 +767,8 @@ class LabelModel(nn.Module):
         assumption that we could use, and in practice this may require further
         iteration here.
         """
-        mu = self.mu.detach().clone().numpy()
-        P = self.P.clone().numpy()
+        mu = self.mu.detach().numpy()
+        P = self.P.numpy()
         d, k = mu.shape
 
         # Iterate through the possible perumation matrices and track heuristic scores

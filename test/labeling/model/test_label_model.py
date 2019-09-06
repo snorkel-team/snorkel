@@ -355,7 +355,7 @@ class LabelModelTest(unittest.TestCase):
         label_model.fit(L, mu_eps=mu_eps)
         self.assertAlmostEqual(label_model.get_conditional_probs()[0, 1, 0], mu_eps)
 
-    def test_count_accurate_LFs(self):
+    def test_count_accurate_lfs(self):
         mu = np.array(
             [
                 # LF 0

@@ -718,7 +718,7 @@ class LabelModel(nn.Module):
             mu_eps = min(0.01, 1 / 10 ** np.ceil(np.log10(self.n)))
         self.mu.data = self.mu.clamp(mu_eps, 1 - mu_eps)  # type: ignore
 
-    def _count_accurate_LFs(self, mu: np.ndarray) -> int:
+    def _count_accurate_lfs(self, mu: np.ndarray) -> int:
         r"""Count the number of LFs that are estimated to be better than random.
 
         Return the number of LFs are estimated to be more accurate than not when not

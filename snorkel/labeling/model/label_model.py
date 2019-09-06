@@ -718,6 +718,33 @@ class LabelModel(nn.Module):
             mu_eps = min(0.01, 1 / 10 ** np.ceil(np.log10(self.n)))
         self.mu.data = self.mu.clamp(mu_eps, 1 - mu_eps)  # type: ignore
 
+    def _count_accurate_LFs(self, mu: np.ndarray) -> int:
+        r"""Count the number of LFs that are estimated to be better than random.
+
+        Return the number of LFs are estimated to be more accurate than not when not
+        abstaining, i.e., where
+
+            P(\lf = Y) > P(\lf != Y, \lf != -1).
+
+        Parameters
+        ----------
+        mu
+            An [m * k, k] np.ndarray with entries in [0, 1]
+
+        Returns
+        -------
+        int
+            Number of LFs better than random
+        """
+        P = self.P.clone().numpy()
+        cprobs = self._get_conditional_probs(mu)
+        count = 0
+        for i in range(self.m):
+            probs = cprobs[i, 1:] @ P
+            if 2 * np.diagonal(probs).sum() - probs.sum() > 0:
+                count += 1
+        return count
+
     def _break_col_permutation_symmetry(self) -> None:
         r"""Heuristically choose amongst (possibly) several valid mu values.
 
@@ -753,13 +780,7 @@ class LabelModel(nn.Module):
 
             # If Z and P commute, get heuristic score, else skip
             if np.allclose(Z @ P, P @ Z):
-                cprobs = self._get_conditional_probs(mu @ Z)
-                score = 0
-                for i in range(self.m):
-                    probs = cprobs[i, 1:] @ P
-                    if 2 * np.diagonal(probs).sum() - probs.sum() > 0:
-                        score += 1
-                scores.append(score)
+                scores.append(self._count_accurate_LFs(mu @ Z))
             else:
                 scores.append(-1)
 

@@ -1,4 +1,5 @@
 import logging
+import random
 from collections import Counter
 from itertools import chain, permutations
 from typing import Any, Dict, List, NamedTuple, Optional, Set, Tuple, Union
@@ -13,7 +14,7 @@ from snorkel.labeling.analysis import LFAnalysis
 from snorkel.labeling.model.graph_utils import get_clique_tree
 from snorkel.labeling.model.logger import Logger
 from snorkel.types import Config
-from snorkel.utils import probs_to_preds, set_seed
+from snorkel.utils import probs_to_preds
 from snorkel.utils.config_utils import merge_config
 from snorkel.utils.lr_schedulers import LRSchedulerConfig
 from snorkel.utils.optimizers import OptimizerConfig
@@ -841,7 +842,9 @@ class LabelModel(nn.Module):
             TrainConfig(), kwargs  # type:ignore
         )
         # Update base config so that it includes all parameters
-        set_seed(self.train_config.seed)
+        random.seed(self.train_config.seed)
+        np.random.seed(self.train_config.seed)
+        torch.manual_seed(self.train_config.seed)
 
         L_shift = L_train + 1  # convert to {0, 1, ..., k}
         if L_shift.max() > self.cardinality:

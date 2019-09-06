@@ -1,16 +1,18 @@
 import random
 import unittest
 
+import numpy as np
 import torch
 
 from snorkel.slicing import SliceCombinerModule
-from snorkel.utils import set_seed
 
 
 class SliceCombinerTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        set_seed(123)
+        random.seed(123)
+        np.random.seed(123)
+        torch.manual_seed(123)
 
     def test_forward_shape(self):
         """Test that the reweight representation shape matches expected feature size."""

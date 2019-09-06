@@ -1,4 +1,5 @@
 import os
+import random
 import tempfile
 import unittest
 
@@ -14,7 +15,6 @@ from snorkel.classification import (
     Operation,
     Task,
 )
-from snorkel.utils import set_seed
 
 NUM_EXAMPLES = 10
 BATCH_SIZE = 2
@@ -28,7 +28,9 @@ class ClassifierTest(unittest.TestCase):
         cls.dataloader = create_dataloader("task1")
 
     def setUp(self):
-        set_seed(123)
+        random.seed(123)
+        np.random.seed(123)
+        torch.manual_seed(123)
 
     def test_onetask_model(self):
         model = MultitaskClassifier(tasks=[self.task1])

@@ -780,7 +780,7 @@ class LabelModel(nn.Module):
 
             # If Z and P commute, get heuristic score, else skip
             if np.allclose(Z @ P, P @ Z):
-                scores.append(self._count_accurate_LFs(mu @ Z))
+                scores.append(self._count_accurate_lfs(mu @ Z))
             else:
                 scores.append(-1)
 

@@ -374,14 +374,14 @@ class LabelModelTest(unittest.TestCase):
         label_model = LabelModel(verbose=False)
         label_model._set_class_balance(None, None)
         label_model.m = 3
-        self.assertEqual(label_model._count_accurate_LFs(mu), 2)
+        self.assertEqual(label_model._count_accurate_lfs(mu), 2)
 
         # Second test: Now they should all be "good" due to class balance, since we're
         # counting accuracy (not conditional probabilities)
         label_model = LabelModel(verbose=False)
         label_model._set_class_balance([0.9, 0.1], None)
         label_model.m = 3
-        self.assertEqual(label_model._count_accurate_LFs(mu), 3)
+        self.assertEqual(label_model._count_accurate_lfs(mu), 3)
 
     def test_symmetry_breaking(self):
         mu = np.array(

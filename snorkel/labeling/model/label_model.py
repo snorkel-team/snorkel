@@ -539,10 +539,18 @@ class LabelModel(nn.Module):
         """
         if class_balance is not None:
             self.p = np.array(class_balance)
+            if len(self.p) != self.cardinality:
+                raise ValueError(
+                    f"class_balance has {len(self.p)} entries. Does not match LabelModel cardinality {self.cardinality}."
+                )
         elif Y_dev is not None:
             class_counts = Counter(Y_dev)
             sorted_counts = np.array([v for k, v in sorted(class_counts.items())])
             self.p = sorted_counts / sum(sorted_counts)
+            if len(self.p) != self.cardinality:
+                raise ValueError(
+                    f"Y_dev has {len(self.p)} class(es). Does not match LabelModel cardinality {self.cardinality}."
+                )
         else:
             self.p = (1 / self.cardinality) * np.ones(self.cardinality)
 
@@ -550,11 +558,6 @@ class LabelModel(nn.Module):
             raise ValueError(
                 f"Class balance prior is 0 for class(es) {np.where(self.p)[0]}."
             )
-        if len(self.p) != self.cardinality:
-            raise ValueError(
-                f"Y_dev has {len(self.p)} class(es). Does not match LabelModel cardinality {self.cardinality}."
-            )
-
         self.P = torch.diag(torch.from_numpy(self.p)).float()
 
     def _set_constants(self, L: np.ndarray) -> None:

@@ -6,7 +6,7 @@ import torch.nn as nn
 
 from snorkel.analysis import Scorer
 from snorkel.classification import DictDataset
-from snorkel.slicing import SFApplier, SlicingClassifier, slicing_function
+from snorkel.slicing import SFApplier, SliceAwareClassifier, slicing_function
 
 
 @slicing_function()
@@ -63,7 +63,7 @@ class SliceCombinerTest(unittest.TestCase):
             for split in splits
         ]
 
-        self.slice_model = SlicingClassifier(
+        self.slice_model = SliceAwareClassifier(
             base_architecture=self.mlp,
             head_dim=self.hidden_dim,
             slice_names=[sf.name for sf in sfs],

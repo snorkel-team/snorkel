@@ -29,18 +29,34 @@ class LabelModelTest(unittest.TestCase):
 
     def test_L_form(self):
         label_model = LabelModel(cardinality=2, verbose=False)
-        L = np.array([[0, 1, 0], [0, 1, 0], [1, 0, 0], [0, 1, 0]])
+        L = np.array([[-1, 1, -1], [-1, 1, -1], [1, -1, -1], [-1, 1, -1]])
         label_model._set_constants(L)
         self.assertEqual(label_model.n, 4)
         self.assertEqual(label_model.m, 3)
 
-        L = np.array([[0, 1, 2], [0, 1, 2], [1, 0, 2], [0, 1, 0]])
+        L = np.array([[-1, 0, 1], [-1, 0, 2], [0, -1, 2], [-1, 0, -1]])
         with self.assertRaisesRegex(ValueError, "L_train has cardinality"):
             label_model.fit(L, n_epochs=1)
 
-        L = np.array([[0], [1], [-1]])
+        L = np.array([[0, 1], [1, 1], [0, 1]])
         with self.assertRaisesRegex(ValueError, "L_train should have at least 3"):
             label_model.fit(L, n_epochs=1)
+
+    def test_mv_default(self):
+        # less than 2 LFs have overlaps
+        label_model = LabelModel(cardinality=2, verbose=False)
+        L = np.array([[-1, -1, 1], [-1, 1, -1], [0, -1, -1]])
+        label_model.fit(L, n_epochs=100)
+        np.testing.assert_array_almost_equal(
+            label_model.predict(L), np.array([1, 1, 0])
+        )
+
+        # less than 2 LFs have conflicts
+        L = np.array([[-1, -1, 1], [-1, 1, 1], [1, 1, 1]])
+        label_model.fit(L, n_epochs=100)
+        np.testing.assert_array_almost_equal(
+            label_model.predict(L), np.array([1, 1, 1])
+        )
 
     def test_class_balance(self):
         label_model = LabelModel(cardinality=2, verbose=False)
@@ -48,6 +64,20 @@ class LabelModelTest(unittest.TestCase):
         Y_dev = np.array([0, 0, 1, 1, 0, 0, 0, 0, 1, 1])
         label_model._set_class_balance(class_balance=None, Y_dev=Y_dev)
         np.testing.assert_array_almost_equal(label_model.p, np.array([0.6, 0.4]))
+
+        class_balance = np.array([0.0, 1.0])
+        with self.assertRaisesRegex(ValueError, "Class balance prior is 0"):
+            label_model._set_class_balance(class_balance=class_balance, Y_dev=Y_dev)
+
+        class_balance = np.array([0.0])
+        with self.assertRaisesRegex(ValueError, "class_balance has 1 entries."):
+            label_model._set_class_balance(class_balance=class_balance, Y_dev=Y_dev)
+
+        Y_dev_one_class = np.array([0, 0, 0])
+        with self.assertRaisesRegex(
+            ValueError, "Does not match LabelModel cardinality"
+        ):
+            label_model._set_class_balance(class_balance=None, Y_dev=Y_dev_one_class)
 
     def test_generate_O(self):
         L = np.array([[0, 1, 0], [0, 1, 0], [1, 0, 0], [0, 1, 1]])

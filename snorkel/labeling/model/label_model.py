@@ -396,7 +396,7 @@ class LabelModel(nn.Module):
         self,
         L: np.ndarray,
         return_probs: Optional[bool] = False,
-        tie_break_policy: str = "random",
+        tie_break_policy: str = "abstain",
     ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """Return predicted labels, with ties broken according to policy.
 
@@ -446,7 +446,7 @@ class LabelModel(nn.Module):
         L: np.ndarray,
         Y: np.ndarray,
         metrics: Optional[List[str]] = ["accuracy"],
-        tie_break_policy: str = "random",
+        tie_break_policy: str = "abstain",
     ) -> Dict[str, float]:
         """Calculate one or more scores from user-specified and/or user-defined metrics.
 
@@ -455,7 +455,7 @@ class LabelModel(nn.Module):
         L
             An [n,m] matrix with values in {-1,0,1,...,k-1}
         Y
-            Gold labels associated with datapoints in L
+            Gold labels associated with data points in L
         metrics
             A list of metric names
         tie_break_policy
@@ -477,6 +477,11 @@ class LabelModel(nn.Module):
         >>> label_model.score(L, Y=np.array([1, 1, 1]), metrics=["f1"])
         {'f1': 0.8}
         """
+        if tie_break_policy == "abstain":  # pragma: no cover
+            logging.warning(
+                "Metrics calculated over data points with non-abstain labels only"
+            )
+
         Y_pred, Y_prob = self.predict(
             L, return_probs=True, tie_break_policy=tie_break_policy
         )

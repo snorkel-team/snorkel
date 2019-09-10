@@ -240,6 +240,14 @@ class LabelModelTest(unittest.TestCase):
         np.testing.assert_array_almost_equal(probs, true_probs)
 
     def test_predict(self):
+        # 3 LFs that always disagree/abstain leads to all abstains
+        L = np.array([[-1, 1, 0], [0, -1, 1], [1, 0, -1]])
+        label_model = LabelModel(cardinality=2, verbose=False)
+        label_model.fit(L, n_epochs=100)
+        np.testing.assert_array_almost_equal(
+            label_model.predict(L), np.array([-1, -1, -1])
+        )
+
         L = np.array([[0, 1, 0], [0, 1, 0]])
         label_model = self._set_up_model(L)
 
@@ -254,6 +262,18 @@ class LabelModelTest(unittest.TestCase):
         np.testing.assert_array_almost_equal(probs, true_probs)
 
     def test_score(self):
+        L = np.array([[1, 1, 0], [-1, -1, -1], [1, 0, 1]])
+        Y = np.array([1, 0, 1])
+        label_model = LabelModel(cardinality=2, verbose=False)
+        label_model.fit(L, n_epochs=100)
+        results = label_model.score(L, Y)
+        np.testing.assert_array_almost_equal(
+            label_model.predict(L), np.array([1, -1, 1])
+        )
+
+        results_expected = dict(accuracy=1.0)
+        self.assertEqual(results, results_expected)
+
         L = np.array([[1, 0, 1], [1, 0, 1]])
         label_model = self._set_up_model(L)
         label_model.mu = nn.Parameter(label_model.mu_init.clone().clamp(0.01, 0.99))

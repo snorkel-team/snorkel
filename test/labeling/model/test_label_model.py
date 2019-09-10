@@ -240,6 +240,7 @@ class LabelModelTest(unittest.TestCase):
         np.testing.assert_array_almost_equal(probs, true_probs)
 
     def test_predict(self):
+        # 3 LFs that always disagree/abstain leads to all abstains
         L = np.array([[-1, 1, 0], [0, -1, 1], [1, 0, -1]])
         label_model = LabelModel(cardinality=2, verbose=False)
         label_model.fit(L, n_epochs=100)

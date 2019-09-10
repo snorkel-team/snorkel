@@ -455,7 +455,7 @@ class LabelModel(nn.Module):
         L
             An [n,m] matrix with values in {-1,0,1,...,k-1}
         Y
-            Gold labels associated with datapoints in L
+            Gold labels associated with data points in L
         metrics
             A list of metric names
         tie_break_policy
@@ -479,7 +479,7 @@ class LabelModel(nn.Module):
         """
         if tie_break_policy == "abstain":  # pragma: no cover
             logging.warning(
-                "Metrics calculated over datapoints with non-abstain labels only"
+                "Metrics calculated over data points with non-abstain labels only"
             )
 
         Y_pred, Y_prob = self.predict(

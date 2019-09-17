@@ -336,14 +336,21 @@ class LabelModelTest(unittest.TestCase):
             label_model.fit(L, n_epochs=1, lr_scheduler="bad_scheduler")
 
     def test_save_and_load(self):
-        L = np.array([[0, -1, 0], [0, 1, 0]])
+        L = np.array([[0, -1, 0], [0, 1, 1]])
         label_model = LabelModel(cardinality=2, verbose=False)
         label_model.fit(L, n_epochs=1)
+        original_preds = label_model.predict(L)
+
         dir_path = tempfile.mkdtemp()
-        save_path = dir_path + "label_model"
+        save_path = dir_path + "label_model.pkl"
         label_model.save(save_path)
-        label_model.load(save_path)
+
+        label_model_new = LabelModel(cardinality=2, verbose=False)
+        label_model_new.load(save_path)
+        loaded_preds = label_model_new.predict(L)
         shutil.rmtree(dir_path)
+
+        np.testing.assert_array_equal(loaded_preds, original_preds)
 
     def test_optimizer_init(self):
         L = np.array([[0, -1, 0], [0, 1, 0]])

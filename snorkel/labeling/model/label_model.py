@@ -1,4 +1,5 @@
 import logging
+import pickle
 import random
 from collections import Counter
 from itertools import chain, permutations
@@ -364,7 +365,7 @@ class LabelModel(nn.Module):
         Parameters
         ----------
         L
-            An [n,m] matrix with values in {-1,0,1,...,k-1}
+            An [n,m] matrix with values in {-1,0,1,...,k-1}f
 
         Returns
         -------
@@ -941,13 +942,13 @@ class LabelModel(nn.Module):
 
         Example
         -------
-        >>> label_model.save('./saved_label_model')  # doctest: +SKIP
+        >>> label_model.save('./saved_label_model.pkl')  # doctest: +SKIP
         """
-        with open(destination, "wb") as f:
-            torch.save(self, f, **kwargs)
+        f = open(destination, "wb")
+        pickle.dump(self.__dict__, f)
+        f.close()
 
-    @staticmethod
-    def load(source: str, **kwargs: Any) -> Any:
+    def load(self, source: str, **kwargs: Any) -> Any:
         """Load existing label model.
 
         Parameters
@@ -966,7 +967,9 @@ class LabelModel(nn.Module):
         -------
         Load parameters saved in ``saved_label_model``
 
-        >>> label_model.load('./saved_label_model')  # doctest: +SKIP
+        >>> label_model.load('./saved_label_model.pkl')  # doctest: +SKIP
         """
-        with open(source, "rb") as f:
-            return torch.load(f, **kwargs)
+        f = open(source, "rb")
+        tmp_dict = pickle.load(f)
+        f.close()
+        self.__dict__.update(tmp_dict)

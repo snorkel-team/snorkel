@@ -930,15 +930,13 @@ class LabelModel(nn.Module):
         if self.config.verbose:  # pragma: no cover
             logging.info("Finished Training")
 
-    def save(self, destination: str, **kwargs: Any) -> None:
+    def save(self, destination: str) -> None:
         """Save label model.
 
         Parameters
         ----------
         destination
-            File location for saving model
-        **kwargs
-            Arguments for torch.save
+            Filename for saving model
 
         Example
         -------
@@ -948,20 +946,13 @@ class LabelModel(nn.Module):
         pickle.dump(self.__dict__, f)
         f.close()
 
-    def load(self, source: str, **kwargs: Any) -> Any:
+    def load(self, source: str) -> None:
         """Load existing label model.
 
         Parameters
         ----------
         source
-            File location from where to load model
-        **kwargs
-            Arguments for torch.load
-
-        Returns
-        -------
-        LabelModel
-            LabelModel with appropriate loaded parameters
+            Filename to load model from
 
         Example
         -------

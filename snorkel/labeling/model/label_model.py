@@ -808,7 +808,9 @@ class LabelModel(nn.Module):
 
         # Set mu according to highest-scoring permutation
         self.mu = nn.Parameter(
-            torch.Tensor(mu @ Zs[np.argmax(scores)]).to(self.config.device) # type: ignore
+            torch.Tensor(mu @ Zs[np.argmax(scores)]).to(  # type: ignore
+                self.config.device
+            )
         )
 
     def fit(

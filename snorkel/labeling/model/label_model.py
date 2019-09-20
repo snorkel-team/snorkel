@@ -1,4 +1,5 @@
 import logging
+import pickle
 import random
 from collections import Counter
 from itertools import chain, permutations
@@ -364,7 +365,7 @@ class LabelModel(nn.Module):
         Parameters
         ----------
         L
-            An [n,m] matrix with values in {-1,0,1,...,k-1}
+            An [n,m] matrix with values in {-1,0,1,...,k-1}f
 
         Returns
         -------
@@ -929,44 +930,37 @@ class LabelModel(nn.Module):
         if self.config.verbose:  # pragma: no cover
             logging.info("Finished Training")
 
-    def save(self, destination: str, **kwargs: Any) -> None:
+    def save(self, destination: str) -> None:
         """Save label model.
 
         Parameters
         ----------
         destination
-            File location for saving model
-        **kwargs
-            Arguments for torch.save
+            Filename for saving model
 
         Example
         -------
-        >>> label_model.save('./saved_label_model')  # doctest: +SKIP
+        >>> label_model.save('./saved_label_model.pkl')  # doctest: +SKIP
         """
-        with open(destination, "wb") as f:
-            torch.save(self, f, **kwargs)
+        f = open(destination, "wb")
+        pickle.dump(self.__dict__, f)
+        f.close()
 
-    @staticmethod
-    def load(source: str, **kwargs: Any) -> Any:
+    def load(self, source: str) -> None:
         """Load existing label model.
 
         Parameters
         ----------
         source
-            File location from where to load model
-        **kwargs
-            Arguments for torch.load
-
-        Returns
-        -------
-        LabelModel
-            LabelModel with appropriate loaded parameters
+            Filename to load model from
 
         Example
         -------
         Load parameters saved in ``saved_label_model``
 
-        >>> label_model.load('./saved_label_model')  # doctest: +SKIP
+        >>> label_model.load('./saved_label_model.pkl')  # doctest: +SKIP
         """
-        with open(source, "rb") as f:
-            return torch.load(f, **kwargs)
+        f = open(source, "rb")
+        tmp_dict = pickle.load(f)
+        f.close()
+        self.__dict__.update(tmp_dict)

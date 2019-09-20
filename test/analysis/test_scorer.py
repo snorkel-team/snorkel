@@ -80,6 +80,11 @@ class ScorerTest(unittest.TestCase):
         results_expected = dict(accuracy=0.5)
         self.assertEqual(results, results_expected)
 
+        scorer = Scorer(metrics=["coverage"], abstain_label=-1)
+        results = scorer.score(golds, abstain_preds)
+        results_expected = dict(coverage=0.6)
+        self.assertEqual(results, results_expected)
+
         # Test abstain set to different value
         scorer = Scorer(metrics=["accuracy"], abstain_label=10)
         results = scorer.score(golds, preds, probs)

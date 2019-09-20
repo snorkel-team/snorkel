@@ -44,22 +44,20 @@ class Scorer:
     ) -> None:
 
         self.metrics: Dict[str, Callable[..., float]]
+        self.metrics = {}
         if metrics:
             for metric in metrics:
                 if metric not in METRICS:
                     raise ValueError(f"Unrecognized metric: {metric}")
 
-            filter_dict = (
-                {}
-                if abstain_label is None
-                else {"golds": [abstain_label], "preds": [abstain_label]}
-            )
-            self.metrics = {
-                m: partial(metric_score, metric=m, filter_dict=filter_dict)
-                for m in metrics
-            }
-        else:
-            self.metrics = {}
+                filter_dict = (
+                    {}
+                    if abstain_label is None or metric == "coverage"
+                    else {"golds": [abstain_label], "preds": [abstain_label]}
+                )
+                self.metrics.update({
+                    metric: partial(metric_score, metric=metric, filter_dict=filter_dict)
+                })
 
         if custom_metric_funcs is not None:
             self.metrics.update(custom_metric_funcs)

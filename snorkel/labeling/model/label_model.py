@@ -238,7 +238,7 @@ class LabelModel(nn.Module):
         """
         L_aug = self._get_augmented_label_matrix(L, higher_order=higher_order)
         self.d = L_aug.shape[1]
-        self.O = torch.from_numpy(L_aug.T @ L_aug / self.n).float()
+        self.O = torch.from_numpy(L_aug.T @ L_aug / self.n).float().to(self.config.device)
 
     def _init_params(self) -> None:
         r"""Initialize the learned params.
@@ -269,7 +269,7 @@ class LabelModel(nn.Module):
 
         # Get the per-value labeling propensities
         # Note that self.O must have been computed already!
-        lps = torch.diag(self.O).numpy()
+        lps = torch.diag(self.O).cpu().detach().numpy()
 
         # TODO: Update for higher-order cliques!
         self.mu_init = torch.zeros(self.d, self.cardinality)
@@ -335,7 +335,7 @@ class LabelModel(nn.Module):
         np.ndarray
             An [m, k + 1, k] np.ndarray conditional probabilities table.
         """
-        return self._get_conditional_probs(self.mu.detach().numpy())
+        return self._get_conditional_probs(self.mu.clone().cpu().detach().numpy())
 
     def get_weights(self) -> np.ndarray:
         """Return the vector of learned LF weights for combining LFs.
@@ -356,7 +356,7 @@ class LabelModel(nn.Module):
         accs = np.zeros(self.m)
         cprobs = self.get_conditional_probs()
         for i in range(self.m):
-            accs[i] = np.diag(cprobs[i, 1:, :] @ self.P.numpy()).sum()
+            accs[i] = np.diag(cprobs[i, 1:, :] @ self.P.cpu().detach().numpy()).sum()
         return np.clip(accs / self.coverage, 1e-6, 1.0)
 
     def predict_proba(self, L: np.ndarray) -> np.ndarray:
@@ -385,7 +385,7 @@ class LabelModel(nn.Module):
         L_shift = L + 1  # convert to {0, 1, ..., k}
         self._set_constants(L_shift)
         L_aug = self._get_augmented_label_matrix(L_shift)
-        mu = self.mu.detach().numpy()
+        mu = self.mu.cpu().detach().numpy()
         jtm = np.ones(L_aug.shape[1])
 
         # Note: We omit abstains, effectively assuming uniform distribution here
@@ -516,7 +516,7 @@ class LabelModel(nn.Module):
             D = l2 * torch.eye(self.d)
         else:
             D = torch.diag(torch.from_numpy(l2)).type(torch.float32)
-
+        D = D.to(self.config.device)
         # Note that mu is a matrix and this is the *Frobenius norm*
         return torch.norm(D @ (self.mu - self.mu_init)) ** 2
 
@@ -569,7 +569,7 @@ class LabelModel(nn.Module):
             raise ValueError(
                 f"Class balance prior is 0 for class(es) {np.where(self.p)[0]}."
             )
-        self.P = torch.diag(torch.from_numpy(self.p)).float()
+        self.P = torch.diag(torch.from_numpy(self.p)).float().to(self.config.device)
 
     def _set_constants(self, L: np.ndarray) -> None:
         self.n, self.m = L.shape
@@ -756,7 +756,7 @@ class LabelModel(nn.Module):
         int
             Number of LFs better than random
         """
-        P = self.P.numpy()
+        P = self.P.clone().cpu().detach().numpy()
         cprobs = self._get_conditional_probs(mu)
         count = 0
         for i in range(self.m):
@@ -787,8 +787,8 @@ class LabelModel(nn.Module):
         assumption that we could use, and in practice this may require further
         iteration here.
         """
-        mu = self.mu.detach().numpy()
-        P = self.P.numpy()
+        mu = self.mu.cpu().detach().numpy()
+        P = self.P.cpu().detach().numpy()
         d, k = mu.shape
 
         # Iterate through the possible perumation matrices and track heuristic scores
@@ -805,7 +805,7 @@ class LabelModel(nn.Module):
                 scores.append(-1)
 
         # Set mu according to highest-scoring permutation
-        self.mu.data = torch.Tensor(mu @ Zs[np.argmax(scores)])  # type: ignore
+        self.mu = nn.Parameter(torch.Tensor(mu @ Zs[np.argmax(scores)]).to(self.config.device))  # type: ignore
 
     def fit(
         self,
@@ -878,6 +878,7 @@ class LabelModel(nn.Module):
         self.train()
 
         # Move model to GPU
+        self.mu_init = self.mu_init.to(self.config.device)
         if self.config.verbose and self.config.device != "cpu":  # pragma: no cover
             logging.info("Using GPU...")
         self.to(self.config.device)

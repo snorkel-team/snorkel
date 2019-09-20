@@ -55,9 +55,13 @@ class Scorer:
                     if abstain_label is None or metric == "coverage"
                     else {"golds": [abstain_label], "preds": [abstain_label]}
                 )
-                self.metrics.update({
-                    metric: partial(metric_score, metric=metric, filter_dict=filter_dict)
-                })
+                self.metrics.update(
+                    {
+                        metric: partial(
+                            metric_score, metric=metric, filter_dict=filter_dict
+                        )
+                    }
+                )
 
         if custom_metric_funcs is not None:
             self.metrics.update(custom_metric_funcs)

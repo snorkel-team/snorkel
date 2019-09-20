@@ -10,4 +10,5 @@ from .model.baselines import (  # noqa: F401
     RandomVoter,
 )
 from .model.label_model import LabelModel  # noqa: F401
+from .model.wrapper import SklearnLabelModel  # noqa: F401
 from .utils import filter_unlabeled_dataframe  # noqa: F401

@@ -20,6 +20,7 @@ Programmatic data set labeling: LF creation, models, and analysis utilities.
    PandasLFApplier
    apply.dask.PandasParallelLFApplier
    RandomVoter
+   SklearnLabelModel
    apply.spark.SparkLFApplier
    lf.nlp_spark.SparkNLPLabelingFunction
    filter_unlabeled_dataframe

@@ -337,7 +337,7 @@ class LabelModel(nn.Module):
         np.ndarray
             An [m, k + 1, k] np.ndarray conditional probabilities table.
         """
-        return self._get_conditional_probs(self.mu.clone().cpu().detach().numpy())
+        return self._get_conditional_probs(self.mu.cpu().detach().numpy())
 
     def get_weights(self) -> np.ndarray:
         """Return the vector of learned LF weights for combining LFs.
@@ -758,7 +758,7 @@ class LabelModel(nn.Module):
         int
             Number of LFs better than random
         """
-        P = self.P.clone().cpu().detach().numpy()
+        P = self.P.cpu().detach().numpy()
         cprobs = self._get_conditional_probs(mu)
         count = 0
         for i in range(self.m):

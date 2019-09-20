@@ -238,7 +238,9 @@ class LabelModel(nn.Module):
         """
         L_aug = self._get_augmented_label_matrix(L, higher_order=higher_order)
         self.d = L_aug.shape[1]
-        self.O = torch.from_numpy(L_aug.T @ L_aug / self.n).float().to(self.config.device)
+        self.O = (
+            torch.from_numpy(L_aug.T @ L_aug / self.n).float().to(self.config.device)
+        )
 
     def _init_params(self) -> None:
         r"""Initialize the learned params.
@@ -805,7 +807,9 @@ class LabelModel(nn.Module):
                 scores.append(-1)
 
         # Set mu according to highest-scoring permutation
-        self.mu = nn.Parameter(torch.Tensor(mu @ Zs[np.argmax(scores)]).to(self.config.device))  # type: ignore
+        self.mu = nn.Parameter(
+            torch.Tensor(mu @ Zs[np.argmax(scores)]).to(self.config.device) # type: ignore
+        )
 
     def fit(
         self,

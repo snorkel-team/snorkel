@@ -89,17 +89,17 @@ class _CliqueData(NamedTuple):
 class LabelModel(nn.Module):
     r"""A model for learning the LF accuracies and combining their output labels.
 
-    This class estimates a model of the labeling functions' conditional probabilities
-    of correctly outputting the true (unobserved) label `Y`, `P(\lf | Y)`, and uses
-    this learned model to re-weight and combine their output labels.
+    This class learns a model of the labeling functions' conditional probabilities
+    of outputting the true (unobserved) label `Y`, `P(\lf | Y)`, and uses this learned
+    model to re-weight and combine their output labels.
 
     This class is based on the approach in [Training Complex Models with Multi-Task
     Weak Supervision](https://arxiv.org/abs/1810.02840), published in AAAI'19. In this
     approach, we compute the inverse generalized covariance matrix of the junction tree
     of a given LF dependency graph, and perform a matrix completion-style approach with
     respect to these empirical statistics. The result is an estimate of the conditional
-    LF probabilities, `P(\lf | Y)`, which are then the parameters of the label model
-    used to re-weight and combine the labels output by the LFs.
+    LF probabilities, `P(\lf | Y)`, which are then set as the parameters of the label
+    model used to re-weight and combine the labels output by the LFs.
 
     Currently this class uses a conditionally independent label model, in which the LFs
     are assumed to be conditionally independent given `Y`.

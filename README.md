@@ -86,6 +86,7 @@ This is likely the fastest way to get a change you'd like to see into the librar
 
 Small contributions can be made directly in a pull request (PR).
 If you would like to contribute a larger feature, we recommend first creating an issue with a proposed design for discussion. 
+For ideas about what to work on, we've labeled specific issues as [`help wanted`](https://github.com/snorkel-team/snorkel/issues?utf8=%E2%9C%93&q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22+).
 
 To set up a development environment for contributing back to Snorkel, see our [contributing guidelines](./CONTRIBUTING.md).
 All PRs must pass the continuous integration tests and receive approval from a member of the Snorkel development team before they will be merged.

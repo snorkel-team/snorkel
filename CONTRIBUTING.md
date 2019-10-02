@@ -161,4 +161,5 @@ We ask that you make sure initial CI checks are passing before requesting a revi
 ### Merging
 
 The PR author owns the test plan and has final say on correctness.
-Therefore, it is up to the PR author to merge their PR.
+Therefore, it is up to the PR author to give the final okay on merging
+(or merge their PR if they have write access).

@@ -34,30 +34,14 @@ class TestLabelingFunction(unittest.TestCase):
         self.assertEqual(lf(x_43), 0)
         self.assertEqual(lf(x_19), -1)
 
-    def _run_lf_raise(self, lf: LabelingFunction) -> None:
-        x_none = SimpleNamespace(num=None)
-        with self.assertRaises(TypeError):
-            lf(x_none)
-
-    def _run_lf_no_raise(self, lf: LabelingFunction) -> None:
-        x_none = SimpleNamespace(num=None)
-        self.assertEqual(lf(x_none), -1)
-
     def test_labeling_function(self) -> None:
         lf = LabelingFunction(name="my_lf", f=f)
         self._run_lf(lf)
-        self._run_lf_raise(lf)
-
-    def test_labeling_function_fault_tolerant(self) -> None:
-        lf = LabelingFunction(name="my_lf", f=f, fault_tolerant=True)
-        self._run_lf(lf)
-        self._run_lf_no_raise(lf)
 
     def test_labeling_function_resources(self) -> None:
         db = [3, 6, 43]
         lf = LabelingFunction(name="my_lf", f=g, resources=dict(db=db))
         self._run_lf(lf)
-        self._run_lf_no_raise(lf)
 
     def test_labeling_function_preprocessor(self) -> None:
         lf = LabelingFunction(name="my_lf", f=f, pre=[square, square])
@@ -79,7 +63,6 @@ class TestLabelingFunction(unittest.TestCase):
         lf = LabelingFunction(name="my_lf", f=g, resources=dict(db=db))
         lf_load = pickle.loads(pickle.dumps(lf))
         self._run_lf(lf_load)
-        self._run_lf_no_raise(lf_load)
 
     def test_labeling_function_decorator(self) -> None:
         @labeling_function()
@@ -89,17 +72,17 @@ class TestLabelingFunction(unittest.TestCase):
         self.assertIsInstance(lf, LabelingFunction)
         self.assertEqual(lf.name, "lf")
         self._run_lf(lf)
-        self._run_lf_raise(lf)
 
     def test_labeling_function_decorator_args(self) -> None:
-        @labeling_function(name="my_lf", fault_tolerant=True)
-        def lf(x: DataPoint) -> int:
-            return 0 if x.num > 42 else -1
+        db = [3, 6, 43 ** 2]
+
+        @labeling_function(name="my_lf", resources=dict(db=db), pre=[square])
+        def lf(x: DataPoint, db: List[int]) -> int:
+            return 0 if x.num in db else -1
 
         self.assertIsInstance(lf, LabelingFunction)
         self.assertEqual(lf.name, "my_lf")
         self._run_lf(lf)
-        self._run_lf_no_raise(lf)
 
     def test_labeling_function_decorator_no_parens(self) -> None:
         with self.assertRaisesRegex(ValueError, "missing parentheses"):

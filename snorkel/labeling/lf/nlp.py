@@ -73,7 +73,6 @@ class BaseNLPLabelingFunction(LabelingFunction):
         f: Callable[..., int],
         resources: Optional[Mapping[str, Any]] = None,
         pre: Optional[List[BasePreprocessor]] = None,
-        fault_tolerant: bool = False,
         text_field: str = "text",
         doc_field: str = "doc",
         language: str = EN_CORE_WEB_SM,
@@ -83,13 +82,7 @@ class BaseNLPLabelingFunction(LabelingFunction):
         self._create_or_check_preprocessor(
             text_field, doc_field, language, disable, pre or [], memoize
         )
-        super().__init__(
-            name,
-            f,
-            resources=resources,
-            pre=[self._nlp_config.nlp],
-            fault_tolerant=fault_tolerant,
-        )
+        super().__init__(name, f, resources=resources, pre=[self._nlp_config.nlp])
 
 
 class NLPLabelingFunction(BaseNLPLabelingFunction):
@@ -123,8 +116,6 @@ class NLPLabelingFunction(BaseNLPLabelingFunction):
         Labeling resources passed in to ``f`` via ``kwargs``
     pre
         Preprocessors to run before SpacyPreprocessor is executed
-    fault_tolerant
-        Output -1 if LF execution fails?
     text_field
         Name of data point text field to input
     doc_field
@@ -161,8 +152,6 @@ class NLPLabelingFunction(BaseNLPLabelingFunction):
     ----------
     name
         See above
-    fault_tolerant
-        See above
     """
 
     @classmethod
@@ -182,14 +171,13 @@ class base_nlp_labeling_function(labeling_function):
         name: Optional[str] = None,
         resources: Optional[Mapping[str, Any]] = None,
         pre: Optional[List[BasePreprocessor]] = None,
-        fault_tolerant: bool = False,
         text_field: str = "text",
         doc_field: str = "doc",
         language: str = EN_CORE_WEB_SM,
         disable: Optional[List[str]] = None,
         memoize: bool = True,
     ) -> None:
-        super().__init__(name, resources, pre, fault_tolerant)
+        super().__init__(name, resources, pre)
         self.text_field = text_field
         self.doc_field = doc_field
         self.language = language
@@ -217,7 +205,6 @@ class base_nlp_labeling_function(labeling_function):
             f=f,
             resources=self.resources,
             pre=self.pre,
-            fault_tolerant=self.fault_tolerant,
             text_field=self.text_field,
             doc_field=self.doc_field,
             language=self.language,
@@ -237,8 +224,6 @@ class nlp_labeling_function(base_nlp_labeling_function):
         Labeling resources passed in to ``f`` via ``kwargs``
     pre
         Preprocessors to run before SpacyPreprocessor is executed
-    fault_tolerant
-        Output -1 if LF execution fails?
     text_field
         Name of data point text field to input
     doc_field

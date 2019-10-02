@@ -8,6 +8,7 @@ import pytest
 from dask import dataframe as dd
 
 from snorkel.labeling import LFApplier, PandasLFApplier, labeling_function
+from snorkel.labeling.apply.core import ApplierMetadata
 from snorkel.labeling.apply.dask import DaskLFApplier, PandasParallelLFApplier
 from snorkel.preprocess import preprocessor
 from snorkel.preprocess.nlp import SpacyPreprocessor
@@ -59,8 +60,14 @@ def g_np(x: DataPoint, db: List[int]) -> int:
     return 0 if x[1] in db else -1
 
 
+@labeling_function()
+def f_bad(x: DataPoint) -> int:
+    return 0 if x.mum > 42 else -1
+
+
 DATA = [3, 43, 12, 9, 3]
 L_EXPECTED = np.array([[-1, 0], [0, -1], [-1, -1], [-1, 0], [-1, 0]])
+L_EXPECTED_BAD = np.array([[-1, -1], [0, -1], [-1, -1], [-1, -1], [-1, -1]])
 L_PREPROCESS_EXPECTED = np.array([[-1, -1], [0, 0], [-1, 0], [-1, 0], [-1, -1]])
 
 TEXT_DATA = ["Jane", "Jane plays soccer.", "Jane plays soccer."]
@@ -75,6 +82,22 @@ class TestLFApplier(unittest.TestCase):
         np.testing.assert_equal(L, L_EXPECTED)
         L = applier.apply(data_points, progress_bar=True)
         np.testing.assert_equal(L, L_EXPECTED)
+        L, meta = applier.apply(data_points, return_meta=True)
+        np.testing.assert_equal(L, L_EXPECTED)
+        self.assertEqual(meta, ApplierMetadata(dict()))
+
+    def test_lf_applier_fault(self) -> None:
+        data_points = [SimpleNamespace(num=num) for num in DATA]
+        applier = LFApplier([f, f_bad])
+        with self.assertRaises(AttributeError):
+            applier.apply(data_points, progress_bar=False)
+        L = applier.apply(data_points, progress_bar=False, fault_tolerant=True)
+        np.testing.assert_equal(L, L_EXPECTED_BAD)
+        L, meta = applier.apply(
+            data_points, progress_bar=False, fault_tolerant=True, return_meta=True
+        )
+        np.testing.assert_equal(L, L_EXPECTED_BAD)
+        self.assertEqual(meta, ApplierMetadata(dict(f_bad=5)))
 
     def test_lf_applier_preprocessor(self) -> None:
         data_points = [SimpleNamespace(num=num) for num in DATA]
@@ -121,6 +144,22 @@ class TestPandasApplier(unittest.TestCase):
         np.testing.assert_equal(L, L_EXPECTED)
         L = applier.apply(df, progress_bar=True)
         np.testing.assert_equal(L, L_EXPECTED)
+        L, meta = applier.apply(df, return_meta=True)
+        np.testing.assert_equal(L, L_EXPECTED)
+        self.assertEqual(meta, ApplierMetadata(dict()))
+
+    def test_lf_applier_pandas_fault(self) -> None:
+        df = pd.DataFrame(dict(num=DATA))
+        applier = PandasLFApplier([f, f_bad])
+        with self.assertRaises(AttributeError):
+            applier.apply(df, progress_bar=False)
+        L = applier.apply(df, progress_bar=False, fault_tolerant=True)
+        np.testing.assert_equal(L, L_EXPECTED_BAD)
+        L, meta = applier.apply(
+            df, progress_bar=False, fault_tolerant=True, return_meta=True
+        )
+        np.testing.assert_equal(L, L_EXPECTED_BAD)
+        self.assertEqual(meta, ApplierMetadata(dict(f_bad=5)))
 
     def test_lf_applier_pandas_preprocessor(self) -> None:
         df = pd.DataFrame(dict(num=DATA))
@@ -188,6 +227,15 @@ class TestDaskApplier(unittest.TestCase):
         applier = DaskLFApplier([f, g])
         L = applier.apply(df)
         np.testing.assert_equal(L, L_EXPECTED)
+
+    def test_lf_applier_dask_fault(self) -> None:
+        df = pd.DataFrame(dict(num=DATA))
+        df = dd.from_pandas(df, npartitions=2)
+        applier = DaskLFApplier([f, f_bad])
+        with self.assertRaises(Exception):
+            applier.apply(df)
+        L = applier.apply(df, fault_tolerant=True)
+        np.testing.assert_equal(L, L_EXPECTED_BAD)
 
     def test_lf_applier_dask_preprocessor(self) -> None:
         df = pd.DataFrame(dict(num=DATA))

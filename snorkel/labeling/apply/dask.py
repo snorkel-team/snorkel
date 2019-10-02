@@ -6,7 +6,7 @@ import pandas as pd
 from dask import dataframe as dd
 from dask.distributed import Client
 
-from .core import BaseLFApplier
+from .core import BaseLFApplier, _FunctionCaller
 from .pandas import apply_lfs_to_data_point, rows_to_triplets
 
 Scheduler = Union[str, Client]
@@ -20,7 +20,12 @@ class DaskLFApplier(BaseLFApplier):
     For more information, see https://docs.dask.org/en/stable/dataframe.html
     """
 
-    def apply(self, df: dd, scheduler: Scheduler = "processes") -> np.ndarray:
+    def apply(
+        self,
+        df: dd.DataFrame,
+        scheduler: Scheduler = "processes",
+        fault_tolerant: bool = False,
+    ) -> np.ndarray:
         """Label Dask DataFrame of data points with LFs.
 
         Parameters
@@ -31,13 +36,16 @@ class DaskLFApplier(BaseLFApplier):
             A Dask scheduling configuration: either a string option or
             a ``Client``. For more information, see
             https://docs.dask.org/en/stable/scheduling.html#
+        fault_tolerant
+            Output ``-1`` if LF execution fails?
 
         Returns
         -------
         np.ndarray
             Matrix of labels emitted by LFs
         """
-        apply_fn = partial(apply_lfs_to_data_point, lfs=self._lfs)
+        f_caller = _FunctionCaller(fault_tolerant)
+        apply_fn = partial(apply_lfs_to_data_point, lfs=self._lfs, f_caller=f_caller)
         map_fn = df.map_partitions(lambda p_df: p_df.apply(apply_fn, axis=1))
         labels = map_fn.compute(scheduler=scheduler)
         labels_with_index = rows_to_triplets(labels)
@@ -52,7 +60,11 @@ class PandasParallelLFApplier(DaskLFApplier):
     """
 
     def apply(  # type: ignore
-        self, df: pd.DataFrame, n_parallel: int = 2, scheduler: Scheduler = "processes"
+        self,
+        df: pd.DataFrame,
+        n_parallel: int = 2,
+        scheduler: Scheduler = "processes",
+        fault_tolerant: bool = False,
     ) -> np.ndarray:
         """Label Pandas DataFrame of data points with LFs in parallel using Dask.
 
@@ -69,6 +81,8 @@ class PandasParallelLFApplier(DaskLFApplier):
             A Dask scheduling configuration: either a string option or
             a ``Client``. For more information, see
             https://docs.dask.org/en/stable/scheduling.html#
+        fault_tolerant
+            Output ``-1`` if LF execution fails?
 
         Returns
         -------
@@ -81,4 +95,4 @@ class PandasParallelLFApplier(DaskLFApplier):
                 "For single process Pandas, use PandasLFApplier."
             )
         df = dd.from_pandas(df, npartitions=n_parallel)
-        return super().apply(df, scheduler=scheduler)
+        return super().apply(df, scheduler=scheduler, fault_tolerant=fault_tolerant)

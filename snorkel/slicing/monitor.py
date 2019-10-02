@@ -27,5 +27,5 @@ def slice_dataframe(
     S = PandasSFApplier([slicing_function]).apply(df)
 
     # Index into the SF labels by name
-    df_idx = np.where(S[slicing_function.name])[0]
+    df_idx = np.where(S[slicing_function.name])[0]  # type: ignore
     return df.iloc[df_idx]

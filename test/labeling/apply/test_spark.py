@@ -33,8 +33,14 @@ def g(x: DataPoint, db: List[int]) -> int:
     return 0 if x.num in db else -1
 
 
+@labeling_function()
+def f_bad(x: DataPoint) -> int:
+    return 0 if x.mum > 42 else -1
+
+
 DATA = [3, 43, 12, 9, 3]
 L_EXPECTED = np.array([[-1, 0], [0, -1], [-1, -1], [-1, 0], [-1, 0]])
+L_EXPECTED_BAD = np.array([[-1, -1], [0, -1], [-1, -1], [-1, -1], [-1, -1]])
 L_PREPROCESS_EXPECTED = np.array([[-1, -1], [0, 0], [-1, 0], [-1, 0], [-1, -1]])
 
 TEXT_DATA = ["Jane", "Jane plays soccer.", "Jane plays soccer."]
@@ -52,6 +58,19 @@ class TestSparkApplier(unittest.TestCase):
         applier = SparkLFApplier([f, g])
         L = applier.apply(rdd)
         np.testing.assert_equal(L, L_EXPECTED)
+
+    @pytest.mark.complex
+    @pytest.mark.spark
+    def test_lf_applier_spark_fault(self) -> None:
+        sc = SparkContext.getOrCreate()
+        sql = SQLContext(sc)
+        df = pd.DataFrame(dict(num=DATA))
+        rdd = sql.createDataFrame(df).rdd
+        applier = SparkLFApplier([f, f_bad])
+        with self.assertRaises(Exception):
+            applier.apply(rdd)
+        L = applier.apply(rdd, fault_tolerant=True)
+        np.testing.assert_equal(L, L_EXPECTED_BAD)
 
     @pytest.mark.complex
     @pytest.mark.spark

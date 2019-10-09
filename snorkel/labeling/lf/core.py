@@ -27,8 +27,6 @@ class LabelingFunction:
         Labeling resources passed in to ``f`` via ``kwargs``
     pre
         Preprocessors to run on data points before LF execution
-    fault_tolerant
-        Output ``-1`` if LF execution fails?
 
     Raises
     ------
@@ -39,8 +37,6 @@ class LabelingFunction:
     ----------
     name
         See above
-    fault_tolerant
-        See above
     """
 
     def __init__(
@@ -49,10 +45,8 @@ class LabelingFunction:
         f: Callable[..., int],
         resources: Optional[Mapping[str, Any]] = None,
         pre: Optional[List[BasePreprocessor]] = None,
-        fault_tolerant: bool = False,
     ) -> None:
         self.name = name
-        self.fault_tolerant = fault_tolerant
         self._f = f
         self._resources = resources or {}
         self._pre = pre or []
@@ -67,9 +61,7 @@ class LabelingFunction:
     def __call__(self, x: DataPoint) -> int:
         """Label data point.
 
-        Runs all preprocessors, then passes to LF. If an exception
-        is encountered and the LF is in fault tolerant mode,
-        the LF abstains from voting.
+        Runs all preprocessors, then passes preprocessed data point to LF.
 
         Parameters
         ----------
@@ -82,11 +74,6 @@ class LabelingFunction:
             Label for data point
         """
         x = self._preprocess_data_point(x)
-        if self.fault_tolerant:
-            try:
-                return self._f(x, **self._resources)
-            except Exception:
-                return -1
         return self._f(x, **self._resources)
 
     def __repr__(self) -> str:
@@ -105,8 +92,6 @@ class labeling_function:
         Labeling resources passed in to ``f`` via ``kwargs``
     preprocessors
         Preprocessors to run on data points before LF execution
-    fault_tolerant
-        Output ``-1`` if LF execution fails?
 
     Examples
     --------
@@ -132,14 +117,12 @@ class labeling_function:
         name: Optional[str] = None,
         resources: Optional[Mapping[str, Any]] = None,
         pre: Optional[List[BasePreprocessor]] = None,
-        fault_tolerant: bool = False,
     ) -> None:
         if callable(name):
             raise ValueError("Looks like this decorator is missing parentheses!")
         self.name = name
         self.resources = resources
         self.pre = pre
-        self.fault_tolerant = fault_tolerant
 
     def __call__(self, f: Callable[..., int]) -> LabelingFunction:
         """Wrap a function to create a ``LabelingFunction``.
@@ -155,10 +138,4 @@ class labeling_function:
             New ``LabelingFunction`` executing logic in wrapped function
         """
         name = self.name or f.__name__
-        return LabelingFunction(
-            name=name,
-            f=f,
-            resources=self.resources,
-            pre=self.pre,
-            fault_tolerant=self.fault_tolerant,
-        )
+        return LabelingFunction(name=name, f=f, resources=self.resources, pre=self.pre)

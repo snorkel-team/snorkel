@@ -24,8 +24,6 @@ class slicing_function:
         Slicing resources passed in to ``f`` via ``kwargs``
     preprocessors
         Preprocessors to run on data points before SF execution
-    fault_tolerant
-        Output ``-1`` if SF execution fails?
 
     Examples
     --------
@@ -51,14 +49,12 @@ class slicing_function:
         name: Optional[str] = None,
         resources: Optional[Mapping[str, Any]] = None,
         pre: Optional[List[BasePreprocessor]] = None,
-        fault_tolerant: bool = False,
     ) -> None:
         if callable(name):
             raise ValueError("Looks like this decorator is missing parentheses!")
         self.name = name
         self.resources = resources
         self.pre = pre
-        self.fault_tolerant = fault_tolerant
 
     def __call__(self, f: Callable[..., int]) -> SlicingFunction:
         """Wrap a function to create a ``SlicingFunction``.
@@ -74,10 +70,4 @@ class slicing_function:
             New ``SlicingFunction`` executing logic in wrapped function
         """
         name = self.name or f.__name__
-        return SlicingFunction(
-            name=name,
-            f=f,
-            resources=self.resources,
-            pre=self.pre,
-            fault_tolerant=self.fault_tolerant,
-        )
+        return SlicingFunction(name=name, f=f, resources=self.resources, pre=self.pre)

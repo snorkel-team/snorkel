@@ -24,8 +24,6 @@ class SparkNLPLabelingFunction(BaseNLPLabelingFunction):
         Labeling resources passed in to ``f`` via ``kwargs``
     pre
         Preprocessors to run before SpacyPreprocessor is executed
-    fault_tolerant
-        Output -1 if LF execution fails?
     text_field
         Name of data point text field to input
     doc_field
@@ -47,8 +45,6 @@ class SparkNLPLabelingFunction(BaseNLPLabelingFunction):
     Attributes
     ----------
     name
-        See above
-    fault_tolerant
         See above
     """
 
@@ -72,8 +68,6 @@ class spark_nlp_labeling_function(base_nlp_labeling_function):
         Labeling resources passed in to ``f`` via ``kwargs``
     pre
         Preprocessors to run before SpacyPreprocessor is executed
-    fault_tolerant
-        Output -1 if LF execution fails?
     text_field
         Name of data point text field to input
     doc_field

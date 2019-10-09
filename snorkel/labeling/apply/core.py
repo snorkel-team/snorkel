@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import List, Tuple, Union
+from typing import DefaultDict, Dict, List, NamedTuple, Tuple, Union
 
 import numpy as np
 from tqdm import tqdm
@@ -9,6 +9,28 @@ from snorkel.types import DataPoint, DataPoints
 from snorkel.utils.data_operators import check_unique_names
 
 RowData = List[Tuple[int, int, int]]
+
+
+class ApplierMetadata(NamedTuple):
+    """Metadata about Applier call."""
+
+    # Map from LF name to number of faults in apply call
+    faults: Dict[str, int]
+
+
+class _FunctionCaller:
+    def __init__(self, fault_tolerant: bool):
+        self.fault_tolerant = fault_tolerant
+        self.fault_counts: DefaultDict[str, int] = DefaultDict(int)
+
+    def __call__(self, f: LabelingFunction, x: DataPoint) -> int:
+        if not self.fault_tolerant:
+            return f(x)
+        try:
+            return f(x)
+        except Exception:
+            self.fault_counts[f.name] += 1
+            return -1
 
 
 class BaseLFApplier:
@@ -60,7 +82,7 @@ class BaseLFApplier:
 
 
 def apply_lfs_to_data_point(
-    x: DataPoint, index: int, lfs: List[LabelingFunction]
+    x: DataPoint, index: int, lfs: List[LabelingFunction], f_caller: _FunctionCaller
 ) -> RowData:
     """Label a single data point with a set of LFs.
 
@@ -72,6 +94,8 @@ def apply_lfs_to_data_point(
         Index of the data point
     lfs
         Set of LFs to label ``x`` with
+    f_caller
+        A ``_FunctionCaller`` to record failed LF executions
 
     Returns
     -------
@@ -80,7 +104,7 @@ def apply_lfs_to_data_point(
     """
     labels = []
     for j, lf in enumerate(lfs):
-        y = lf(x)
+        y = f_caller(lf, x)
         if y >= 0:
             labels.append((index, j, y))
     return labels
@@ -114,8 +138,12 @@ class LFApplier(BaseLFApplier):
     """
 
     def apply(
-        self, data_points: Union[DataPoints, np.ndarray], progress_bar: bool = True
-    ) -> np.ndarray:
+        self,
+        data_points: Union[DataPoints, np.ndarray],
+        progress_bar: bool = True,
+        fault_tolerant: bool = False,
+        return_meta: bool = False,
+    ) -> Union[np.ndarray, Tuple[np.ndarray, ApplierMetadata]]:
         """Label list of data points or a NumPy array with LFs.
 
         Parameters
@@ -124,13 +152,23 @@ class LFApplier(BaseLFApplier):
             List of data points or NumPy array to be labeled by LFs
         progress_bar
             Display a progress bar?
+        fault_tolerant
+            Output ``-1`` if LF execution fails?
+        return_meta
+            Return metadata from apply call?
 
         Returns
         -------
         np.ndarray
             Matrix of labels emitted by LFs
+        ApplierMetadata
+            Metadata, such as fault counts, for the apply call
         """
         labels = []
+        f_caller = _FunctionCaller(fault_tolerant)
         for i, x in tqdm(enumerate(data_points), disable=(not progress_bar)):
-            labels.append(apply_lfs_to_data_point(x, i, self._lfs))
-        return self._numpy_from_row_data(labels)
+            labels.append(apply_lfs_to_data_point(x, i, self._lfs, f_caller))
+        L = self._numpy_from_row_data(labels)
+        if return_meta:
+            return L, ApplierMetadata(f_caller.fault_counts)
+        return L

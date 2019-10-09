@@ -37,8 +37,6 @@ class NLPSlicingFunction(BaseNLPLabelingFunction):
         Labeling resources passed in to ``f`` via ``kwargs``
     pre
         Preprocessors to run before SpacyPreprocessor is executed
-    fault_tolerant
-        Output -1 if LF execution fails?
     text_field
         Name of data point text field to input
     doc_field
@@ -74,8 +72,6 @@ class NLPSlicingFunction(BaseNLPLabelingFunction):
     Attributes
     ----------
     name
-        See above
-    fault_tolerant
         See above
     """
 

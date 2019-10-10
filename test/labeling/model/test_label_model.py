@@ -506,6 +506,21 @@ class TestLabelModelAdvanced(unittest.TestCase):
         score = label_model.score(L, Y)
         self.assertGreaterEqual(score["accuracy"], 0.9)
 
+    def test_label_model_large_multiclass(self) -> None:
+        """Test the LabelModel's estimate of P and Y on a dataset with a high-cardinality target."""
+        np.random.seed(123)
+
+        # Generate label matrix with high cardinality.
+        cardinality: int = 20
+        P, Y, L = generate_simple_label_matrix(self.n, self.m, cardinality=cardinality)
+
+        # Train LabelModel and only allow for 100 permutation iterations. At
+        # cardinality = 20, the theoretical maximum number of permuted iterations
+        # is `20!`, which is ~2.43e18. This test should never finish unless we've
+        # properly bound the number of iterations from above.
+        label_model = LabelModel(cardinality=cardinality, verbose=False, n_iter=100)
+        label_model.fit(L, n_epochs=200, lr=0.01, seed=123)
+
     def test_label_model_sparse(self) -> None:
         """Test the LabelModel's estimate of P and Y on a sparse synthetic dataset.
 

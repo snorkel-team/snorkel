@@ -2,7 +2,7 @@ import logging
 import pickle
 import random
 from collections import Counter
-from itertools import chain, permutations
+from itertools import chain
 from typing import Any, Dict, List, NamedTuple, Optional, Set, Tuple, Union
 
 import numpy as np
@@ -74,10 +74,18 @@ class LabelModelConfig(Config):
         Whether to include print statements
     device
         What device to place the model on ('cpu' or 'cuda:0', for example)
+    n_iter
+        Maximum number of iterations where LabelModel will search for a valid
+        μ value (default: 1,000,000). Note: the maximum number of iterations
+        is `k!`, which is exponential with respect to the model's cardinality.
+        A default of 1 million iterations places a cap between models with
+        cardinality 9 (9! = 362,880) and 10 (10! = 3,628,800). `n_iter` trades-off
+        runtime vs optimality of the discovered μ value.
     """
 
     verbose: bool = True
     device: str = "cpu"
+    n_iter: int = 1_000_000
 
 
 class _CliqueData(NamedTuple):
@@ -110,6 +118,7 @@ class LabelModel(nn.Module):
     >>> label_model = LabelModel(cardinality=3)
     >>> label_model = LabelModel(cardinality=3, device='cpu')
     >>> label_model = LabelModel(cardinality=3)
+    >>> label_model = LabelModel(cardinality=19, n_iter=2500000)
 
     Parameters
     ----------
@@ -804,15 +813,36 @@ class LabelModel(nn.Module):
         assumption that we could use, and in practice this may require further
         iteration here.
         """
+        import tqdm
+
         mu = self.mu.cpu().detach().numpy()
         P = self.P.cpu().detach().numpy()
         d, k = mu.shape
 
-        # Iterate through the possible perumation matrices and track heuristic scores
-        Zs = []
-        scores = []
-        for idxs in permutations(range(k)):
-            Z = np.eye(k)[:, idxs]
+        # Limit number of iterations to avoid exponentially-increasing runtime.
+        # See: https://github.com/snorkel-team/snorkel/issues/1486
+        max_n_iter: int = np.math.factorial(k)
+        n_iter: int = self.config.n_iter if self.config.n_iter and 0 < self.config.n_iter < max_n_iter else max_n_iter
+
+        # Otherwise, sample `n_iter` unique permutation indices from the full set of `max_n_iter` permutations.
+        sampled_permutations: Set[Tuple[int, ...]] = set()
+        pbar = tqdm.tqdm(desc="Sampling from all possible permutations", total=n_iter)
+        while len(sampled_permutations) < n_iter:
+            permutation: Tuple[int, ...] = tuple(np.random.permutation(range(k)))
+            if permutation not in sampled_permutations:
+                sampled_permutations.add(permutation)
+                pbar.update(n=1)
+        pbar.close()
+
+        # Iterate through the possible permutation matrices and track heuristic scores.
+        Zs: List[np.ndarray] = []
+        scores: List[int] = []
+        for permutation_indices in tqdm.tqdm(
+            iterable=sampled_permutations,
+            desc="Searching for ideal μ amongst candidates",
+            total=n_iter,
+        ):
+            Z = np.eye(k)[:, permutation_indices]
             Zs.append(Z)
 
             # If Z and P commute, get heuristic score, else skip
@@ -820,6 +850,18 @@ class LabelModel(nn.Module):
                 scores.append(self._count_accurate_lfs(mu @ Z))
             else:
                 scores.append(-1)
+
+        if max(scores) == -1 and self.config.verbose:
+            if n_iter == max_n_iter:
+                logging.warning("Could not heuristically find a valid μ value.")
+            else:
+                logging.warning(
+                    (
+                        "Could not heuristically find an ideal μ value. "
+                        "Try passing a larger `n_iter` to the LabelModel initialization "
+                        "(currently set to {n_iter:,}; maximum is {max_n_iter:,})."
+                    ).format(n_iter=n_iter, max_n_iter=max_n_iter)
+                )
 
         # Set mu according to highest-scoring permutation
         self.mu = nn.Parameter(

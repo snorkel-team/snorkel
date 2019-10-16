@@ -21,7 +21,7 @@ scikit-learn>=0.20.2,<0.22.0
 torch>=1.1.0,<1.2.0
 
 # LF dependency learning
-networkx>=2.2,<3.0
+networkx>=2.2,<2.4
 
 # Model introspection tools
 tensorboardX>=1.6,<2.0

@@ -772,19 +772,16 @@ class LabelModel(nn.Module):
         LFs being accurate when not abstaining.
 
             \sum_lf \sum_{y=1}^{cardinality} P(\lf = y, Y = y)
-
-        This is the standard assumption we have made in algorithmic and theoretical
-        work to date. Note however that this is not the only possible heuristic /
-        assumption that we could use, and in practice this may require further
-        iteration here.
         """
         mu = self.mu.cpu().detach().numpy()
         P = self.P.cpu().detach().numpy()
         d, k = mu.shape
+        # We want to maximize the sum of diagonals of matrices for each LF. So
+        # we start by computing the sum of conditional probabilities here.
         probs_sum = sum([mu[i : i + k] for i in range(0, self.m * k, k)]) @ P
 
-        m = Munkres()
-        Z = np.zeros([self.cardinality, self.cardinality])
+        munkres_solver = Munkres()
+        Z = np.zeros([k, k])
 
         # Compute groups of indicess with equal prior in P.
         groups: DefaultDict[float, List[int]] = defaultdict(list)
@@ -796,10 +793,10 @@ class LabelModel(nn.Module):
                 continue
             # Compute submatrix corresponding to the group.
             probs_proj = probs_sum[[[g] for g in group], group]
-            # Use the Munkres algorithm to find optimal permutation.
+            # Use the Munkres algorithm to find the optimal permutation.
             # We use minus because we want to maximize diagonal sum, not minimize,
             # and transpose because we want to permute columns, not rows.
-            permutation_pairs = m.compute(-probs_proj.T)
+            permutation_pairs = munkres_solver.compute(-probs_proj.T)
             for i, j in permutation_pairs:
                 Z[group[i], group[j]] = 1.0
 

@@ -19,6 +19,7 @@ tqdm>=4.33.0,<5.0.0
 # Internal models
 scikit-learn>=0.20.2,<0.22.0
 torch>=1.1.0,<1.2.0
+munkres==1.1.2
 
 # LF dependency learning
 networkx>=2.2,<2.4

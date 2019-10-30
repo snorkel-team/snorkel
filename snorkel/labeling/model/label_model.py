@@ -1,14 +1,15 @@
 import logging
 import pickle
 import random
-from collections import Counter
-from itertools import chain, permutations
-from typing import Any, Dict, List, NamedTuple, Optional, Set, Tuple, Union
+from collections import Counter, defaultdict
+from itertools import chain
+from typing import Any, DefaultDict, Dict, List, NamedTuple, Optional, Set, Tuple, Union
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from munkres import Munkres  # type: ignore
 
 from snorkel.analysis import Scorer
 from snorkel.labeling.analysis import LFAnalysis
@@ -755,33 +756,6 @@ class LabelModel(nn.Module):
             mu_eps = min(0.01, 1 / 10 ** np.ceil(np.log10(self.n)))
         self.mu.data = self.mu.clamp(mu_eps, 1 - mu_eps)  # type: ignore
 
-    def _count_accurate_lfs(self, mu: np.ndarray) -> int:
-        r"""Count the number of LFs that are estimated to be better than random.
-
-        Return the number of LFs are estimated to be more accurate than not when not
-        abstaining, i.e., where
-
-            P(\lf = Y) > P(\lf != Y, \lf != -1).
-
-        Parameters
-        ----------
-        mu
-            An [m * k, k] np.ndarray with entries in [0, 1]
-
-        Returns
-        -------
-        int
-            Number of LFs better than random
-        """
-        P = self.P.cpu().detach().numpy()
-        cprobs = self._get_conditional_probs(mu)
-        count = 0
-        for i in range(self.m):
-            probs = cprobs[i, 1:] @ P
-            if 2 * np.diagonal(probs).sum() - probs.sum() > 0:
-                count += 1
-        return count
-
     def _break_col_permutation_symmetry(self) -> None:
         r"""Heuristically choose amongst (possibly) several valid mu values.
 
@@ -794,38 +768,41 @@ class LabelModel(nn.Module):
             2. diag(O) = sum(mu @ P, axis=1)
         Then any column permutation matrix Z that commutes with P will also equivalently
         satisfy these objectives, and thus is an equally valid (symmetric) solution.
-        Therefore, we select the solution where the most LFs are estimated to be more
-        accurate than not when not abstaining, i.e., where for the majority of LFs,
+        Therefore, we select the solution that maximizes the summed probability of the
+        LFs being accurate when not abstaining.
 
-            P(\lf = Y) > P(\lf != Y, \lf != -1).
-
-        This is the standard assumption we have made in algorithmic and theoretical
-        work to date. Note however that this is not the only possible heuristic /
-        assumption that we could use, and in practice this may require further
-        iteration here.
+            \sum_lf \sum_{y=1}^{cardinality} P(\lf = y, Y = y)
         """
         mu = self.mu.cpu().detach().numpy()
         P = self.P.cpu().detach().numpy()
         d, k = mu.shape
+        # We want to maximize the sum of diagonals of matrices for each LF. So
+        # we start by computing the sum of conditional probabilities here.
+        probs_sum = sum([mu[i : i + k] for i in range(0, self.m * k, k)]) @ P
 
-        # Iterate through the possible perumation matrices and track heuristic scores
-        Zs = []
-        scores = []
-        for idxs in permutations(range(k)):
-            Z = np.eye(k)[:, idxs]
-            Zs.append(Z)
+        munkres_solver = Munkres()
+        Z = np.zeros([k, k])
 
-            # If Z and P commute, get heuristic score, else skip
-            if np.allclose(Z @ P, P @ Z):
-                scores.append(self._count_accurate_lfs(mu @ Z))
-            else:
-                scores.append(-1)
+        # Compute groups of indicess with equal prior in P.
+        groups: DefaultDict[float, List[int]] = defaultdict(list)
+        for i, f in enumerate(P.diagonal()):
+            groups[np.around(f, 3)].append(i)
+        for group in groups.values():
+            if len(group) == 1:
+                Z[group[0], group[0]] = 1.0  # Identity permutation
+                continue
+            # Compute submatrix corresponding to the group.
+            probs_proj = probs_sum[[[g] for g in group], group]
+            # Use the Munkres algorithm to find the optimal permutation.
+            # We use minus because we want to maximize diagonal sum, not minimize,
+            # and transpose because we want to permute columns, not rows.
+            permutation_pairs = munkres_solver.compute(-probs_proj.T)
+            for i, j in permutation_pairs:
+                Z[group[i], group[j]] = 1.0
 
-        # Set mu according to highest-scoring permutation
+        # Set mu according to permutation
         self.mu = nn.Parameter(
-            torch.Tensor(mu @ Zs[np.argmax(scores)]).to(  # type: ignore
-                self.config.device
-            )
+            torch.Tensor(mu @ Z).to(self.config.device)  # type: ignore
         )
 
     def fit(

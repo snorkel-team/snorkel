@@ -103,9 +103,11 @@ def parse_setup() -> Tuple[PackagesType, PackagesType, Set[str], Set[str]]:
 def main() -> int:
     exit_code = 0
 
-    requirements_essential, requirements_other, requirements_duplicate = (
-        parse_requirements()
-    )
+    (
+        requirements_essential,
+        requirements_other,
+        requirements_duplicate,
+    ) = parse_requirements()
     requirements_all = dict(requirements_essential, **requirements_other)
     setup_essential, setup_test, essential_duplicates, test_duplicates = parse_setup()
 

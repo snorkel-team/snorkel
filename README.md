@@ -25,7 +25,7 @@ These tutorials demonstrate a variety of tasks, domains, labeling techniques, an
 
 # Installation
 
-To install Snorkel, we recommend using `pip`:
+To install Snorkel, we recommend using `pip` (with `python>=3.6`):
 
 ```bash
 pip install snorkel

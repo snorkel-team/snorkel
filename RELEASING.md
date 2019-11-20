@@ -2,8 +2,7 @@
 
 ## Before You Start
 
-Make sure you have [PyPI](https://pypi.org) and [PyPI Test](https://test.pypi.org/)
-accounts with maintainer access to the Snorkel project.
+Make sure you have [PyPI](https://pypi.org) account with maintainer access to the Snorkel project.
 Create a .pypirc in your home directory.
 It should look like this:
 
@@ -14,11 +13,6 @@ index-servers =
   pypitest
 
 [pypi]
-username=YOUR_USERNAME
-password=YOUR_PASSWORD
-
-[pypitest]
-repository=https://test.pypi.org/legacy/
 username=YOUR_USERNAME
 password=YOUR_PASSWORD
 ```
@@ -38,9 +32,9 @@ You'll also need to have permissions to push directly to the `master` branch.
 1. Make sure `CHANGELOG.md` is up to date for the release: compare against PRs
    merged since the last release & update top heading with release date.
 
-1. Update version to, e.g. 0.9.0 (remove the `+dev` label) in `snorkel/VERSION.py`.
+1. Update version to, e.g. 0.9.0 (remove the `+dev` label) in `snorkel/version.py`.
 
-1. Commit these changes and push to master:
+1. Commit these changes and create a PR:
 
        git add . -u
        git commit -m "[RELEASE]: v0.9.0"
@@ -57,8 +51,11 @@ You'll also need to have permissions to push directly to the `master` branch.
        python3 setup.py sdist  # create a source distribution
        python3 setup.py bdist_wheel  # create a universal wheel
 
+1. Attach the resulting binaries in (`dist/snorkel-x.x.x.*`) to the release.
+
 1. Check that everything looks correct by uploading the package to the PyPI test server:
 
+       pip install twine  # if not installed
        twine upload dist/* -r pypitest  # publish to test.pypi.org
        python3 -m venv test_snorkel  # create a virtualenv for testing
        source test_snorkel/bin/activate  # activate virtualenv

@@ -17,9 +17,7 @@ username=YOUR_USERNAME
 password=YOUR_PASSWORD
 ```
 
-Then run `chmod 600 ./pypirc` so only you can read/write.
-
-You'll also need to have permissions to push directly to the `master` branch.
+Then run `chmod 600 ./.pypirc` so only you can read/write.
 
 
 ## Release Steps
@@ -40,7 +38,7 @@ You'll also need to have permissions to push directly to the `master` branch.
        git commit -m "[RELEASE]: v0.9.0"
        git push origin master
 
-1. Tag the release:
+1. On approval, merge the PR, pull master locally, and proceed to "tag the release":
 
        git tag -a v0.9.0 -m "v0.9.0 release"
        git push origin v0.9.0
@@ -65,10 +63,7 @@ You'll also need to have permissions to push directly to the `master` branch.
 
        twine upload dist/* -r pypi
 
-1. Fork [`conda-forge/snorkel-feedstock`](https://github.com/conda-forge/snorkel-feedstock),
-   update the version in
-   [`meta.yml`](https://github.com/conda-forge/snorkel-feedstock/blob/master/recipe/meta.yaml),
-   submit a PR upstream and follow conda-forge's PR instructions.
+1. A PR is auto-submitted on [`conda-forge/snorkel-feedstock`](https://github.com/conda-forge/snorkel-feedstock) to update the version. A maintainer needs to accept and merge those changes.
 
 1. Copy the release notes in `CHANGELOG.md` to the GitHub tag and publish a release.
 
@@ -91,7 +86,10 @@ You'll also need to have permissions to push directly to the `master` branch.
        git push origin master
        
 1. Add the new tag to [the Snorkel project on ReadTheDocs](https://readthedocs.org/projects/snorkel),
-   set it as the default version, and make sure a build is triggered.
+    * Trigger a build for master to pull new tags.
+    * Then, go to the "Versions" tab and add a tag.
+    * Go to Admin/Advanced to set this tag as the new default version.
+    * Make sure a build is triggered on the correct tag.
 
 
 ## Credit

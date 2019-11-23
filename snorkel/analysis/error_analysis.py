@@ -30,13 +30,16 @@ def get_label_buckets(*y: np.ndarray) -> Dict[Tuple[int, ...], np.ndarray]:
     >>> buckets = get_label_buckets(Y_gold, Y_pred)
 
     The returned ``buckets[(i, j)]`` is a NumPy array of data point indices with
-    predicted label i and true label j.
+    true label i and predicted label j.
+
+    More generally, the returned indices within each bucket refer to the order of the
+    labels that were passed in as function arguments.
 
     >>> buckets[(1, 1)]  # true positives
     array([0, 1])
-    >>> (1, 0) in buckets  # false negatives
+    >>> (1, 0) in buckets  # false positives
     False
-    >>> (0, 1) in buckets  # false positives
+    >>> (0, 1) in buckets  # false negatives
     False
     >>> (0, 0) in buckets  # true negatives
     False

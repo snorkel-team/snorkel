@@ -40,6 +40,8 @@ class SpacyPreprocessor(Preprocessor):
         Preprocessors to run before this preprocessor is executed
     memoize
         Memoize preprocessor outputs?
+    gpu
+        Prefer Spacy GPU processing?
     """
 
     def __init__(
@@ -50,6 +52,7 @@ class SpacyPreprocessor(Preprocessor):
         disable: Optional[List[str]] = None,
         pre: Optional[List[BasePreprocessor]] = None,
         memoize: bool = False,
+        gpu: bool = False,
     ) -> None:
         name = type(self).__name__
         super().__init__(
@@ -59,6 +62,9 @@ class SpacyPreprocessor(Preprocessor):
             pre=pre,
             memoize=memoize,
         )
+        self.gpu = gpu
+        if self.gpu:
+            spacy.prefer_gpu()
         self._nlp = spacy.load(language, disable=disable or [])
 
     def run(self, text: str) -> FieldMap:  # type: ignore

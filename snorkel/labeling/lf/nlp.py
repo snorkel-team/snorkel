@@ -18,6 +18,7 @@ class SpacyPreprocessorParameters(NamedTuple):
     disable: Optional[List[str]]
     pre: List[BasePreprocessor]
     memoize: bool
+    gpu: bool
 
 
 class SpacyPreprocessorConfig(NamedTuple):
@@ -47,6 +48,7 @@ class BaseNLPLabelingFunction(LabelingFunction):
         disable: Optional[List[str]],
         pre: List[BasePreprocessor],
         memoize: bool,
+        gpu: bool,
     ) -> None:
         # Create a SpacyPreprocessor if one has not yet been instantiated.
         # Otherwise, check that configuration matches already instantiated one.
@@ -57,6 +59,7 @@ class BaseNLPLabelingFunction(LabelingFunction):
             disable=disable,
             pre=pre,
             memoize=memoize,
+            gpu=gpu,
         )
         if not hasattr(cls, "_nlp_config"):
             nlp = cls._create_preprocessor(parameters)
@@ -78,9 +81,10 @@ class BaseNLPLabelingFunction(LabelingFunction):
         language: str = EN_CORE_WEB_SM,
         disable: Optional[List[str]] = None,
         memoize: bool = True,
+        gpu: bool = False,
     ) -> None:
         self._create_or_check_preprocessor(
-            text_field, doc_field, language, disable, pre or [], memoize
+            text_field, doc_field, language, disable, pre or [], memoize, gpu
         )
         super().__init__(name, f, resources=resources, pre=[self._nlp_config.nlp])
 
@@ -128,6 +132,8 @@ class NLPLabelingFunction(BaseNLPLabelingFunction):
         See https://spacy.io/usage/processing-pipelines#disabling
     memoize
         Memoize preprocessor outputs?
+    gpu
+        Prefer Spacy GPU processing?
 
     Raises
     ------
@@ -176,6 +182,7 @@ class base_nlp_labeling_function(labeling_function):
         language: str = EN_CORE_WEB_SM,
         disable: Optional[List[str]] = None,
         memoize: bool = True,
+        gpu: bool = False,
     ) -> None:
         super().__init__(name, resources, pre)
         self.text_field = text_field
@@ -183,6 +190,7 @@ class base_nlp_labeling_function(labeling_function):
         self.language = language
         self.disable = disable
         self.memoize = memoize
+        self.gpu = gpu
 
     def __call__(self, f: Callable[..., int]) -> BaseNLPLabelingFunction:
         """Wrap a function to create an ``BaseNLPLabelingFunction``.
@@ -210,6 +218,7 @@ class base_nlp_labeling_function(labeling_function):
             language=self.language,
             disable=self.disable,
             memoize=self.memoize,
+            gpu=self.gpu,
         )
 
 

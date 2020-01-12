@@ -1,6 +1,8 @@
 import logging
 from collections import defaultdict
 from typing import Any, DefaultDict, Dict, List, Optional
+import json
+import os
 
 import torch
 import torch.nn as nn
@@ -509,3 +511,49 @@ class Trainer:
         """Reset the loss counters."""
         self.running_losses = defaultdict(float)
         self.running_counts = defaultdict(int)
+
+
+    def save(self, trainer_path : str) -> None:
+        '''
+        TODO
+        Docstring
+
+        '''
+        
+        head, tail = os.path.split(trainer_path)
+
+        if not os.path.exists(head):
+            os.makedirs(os.path.dirname(head))
+
+        try:
+            with open(trainer_path, 'w') as fp:
+                json.dump(self.config._asdict(), fp)
+        except BaseException:  # pragma: no cover
+            logging.warning("Saving failed... continuing anyway.")
+
+        logging.info(f"[{self.name}] Trainer config saved in {trainer_path}")
+
+
+
+    def load(self, trainer_path) -> None:
+        '''
+        TODO
+        Docstring
+
+        '''
+
+        try:
+            with open(trainer_path, 'r') as fp:
+                config_dict = json.load(fp)
+        except BaseException:
+            if not os.path.exists(trainer_path):
+                logging.error("Loading failed... Trainer config does not exist.")
+            else:
+                logging.error(f"Loading failed... Cannot load trainer config from {trainer_path}")
+            raise
+        
+        self.config = TrainerConfig(**config_dict)
+        logging.info(f"[{self.name}] Trainer config loaded from {trainer_path}")
+ 
+            
+        

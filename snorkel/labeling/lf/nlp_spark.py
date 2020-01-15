@@ -36,6 +36,8 @@ class SparkNLPLabelingFunction(BaseNLPLabelingFunction):
         See https://spacy.io/usage/processing-pipelines#disabling
     memoize
         Memoize preprocessor outputs?
+    gpu
+        Prefer Spacy GPU processing?
 
     Raises
     ------

@@ -1,8 +1,7 @@
 import logging
+import os
 from collections import defaultdict
 from typing import Any, DefaultDict, Dict, List, Optional
-import json
-import os
 
 import torch
 import torch.nn as nn
@@ -512,48 +511,53 @@ class Trainer:
         self.running_losses = defaultdict(float)
         self.running_counts = defaultdict(int)
 
+    def save(self, trainer_path: str) -> None:
+        """Save the trainer config to the specified file path in json format.
 
-    def save(self, trainer_path : str) -> None:
-        '''
-        TODO
-        Docstring
+        Parameters
+        ----------
+        trainer_path :
+            The path where trainer config and optimizer state should be saved.
+        """
 
-        '''
-        
         head, tail = os.path.split(trainer_path)
 
         if not os.path.exists(head):
             os.makedirs(os.path.dirname(head))
 
         try:
-            with open(trainer_path, 'w') as fp:
-                json.dump(self.config._asdict(), fp)
+            torch.save(
+                {
+                    "trainer_config": self.config._asdict(),
+                    "optimizer_state_dict": self.optimizer.state_dict(),
+                },
+                trainer_path,
+            )
         except BaseException:  # pragma: no cover
             logging.warning("Saving failed... continuing anyway.")
 
         logging.info(f"[{self.name}] Trainer config saved in {trainer_path}")
 
-
-
     def load(self, trainer_path) -> None:
-        '''
-        TODO
-        Docstring
+        """Load trainer config and optimizer state from the specified json file path to the trainer object.
 
-        '''
+        Parameters
+        ----------
+        trainer_path :
+            The path to the saved trainer config to be loaded
+        """
 
         try:
-            with open(trainer_path, 'r') as fp:
-                config_dict = json.load(fp)
+            saved_state = torch.load(trainer_path)
         except BaseException:
             if not os.path.exists(trainer_path):
                 logging.error("Loading failed... Trainer config does not exist.")
             else:
-                logging.error(f"Loading failed... Cannot load trainer config from {trainer_path}")
+                logging.error(
+                    f"Loading failed... Cannot load trainer config from {trainer_path}"
+                )
             raise
-        
-        self.config = TrainerConfig(**config_dict)
+
+        self.optimizer.load_state_dict(saved_state["optimizer_state_dict"])
+        self.config = TrainerConfig(**saved_state["trainer_config"])
         logging.info(f"[{self.name}] Trainer config loaded from {trainer_path}")
- 
-            
-        

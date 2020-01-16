@@ -524,7 +524,6 @@ class Trainer:
 
         if not os.path.exists(head):
             os.makedirs(os.path.dirname(head))
-
         try:
             torch.save(
                 {
@@ -538,15 +537,18 @@ class Trainer:
 
         logging.info(f"[{self.name}] Trainer config saved in {trainer_path}")
 
-    def load(self, trainer_path) -> None:
-        """Load trainer config and optimizer state from the specified json file path to the trainer object.
+    def load(self, trainer_path, model: Optional[MultitaskClassifier] = None) -> None:
+        """Load trainer config and optimizer state from the specified json file path to the trainer object. The optimizer state
+        is stored, too. However, it only makes sense if loaded with the correct model again.
 
         Parameters
         ----------
         trainer_path :
             The path to the saved trainer config to be loaded
+        model :
+            MultitaskClassifier for which the optimizer has been set. Parameters of optimizer must fit to model parameters. This model
+            shall be the model which was fit by the stored Trainer.
         """
-
         try:
             saved_state = torch.load(trainer_path)
         except BaseException:
@@ -558,6 +560,13 @@ class Trainer:
                 )
             raise
 
-        self.optimizer.load_state_dict(saved_state["optimizer_state_dict"])
         self.config = TrainerConfig(**saved_state["trainer_config"])
         logging.info(f"[{self.name}] Trainer config loaded from {trainer_path}")
+
+        if model is not None:
+            try:
+                self._set_optimizer(model)
+                self.optimizer.load_state_dict(saved_state["optimizer_state_dict"])
+                logging.info(f"[{self.name}] Optimizer loaded from {trainer_path}")
+            except BaseException:
+                logging.error("Loading the optimizer for your model failed. Optimizer state NOT loaded.")

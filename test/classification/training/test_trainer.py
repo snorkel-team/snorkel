@@ -216,6 +216,25 @@ class TrainerTest(unittest.TestCase):
         trainer.fit(model, [dataloaders[0]])
         self.assertEqual(trainer.warmup_steps, 1)
 
+    def test_save_load(self):
+        fd, checkpoint_path = tempfile.mkstemp()
+        non_base_config = {"n_epochs": 2, "progress_bar": False}
+
+        trainer1 = Trainer(**base_config, lr_scheduler="exponential")
+        trainer1.fit(model, [dataloaders[0]])
+
+        trainer2 = Trainer(**non_base_config, lr_scheduler="linear")
+
+        trainer1.save(checkpoint_path)
+        trainer2.load(checkpoint_path, model=model)
+        self.assertTrue(
+            trainer1.config == trainer2.config
+        )
+        self.assertTrue(
+            trainer1.optimizer.state_dict() == trainer2.optimizer.state_dict()
+        )
+        os.close(fd)
+
 
 if __name__ == "__main__":
     unittest.main()

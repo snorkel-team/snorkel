@@ -227,12 +227,22 @@ class TrainerTest(unittest.TestCase):
 
         trainer1.save(checkpoint_path)
         trainer2.load(checkpoint_path, model=model)
-        self.assertTrue(
-            trainer1.config == trainer2.config
+        self.assertEqual(trainer1.config, trainer2.config)
+
+        self.assertEqual(
+            trainer1.optimizer.state_dict()["param_groups"],
+            trainer2.optimizer.state_dict()["param_groups"],
         )
-        self.assertTrue(
-            trainer1.optimizer.state_dict() == trainer2.optimizer.state_dict()
-        )
+
+        for k in trainer1.optimizer.state_dict()["state"].keys():
+            print()
+            self.assertTrue(
+                torch.eq(
+                    trainer1.optimizer.state_dict()["state"][k]["exp_avg"],
+                    trainer2.optimizer.state_dict()["state"][k]["exp_avg"],
+                ).all()
+            )
+
         os.close(fd)
 
 

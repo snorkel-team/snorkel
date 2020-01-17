@@ -537,7 +537,7 @@ class Trainer:
 
         logging.info(f"[{self.name}] Trainer config saved in {trainer_path}")
 
-    def load(self, trainer_path, model: Optional[MultitaskClassifier] = None) -> None:
+    def load(self, trainer_path: str, model: Optional[MultitaskClassifier] = None) -> None:
         """Load trainer config and optimizer state from the specified json file path to the trainer object. The optimizer state is stored, too. However, it only makes sense if loaded with the correct model again.
 
         Parameters

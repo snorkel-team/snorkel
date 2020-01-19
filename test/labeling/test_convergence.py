@@ -6,12 +6,8 @@ import pandas as pd
 import pytest
 import torch
 
-from snorkel.labeling import (
-    LabelingFunction,
-    LabelModel,
-    PandasLFApplier,
-    labeling_function,
-)
+from snorkel.labeling import LabelingFunction, PandasLFApplier, labeling_function
+from snorkel.labeling.model import LabelModel
 from snorkel.preprocess import preprocessor
 from snorkel.types import DataPoint
 

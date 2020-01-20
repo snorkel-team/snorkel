@@ -12,14 +12,14 @@ Programmatic data set labeling: LF creation, models, and analysis utilities.
    apply.dask.DaskLFApplier
    LFAnalysis
    LFApplier
-   LabelModel
+   model.label_model.LabelModel
    LabelingFunction
-   MajorityClassVoter
-   MajorityLabelVoter
+   model.baselines.MajorityClassVoter
+   model.baselines.MajorityLabelVoter
    lf.nlp.NLPLabelingFunction
    PandasLFApplier
    apply.dask.PandasParallelLFApplier
-   RandomVoter
+   model.baselines.RandomVoter
    apply.spark.SparkLFApplier
    lf.nlp_spark.SparkNLPLabelingFunction
    filter_unlabeled_dataframe

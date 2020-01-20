@@ -17,7 +17,11 @@
             "lf.nlp.NLPLabelingFunction",
             "lf.nlp.nlp_labeling_function",
             "lf.nlp_spark.SparkNLPLabelingFunction",
-            "lf.nlp_spark.spark_nlp_labeling_function"
+            "lf.nlp_spark.spark_nlp_labeling_function",
+            "model.baselines.MajorityClassVoter",
+            "model.baselines.MajorityLabelVoter",
+            "model.baselines.RandomVoter",
+            "model.label_model.LabelModel"
         ],
         "map": [
             "spark.make_spark_mapper"

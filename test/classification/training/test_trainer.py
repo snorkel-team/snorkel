@@ -224,7 +224,6 @@ class TrainerTest(unittest.TestCase):
         trainer2 = Trainer(**non_base_config, lr_scheduler="linear")
         trainer3 = Trainer(**non_base_config, lr_scheduler="linear")
 
-
         with tempfile.NamedTemporaryFile() as fd:
             checkpoint_path = fd.name
             trainer1.save(checkpoint_path)
@@ -241,9 +240,8 @@ class TrainerTest(unittest.TestCase):
 
         # check that an inappropriate model does not load an optimizer state but a trainer config
         self.assertEqual(trainer1.config, trainer3.config)
-        self.assertFalse(hasattr(trainer3, 'optimizer'))
+        self.assertFalse(hasattr(trainer3, "optimizer"))
         trainer3.fit(model, [dataloaders[0]])
-
 
     def dict_check(self, dict1, dict2):
         for k in dict1.keys():

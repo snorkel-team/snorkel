@@ -553,12 +553,12 @@ class Trainer:
         Example
         -------
         Saving model and corresponding trainer:
-        >>> model.save('./my_saved_model_file')
-        >>> trainer.save('./my_saved_trainer_file')
+        >>> model.save('./my_saved_model_file') # doctest: +SKIP
+        >>> trainer.save('./my_saved_trainer_file') # doctest: +SKIP
         Now we can resume training and load the saved model and trainer into new model and trainer objects:
-        >>> new_model.load('./my_saved_model_file')
-        >>> new_trainer.load('./my_saved_trainer_file', model=new_model)
-        >>> new_trainer.fit(...)
+        >>> new_model.load('./my_saved_model_file') # doctest: +SKIP
+        >>> new_trainer.load('./my_saved_trainer_file', model=new_model) # doctest: +SKIP
+        >>> new_trainer.fit(...) # doctest: +SKIP
         """
 
         try:

@@ -516,7 +516,7 @@ class Trainer:
 
         Parameters
         ----------
-        trainer_path :
+        trainer_path
             The path where trainer config and optimizer state should be saved.
         """
 
@@ -544,12 +544,23 @@ class Trainer:
 
         Parameters
         ----------
-        trainer_path :
+        trainer_path
             The path to the saved trainer config to be loaded
-        model :
+        model
             MultitaskClassifier for which the optimizer has been set. Parameters of optimizer must fit to model parameters. This model
             shall be the model which was fit by the stored Trainer.
+
+        Example
+        -------
+        Saving model and corresponding trainer:
+        >>> model.save('./my_saved_model_file')
+        >>> trainer.save('./my_saved_trainer_file')
+        Now we can resume training and load the saved model and trainer into new model and trainer objects:
+        >>> new_model.load('./my_saved_model_file')
+        >>> new_trainer.load('./my_saved_trainer_file', model=new_model)
+        >>> new_trainer.fit(...)
         """
+
         try:
             saved_state = torch.load(trainer_path)
         except BaseException:

@@ -121,6 +121,8 @@ def to_int_label_array(X: np.ndarray, flatten_vector: bool = True) -> np.ndarray
     # Correct shape
     if flatten_vector:
         X = X.squeeze()
+        if X.ndim == 0:
+            X = np.expand_dims(X, 0)
         if X.ndim != 1:
             raise ValueError("Input could not be converted to 1d np.array")
     return X

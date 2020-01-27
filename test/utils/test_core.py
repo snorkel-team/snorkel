@@ -21,6 +21,10 @@ class UtilsTest(unittest.TestCase):
         Y = to_int_label_array(X, flatten_vector=True)
         np.testing.assert_array_equal(Y, Y_expected)
 
+        Y = to_int_label_array(np.array([[1]]), flatten_vector=True)
+        Y_expected = np.array([1])
+        np.testing.assert_array_equal(Y, Y_expected)
+
         Y = to_int_label_array(X, flatten_vector=False)
         Y_expected = np.array([[1], [0], [2]])
         np.testing.assert_array_equal(Y, Y_expected)

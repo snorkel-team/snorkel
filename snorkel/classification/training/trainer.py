@@ -1,4 +1,5 @@
 import logging
+import os
 from collections import defaultdict
 from typing import Any, DefaultDict, Dict, List, Optional
 
@@ -509,3 +510,75 @@ class Trainer:
         """Reset the loss counters."""
         self.running_losses = defaultdict(float)
         self.running_counts = defaultdict(int)
+
+    def save(self, trainer_path: str) -> None:
+        """Save the trainer config to the specified file path in json format.
+
+        Parameters
+        ----------
+        trainer_path
+            The path where trainer config and optimizer state should be saved.
+        """
+
+        head, tail = os.path.split(trainer_path)
+
+        if not os.path.exists(head):
+            os.makedirs(os.path.dirname(head))
+        try:
+            torch.save(
+                {
+                    "trainer_config": self.config._asdict(),
+                    "optimizer_state_dict": self.optimizer.state_dict(),
+                },
+                trainer_path,
+            )
+        except BaseException:  # pragma: no cover
+            logging.warning("Saving failed... continuing anyway.")
+
+        logging.info(f"[{self.name}] Trainer config saved in {trainer_path}")
+
+    def load(self, trainer_path: str, model: Optional[MultitaskClassifier]) -> None:
+        """Load trainer config and optimizer state from the specified json file path to the trainer object. The optimizer state is stored, too. However, it only makes sense if loaded with the correct model again.
+
+        Parameters
+        ----------
+        trainer_path
+            The path to the saved trainer config to be loaded
+        model
+            MultitaskClassifier for which the optimizer has been set. Parameters of optimizer must fit to model parameters. This model
+            shall be the model which was fit by the stored Trainer.
+
+        Example
+        -------
+        Saving model and corresponding trainer:
+        >>> model.save('./my_saved_model_file') # doctest: +SKIP
+        >>> trainer.save('./my_saved_trainer_file') # doctest: +SKIP
+        Now we can resume training and load the saved model and trainer into new model and trainer objects:
+        >>> new_model.load('./my_saved_model_file') # doctest: +SKIP
+        >>> new_trainer.load('./my_saved_trainer_file', model=new_model) # doctest: +SKIP
+        >>> new_trainer.fit(...) # doctest: +SKIP
+        """
+
+        try:
+            saved_state = torch.load(trainer_path)
+        except BaseException:
+            if not os.path.exists(trainer_path):
+                logging.error("Loading failed... Trainer config does not exist.")
+            else:
+                logging.error(
+                    f"Loading failed... Cannot load trainer config from {trainer_path}"
+                )
+            raise
+
+        self.config = TrainerConfig(**saved_state["trainer_config"])
+        logging.info(f"[{self.name}] Trainer config loaded from {trainer_path}")
+
+        if model is not None:
+            try:
+                self._set_optimizer(model)
+                self.optimizer.load_state_dict(saved_state["optimizer_state_dict"])
+                logging.info(f"[{self.name}] Optimizer loaded from {trainer_path}")
+            except BaseException:
+                logging.error(
+                    "Loading the optimizer for your model failed. Optimizer state NOT loaded."
+                )

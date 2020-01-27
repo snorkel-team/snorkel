@@ -1,3 +1,4 @@
+import collections
 import copy
 import json
 import os
@@ -215,6 +216,43 @@ class TrainerTest(unittest.TestCase):
         trainer = Trainer(**base_config, lr_scheduler_config=lr_scheduler_config)
         trainer.fit(model, [dataloaders[0]])
         self.assertEqual(trainer.warmup_steps, 1)
+
+    def test_save_load(self):
+        non_base_config = {"n_epochs": 2, "progress_bar": False}
+        trainer1 = Trainer(**base_config, lr_scheduler="exponential")
+        trainer1.fit(model, [dataloaders[0]])
+        trainer2 = Trainer(**non_base_config, lr_scheduler="linear")
+        trainer3 = Trainer(**non_base_config, lr_scheduler="linear")
+
+        with tempfile.NamedTemporaryFile() as fd:
+            checkpoint_path = fd.name
+            trainer1.save(checkpoint_path)
+            trainer2.load(checkpoint_path, model=model)
+            trainer3.load(checkpoint_path, None)
+
+        self.assertEqual(trainer1.config, trainer2.config)
+        self.dict_check(
+            trainer1.optimizer.state_dict(), trainer2.optimizer.state_dict()
+        )
+
+        # continue training after load
+        trainer2.fit(model, [dataloaders[0]])
+
+        # check that an inappropriate model does not load an optimizer state but a trainer config
+        self.assertEqual(trainer1.config, trainer3.config)
+        self.assertFalse(hasattr(trainer3, "optimizer"))
+        trainer3.fit(model, [dataloaders[0]])
+
+    def dict_check(self, dict1, dict2):
+        for k in dict1.keys():
+            dict1_ = dict1[k]
+            dict2_ = dict2[k]
+            if isinstance(dict1_, collections.Mapping):
+                self.dict_check(dict1_, dict2_)
+            elif isinstance(dict1_, torch.Tensor):
+                self.assertTrue(torch.eq(dict1_, dict2_,).all())
+            else:
+                self.assertEqual(dict1_, dict2_)
 
 
 if __name__ == "__main__":

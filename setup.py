@@ -35,7 +35,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        "munkres==1.1.2",
+        "munkres>=1.0.6",
         "numpy>=1.16.0,<2.0.0",
         "scipy>=1.2.0,<2.0.0",
         "pandas>=0.25.0,<0.26.0",

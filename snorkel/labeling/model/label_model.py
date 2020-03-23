@@ -1,5 +1,4 @@
 import logging
-import pickle
 import random
 from collections import Counter, defaultdict
 from itertools import chain
@@ -11,12 +10,11 @@ import torch.nn as nn
 import torch.optim as optim
 from munkres import Munkres  # type: ignore
 
-from snorkel.analysis import Scorer
 from snorkel.labeling.analysis import LFAnalysis
+from snorkel.labeling.model.base_labeler import BaseLabeler
 from snorkel.labeling.model.graph_utils import get_clique_tree
 from snorkel.labeling.model.logger import Logger
 from snorkel.types import Config
-from snorkel.utils import probs_to_preds
 from snorkel.utils.config_utils import merge_config
 from snorkel.utils.lr_schedulers import LRSchedulerConfig
 from snorkel.utils.optimizers import OptimizerConfig
@@ -87,7 +85,7 @@ class _CliqueData(NamedTuple):
     max_cliques: Set[int]
 
 
-class LabelModel(nn.Module):
+class LabelModel(nn.Module, BaseLabeler):
     r"""A model for learning the LF accuracies and combining their output labels.
 
     This class learns a model of the labeling functions' conditional probabilities
@@ -454,11 +452,7 @@ class LabelModel(nn.Module):
         >>> label_model.predict(L)
         array([0, 1, 0])
         """
-        Y_probs = self.predict_proba(L)
-        Y_p = probs_to_preds(Y_probs, tie_break_policy)
-        if return_probs:
-            return Y_p, Y_probs
-        return Y_p
+        return super(LabelModel, self).predict(L, return_probs, tie_break_policy)
 
     def score(
         self,
@@ -496,18 +490,7 @@ class LabelModel(nn.Module):
         >>> label_model.score(L, Y=np.array([1, 1, 1]), metrics=["f1"])
         {'f1': 0.8}
         """
-        if tie_break_policy == "abstain":  # pragma: no cover
-            logging.warning(
-                "Metrics calculated over data points with non-abstain labels only"
-            )
-
-        Y_pred, Y_prob = self.predict(
-            L, return_probs=True, tie_break_policy=tie_break_policy
-        )
-
-        scorer = Scorer(metrics=metrics)
-        results = scorer.score(Y, Y_pred, Y_prob)
-        return results
+        return super(LabelModel, self).score(L, Y, metrics, tie_break_policy)
 
     # These loss functions get all their data directly from the LabelModel
     # (for better or worse). The unused *args make these compatible with the
@@ -928,38 +911,3 @@ class LabelModel(nn.Module):
         # Print confusion matrix if applicable
         if self.config.verbose:  # pragma: no cover
             logging.info("Finished Training")
-
-    def save(self, destination: str) -> None:
-        """Save label model.
-
-        Parameters
-        ----------
-        destination
-            Filename for saving model
-
-        Example
-        -------
-        >>> label_model.save('./saved_label_model.pkl')  # doctest: +SKIP
-        """
-        f = open(destination, "wb")
-        pickle.dump(self.__dict__, f)
-        f.close()
-
-    def load(self, source: str) -> None:
-        """Load existing label model.
-
-        Parameters
-        ----------
-        source
-            Filename to load model from
-
-        Example
-        -------
-        Load parameters saved in ``saved_label_model``
-
-        >>> label_model.load('./saved_label_model.pkl')  # doctest: +SKIP
-        """
-        f = open(source, "rb")
-        tmp_dict = pickle.load(f)
-        f.close()
-        self.__dict__.update(tmp_dict)

@@ -2,26 +2,10 @@ from typing import Any
 
 import numpy as np
 
-from snorkel.labeling.model.label_model import LabelModel
+from snorkel.labeling.model.base_labeler import BaseLabeler
 
 
-class BaselineVoter(LabelModel):
-    """Parent baseline label model class with method fit()."""
-
-    def fit(self, *args: Any, **kwargs: Any) -> None:
-        """Train majority class model.
-
-        Set class balance for majority class label model.
-
-        Parameters
-        ----------
-        balance
-            A [k] array of class probabilities
-        """
-        pass
-
-
-class RandomVoter(BaselineVoter):
+class RandomVoter(BaseLabeler):
     """Random vote label model.
 
     Example
@@ -57,7 +41,7 @@ class RandomVoter(BaselineVoter):
         return Y_p
 
 
-class MajorityClassVoter(LabelModel):
+class MajorityClassVoter(BaseLabeler):
     """Majority class label model."""
 
     def fit(  # type: ignore
@@ -110,7 +94,7 @@ class MajorityClassVoter(LabelModel):
         return Y_p
 
 
-class MajorityLabelVoter(BaselineVoter):
+class MajorityLabelVoter(BaseLabeler):
     """Majority vote label model."""
 
     def predict_proba(self, L: np.ndarray) -> np.ndarray:

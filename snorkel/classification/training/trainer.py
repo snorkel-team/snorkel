@@ -197,9 +197,6 @@ class Trainer:
                 total_batch_num = epoch_num * self.n_batches_per_epoch + batch_num
                 batch_size = len(next(iter(Y_dict.values())))
 
-                # Update lr using lr scheduler
-                self._update_lr_scheduler(total_batch_num)
-
                 # Set gradients of all model parameters to zero
                 self.optimizer.zero_grad()
 
@@ -239,6 +236,9 @@ class Trainer:
 
                 # Update the parameters
                 self.optimizer.step()
+
+                # Update lr using lr scheduler
+                self._update_lr_scheduler(total_batch_num)
 
                 # Update metrics
                 self.metrics.update(self._logging(model, dataloaders, batch_size))

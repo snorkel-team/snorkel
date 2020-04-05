@@ -4,14 +4,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-## [0.9.4]
+## [0.9.4] - 2020-04-05
 ### [Breaking Changes]
-### [Added]
-### [Changed]
-### [Deprecated]
-### [Removed]
 
+* PR #1535: Refactor baseline model imports in snorkel.labeling.model
+    * Now, from `from snorkel.labeling import MajorityLabelVoter, LabelModel`
+    can be expressed `from snorkel.labeling.model import MajorityLabelVoter, LabelModel`
+
+
+### [Added]
+
+* PR #1533: Allow option to save optimizer state in Trainer
+* PR #1523: Add GPU option for spaCy preprocessor
+
+### [Changed]
+
+* PR #1540: Fix squeeze bug in `to_int_label_array` function
+* PR #1520: Fix error bucket documentation in snorkel.analysis.error_analysis
+
+### [Contributors]
+
+Thanks to @rjurney, @ptrcklv for recent contributions!
 
 ## [0.9.3] - 2019-11-11
 

@@ -34,8 +34,8 @@ Then run `chmod 600 ./.pypirc` so only you can read/write.
 
 1. Commit these changes and create a PR:
 
-       git add . -u
        git checkout -b release-v0.9.0
+       git add . -u
        git commit -m "[RELEASE]: v0.9.0"
        git push --set-upstream origin release-v0.9.0
 

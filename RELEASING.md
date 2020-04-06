@@ -68,6 +68,7 @@ Then run `chmod 600 ./.pypirc` so only you can read/write.
     * A maintainer needs to accept and merge those changes.
 
 1. Create a new release on Github.
+    * Input the recently-created Tag Version: `v0.9.0`
     * Copy the release notes in `CHANGELOG.md` to the GitHub tag.
     * Attach the resulting binaries in (`dist/snorkel-x.x.x.*`) to the release.
     * Publish the release.

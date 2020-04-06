@@ -4,13 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+## [0.9.5]
+### [Breaking Changes]
+### [Added]
+### [Changed]
+### [Deprecated]
+### [Removed]
+
 ## [0.9.4] - 2020-04-05
 ### [Breaking Changes]
 
 * PR #1535: Refactor baseline model imports in snorkel.labeling.model
     * Now, from `from snorkel.labeling import MajorityLabelVoter, LabelModel`
     can be expressed `from snorkel.labeling.model import MajorityLabelVoter, LabelModel`
-
 
 ### [Added]
 

@@ -52,26 +52,28 @@ Then run `chmod 600 ./.pypirc` so only you can read/write.
        python3 setup.py sdist  # create a source distribution
        python3 setup.py bdist_wheel  # create a universal wheel
 
-1. Attach the resulting binaries in (`dist/snorkel-x.x.x.*`) to the release.
+1. Check that everything looks correct by installing the wheel locally and checking the version:
 
-1. Check that everything looks correct by uploading the package to the PyPI test server:
-
-       pip install twine  # if not installed
-       twine upload dist/* -r pypitest  # publish to test.pypi.org
        python3 -m venv test_snorkel  # create a virtualenv for testing
        source test_snorkel/bin/activate  # activate virtualenv
-       python3 -m pip install -i https://testpypi.python.org/pypi snorkel  # check that install works
+       python3 -m pip install dist/snorkel-0.9.1-py3-none-any.whl
+       python3 -c "import snorkel; print(snorkel.__version__)"
 
 1. Publish to PyPI
 
+       pip install twine  # if not installed
        twine upload dist/* -r pypi
 
 1. A PR is auto-submitted (this will take a few hours) on [`conda-forge/snorkel-feedstock`](https://github.com/conda-forge/snorkel-feedstock) to update the version.
     * A maintainer needs to accept and merge those changes.
 
-1. Copy the release notes in `CHANGELOG.md` to the GitHub tag and publish a release.
+1. Create a new release on Github.
+    * Copy the release notes in `CHANGELOG.md` to the GitHub tag.
+    * Attach the resulting binaries in (`dist/snorkel-x.x.x.*`) to the release.
+    * Publish the release.
 
-1. Update version to, e.g. 0.9.1+dev in `snorkel/VERSION.py`.
+
+1. Update version to, e.g. 0.9.1+dev in `snorkel/version.py`.
 
 1. Add a new changelog entry for the unreleased version:
 
@@ -85,9 +87,11 @@ Then run `chmod 600 ./.pypirc` so only you can read/write.
 
 1. Commit these changes and push to master:
 
+       git checkout -b bump-v0.9.1+dev
        git add . -u
        git commit -m "[BUMP]: v0.9.1+dev"
-       git push origin master
+       git push --set-upstream origin release-v0.9.1+dev
+
        
 1. Add the new tag to [the Snorkel project on ReadTheDocs](https://readthedocs.org/projects/snorkel),
     * Trigger a build for master to pull new tags.

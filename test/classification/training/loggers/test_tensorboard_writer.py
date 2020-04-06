@@ -22,7 +22,7 @@ class TestTensorBoardWriter(unittest.TestCase):
 
     def test_tensorboard_writer(self):
         # Note: this just tests API calls. We rely on
-        # tensorboardX's unit tests for correctness.
+        # tensorboard's unit tests for correctness.
         run_name = "my_run"
         config = TempConfig(b="bar")
         writer = TensorBoardWriter(run_name=run_name, log_dir=self.test_dir)

@@ -149,7 +149,7 @@ class SlicingConvergenceTest(unittest.TestCase):
 
         # Train
         # NOTE: Needs more epochs to convergence with more heads
-        trainer = Trainer(lr=0.001, n_epochs=60, progress_bar=False)
+        trainer = Trainer(lr=0.001, n_epochs=65, progress_bar=False)
         trainer.fit(model, dataloaders)
         scores = model.score(dataloaders)
 

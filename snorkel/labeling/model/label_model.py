@@ -227,7 +227,7 @@ class LabelModel(nn.Module, BaseLabeler):
 
     def _build_mask(self) -> None:
         """Build mask applied to O^{-1}, O for the matrix approx constraint."""
-        self.mask = torch.ones(self.d, self.d).byte()
+        self.mask = torch.ones(self.d, self.d).bool()
         for ci in self.c_data.values():
             si = ci.start_index
             ei = ci.end_index
@@ -296,7 +296,9 @@ class LabelModel(nn.Module, BaseLabeler):
                 self.mu_init[idx, y] += mu_init
 
         # Initialize randomly based on self.mu_init
-        self.mu = nn.Parameter(self.mu_init.clone() * np.random.random()).float()
+        self.mu = nn.Parameter(  # type: ignore
+            self.mu_init.clone() * np.random.random()
+        ).float()
 
         # Build the mask over O^{-1}
         self._build_mask()
@@ -784,7 +786,7 @@ class LabelModel(nn.Module, BaseLabeler):
                 Z[group[i], group[j]] = 1.0
 
         # Set mu according to permutation
-        self.mu = nn.Parameter(
+        self.mu = nn.Parameter(  # type: ignore
             torch.Tensor(mu @ Z).to(self.config.device)  # type: ignore
         )
 

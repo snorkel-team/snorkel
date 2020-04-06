@@ -45,7 +45,7 @@ def add_slice_labels(
 
         # Mask out "inactive" pred_labels as specified by ind_labels
         pred_labels = labels.clone()
-        pred_labels[~ind_labels.byte()] = -1
+        pred_labels[~ind_labels.bool()] = -1
 
         ind_task_name = f"{base_task.name}_slice:{slice_name}_ind"
         pred_task_name = f"{base_task.name}_slice:{slice_name}_pred"

@@ -85,7 +85,7 @@ Then run `chmod 600 ./.pypirc` so only you can read/write.
        ### [Deprecated]
        ### [Removed]
 
-1. Commit these changes and push to master:
+1. Commit these changes and create a PR:
 
        git checkout -b bump-v0.9.1+dev
        git add . -u

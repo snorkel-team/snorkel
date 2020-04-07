@@ -36,6 +36,8 @@ class SparkNLPLabelingFunction(BaseNLPLabelingFunction):
         See https://spacy.io/usage/processing-pipelines#disabling
     memoize
         Memoize preprocessor outputs?
+    memoize_key
+        Hashing function to handle the memoization (default to snorkel.map.core.get_hashable)
     gpu
         Prefer Spacy GPU processing?
 
@@ -82,7 +84,8 @@ class spark_nlp_labeling_function(base_nlp_labeling_function):
         See https://spacy.io/usage/processing-pipelines#disabling
     memoize
         Memoize preprocessor outputs?
-
+    memoize_key
+        Hashing function to handle the memoization (default to snorkel.map.core.get_hashable)
 
     Example
     -------

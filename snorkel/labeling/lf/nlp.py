@@ -2,6 +2,7 @@ from typing import Any, Callable, List, Mapping, NamedTuple, Optional
 
 from snorkel.preprocess import BasePreprocessor
 from snorkel.preprocess.nlp import EN_CORE_WEB_SM, SpacyPreprocessor
+from snorkel.types import HashingFunction
 
 from .core import LabelingFunction, labeling_function
 
@@ -18,6 +19,7 @@ class SpacyPreprocessorParameters(NamedTuple):
     disable: Optional[List[str]]
     pre: List[BasePreprocessor]
     memoize: bool
+    memoize_key: HashingFunction
     gpu: bool
 
 
@@ -48,6 +50,7 @@ class BaseNLPLabelingFunction(LabelingFunction):
         disable: Optional[List[str]],
         pre: List[BasePreprocessor],
         memoize: bool,
+        memoize_key: HashingFunction,
         gpu: bool,
     ) -> None:
         # Create a SpacyPreprocessor if one has not yet been instantiated.
@@ -59,6 +62,7 @@ class BaseNLPLabelingFunction(LabelingFunction):
             disable=disable,
             pre=pre,
             memoize=memoize,
+            memoize_key=memoize_key,
             gpu=gpu,
         )
         if not hasattr(cls, "_nlp_config"):
@@ -81,10 +85,11 @@ class BaseNLPLabelingFunction(LabelingFunction):
         language: str = EN_CORE_WEB_SM,
         disable: Optional[List[str]] = None,
         memoize: bool = True,
+        memoize_key: HashingFunction = None,
         gpu: bool = False,
     ) -> None:
         self._create_or_check_preprocessor(
-            text_field, doc_field, language, disable, pre or [], memoize, gpu
+            text_field, doc_field, language, disable, pre or [], memoize, memoize_key, gpu
         )
         super().__init__(name, f, resources=resources, pre=[self._nlp_config.nlp])
 
@@ -132,6 +137,8 @@ class NLPLabelingFunction(BaseNLPLabelingFunction):
         See https://spacy.io/usage/processing-pipelines#disabling
     memoize
         Memoize preprocessor outputs?
+    memoize_key
+        Hashing function to handle the memoization (default to snorkel.map.core.get_hashable)
     gpu
         Prefer Spacy GPU processing?
 
@@ -182,6 +189,7 @@ class base_nlp_labeling_function(labeling_function):
         language: str = EN_CORE_WEB_SM,
         disable: Optional[List[str]] = None,
         memoize: bool = True,
+        memoize_key: HashingFunction = None,
         gpu: bool = False,
     ) -> None:
         super().__init__(name, resources, pre)
@@ -190,6 +198,7 @@ class base_nlp_labeling_function(labeling_function):
         self.language = language
         self.disable = disable
         self.memoize = memoize
+        self.memoize_key = memoize_key
         self.gpu = gpu
 
     def __call__(self, f: Callable[..., int]) -> BaseNLPLabelingFunction:
@@ -218,6 +227,7 @@ class base_nlp_labeling_function(labeling_function):
             language=self.language,
             disable=self.disable,
             memoize=self.memoize,
+            memoize_key=self.memoize_key,
             gpu=self.gpu,
         )
 
@@ -245,7 +255,8 @@ class nlp_labeling_function(base_nlp_labeling_function):
         See https://spacy.io/usage/processing-pipelines#disabling
     memoize
         Memoize preprocessor outputs?
-
+    memoize_key
+        Hashing function to handle the memoization (default to snorkel.map.core.get_hashable)
 
     Example
     -------

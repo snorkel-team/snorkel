@@ -263,6 +263,25 @@ class TestMapperCore(unittest.TestCase):
         self.assertIsNone(x21_mapped)
         self.assertEqual(square_hit_tracker.n_hits, 1)
 
+    def test_decorator_mapper_memoized_use_memoize_key(self) -> None:
+        square_hit_tracker = SquareHitTracker()
+
+        @lambda_mapper(memoize=True, memoize_key=lambda x: x.num)
+        def square(x: DataPoint) -> DataPoint:
+            x.num_squared = square_hit_tracker(x.num)
+            return x
+
+        x8 = self._get_x()
+        x8_mapped = square(x8)
+        assert x8_mapped is not None
+        self.assertEqual(x8_mapped.num_squared, 64)
+        self.assertEqual(square_hit_tracker.n_hits, 1)
+        x8_with_another_text = self._get_x(text='Henry is still having fun')
+        x8_with_another_text_mapped = square(x8_with_another_text)
+        assert x8_with_another_text_mapped is not None
+        self.assertEqual(x8_with_another_text_mapped.num_squared, 64)
+        self.assertEqual(square_hit_tracker.n_hits, 1)
+
     def test_decorator_mapper_not_memoized(self) -> None:
         square_hit_tracker = SquareHitTracker()
 

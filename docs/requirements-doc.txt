@@ -1,4 +1,4 @@
 sphinx==2.1.2
 sphinx_autodoc_typehints==1.7.0
 sphinx_rtd_theme==0.4.3
-https://download.pytorch.org/whl/cpu/torch-1.1.0-cp36-cp36m-linux_x86_64.whl
+https://download.pytorch.org/whl/cpu/torch-1.4.0%2Bcpu-cp36-cp36m-linux_x86_64.whl

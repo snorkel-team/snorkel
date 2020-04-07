@@ -54,7 +54,7 @@ class SpacyPreprocessor(Preprocessor):
         disable: Optional[List[str]] = None,
         pre: Optional[List[BasePreprocessor]] = None,
         memoize: bool = False,
-        memoize_key: HashingFunction = None,
+        memoize_key: Optional[HashingFunction] = None,
         gpu: bool = False,
     ) -> None:
         name = type(self).__name__

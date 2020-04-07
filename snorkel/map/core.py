@@ -108,7 +108,13 @@ class BaseMapper:
         Memoize mapper outputs?
     """
 
-    def __init__(self, name: str, pre: List["BaseMapper"], memoize: bool, memoize_key: HashingFunction = None) -> None:
+    def __init__(
+        self,
+        name: str,
+        pre: List["BaseMapper"],
+        memoize: bool,
+        memoize_key: Optional[HashingFunction] = None,
+    ) -> None:
         if memoize_key is None:
             memoize_key = get_hashable
         self.name = name
@@ -229,7 +235,7 @@ class Mapper(BaseMapper):
         mapped_field_names: Optional[Mapping[str, str]] = None,
         pre: Optional[List[BaseMapper]] = None,
         memoize: bool = False,
-        memoize_key: HashingFunction = None,
+        memoize_key: Optional[HashingFunction] = None,
     ) -> None:
         if field_names is None:
             # Parse field names from ``run(...)`` if not provided
@@ -306,7 +312,7 @@ class LambdaMapper(BaseMapper):
         f: MapFunction,
         pre: Optional[List[BaseMapper]] = None,
         memoize: bool = False,
-        memoize_key: HashingFunction = None,
+        memoize_key: Optional[HashingFunction] = None,
     ) -> None:
         self._f = f
         super().__init__(name, pre or [], memoize, memoize_key)
@@ -353,7 +359,7 @@ class lambda_mapper:
         name: Optional[str] = None,
         pre: Optional[List[BaseMapper]] = None,
         memoize: bool = False,
-        memoize_key: HashingFunction = None,
+        memoize_key: Optional[HashingFunction] = None,
     ) -> None:
         if callable(name):
             raise ValueError("Looks like this decorator is missing parentheses!")
@@ -376,4 +382,10 @@ class lambda_mapper:
             New ``LambdaMapper`` executing operation in wrapped function
         """
         name = self.name or f.__name__
-        return LambdaMapper(name=name, f=f, pre=self.pre, memoize=self.memoize, memoize_key=self.memoize_key)
+        return LambdaMapper(
+            name=name,
+            f=f,
+            pre=self.pre,
+            memoize=self.memoize,
+            memoize_key=self.memoize_key,
+        )

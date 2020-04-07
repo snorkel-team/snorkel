@@ -19,7 +19,7 @@ class SpacyPreprocessorParameters(NamedTuple):
     disable: Optional[List[str]]
     pre: List[BasePreprocessor]
     memoize: bool
-    memoize_key: HashingFunction
+    memoize_key: Optional[HashingFunction]
     gpu: bool
 
 
@@ -50,7 +50,7 @@ class BaseNLPLabelingFunction(LabelingFunction):
         disable: Optional[List[str]],
         pre: List[BasePreprocessor],
         memoize: bool,
-        memoize_key: HashingFunction,
+        memoize_key: Optional[HashingFunction],
         gpu: bool,
     ) -> None:
         # Create a SpacyPreprocessor if one has not yet been instantiated.
@@ -85,11 +85,18 @@ class BaseNLPLabelingFunction(LabelingFunction):
         language: str = EN_CORE_WEB_SM,
         disable: Optional[List[str]] = None,
         memoize: bool = True,
-        memoize_key: HashingFunction = None,
+        memoize_key: Optional[HashingFunction] = None,
         gpu: bool = False,
     ) -> None:
         self._create_or_check_preprocessor(
-            text_field, doc_field, language, disable, pre or [], memoize, memoize_key, gpu
+            text_field,
+            doc_field,
+            language,
+            disable,
+            pre or [],
+            memoize,
+            memoize_key,
+            gpu,
         )
         super().__init__(name, f, resources=resources, pre=[self._nlp_config.nlp])
 
@@ -189,7 +196,7 @@ class base_nlp_labeling_function(labeling_function):
         language: str = EN_CORE_WEB_SM,
         disable: Optional[List[str]] = None,
         memoize: bool = True,
-        memoize_key: HashingFunction = None,
+        memoize_key: Optional[HashingFunction] = None,
         gpu: bool = False,
     ) -> None:
         super().__init__(name, resources, pre)

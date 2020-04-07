@@ -276,7 +276,7 @@ class TestMapperCore(unittest.TestCase):
         assert x8_mapped is not None
         self.assertEqual(x8_mapped.num_squared, 64)
         self.assertEqual(square_hit_tracker.n_hits, 1)
-        x8_with_another_text = self._get_x(text='Henry is still having fun')
+        x8_with_another_text = self._get_x(text="Henry is still having fun")
         x8_with_another_text_mapped = square(x8_with_another_text)
         assert x8_with_another_text_mapped is not None
         self.assertEqual(x8_with_another_text_mapped.num_squared, 64)

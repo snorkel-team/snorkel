@@ -280,7 +280,7 @@ class LambdaMapper(BaseMapper):
 
     Parameters
     ----------
-    name:
+    name
         Name of mapper
     f
         Function executing the mapping operation

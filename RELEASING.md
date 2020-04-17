@@ -98,7 +98,9 @@ Then run `chmod 600 ./.pypirc` so only you can read/write.
     * Trigger a build for master to pull new tags.
     * Go to the "Versions" tab, and "Activate" the new tag.
     * Go to Admin/Advanced to set this tag as the new default version.
-    * Make sure a build is triggered on the correct tag in "Overview".
+    * In "Overview", make sure a build is triggered:
+        * For the tag `v0.9.1`
+        * For `latest`
 
 
 ## Credit

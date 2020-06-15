@@ -814,7 +814,35 @@ class LabelModel(nn.Module, BaseLabeler):
         class_balance
             Each class's percentage of the population, by default None
         **kwargs
-            Arguments for changing train config defaults
+            Arguments for changing train config defaults.
+
+            n_epochs
+                The number of epochs to train (where each epoch is a single
+                optimization step), default is 100
+            lr
+                Base learning rate (will also be affected by lr_scheduler choice
+                and settings), default is 0.01
+            l2
+                Centered L2 regularization strength, default is 0.0
+            optimizer
+                Which optimizer to use (one of ["sgd", "adam", "adamax"]),
+                default is "sgd"
+            optimizer_config
+                Settings for the optimizer
+            lr_scheduler
+                Which lr_scheduler to use (one of ["constant", "linear",
+                "exponential", "step"]), default is "constant"
+            lr_scheduler_config
+                Settings for the LRScheduler
+            prec_init
+                LF precision initializations / priors, default is 0.7
+            seed
+                A random seed to initialize the random number generator with
+            log_freq
+                Report loss every this many epochs (steps), default is 10
+            mu_eps
+                Restrict the learned conditional probabilities to
+                [mu_eps, 1-mu_eps], default is None
 
         Raises
         ------
@@ -827,8 +855,8 @@ class LabelModel(nn.Module, BaseLabeler):
         >>> Y_dev = [0, 1, 0]
         >>> label_model = LabelModel(verbose=False)
         >>> label_model.fit(L)
-        >>> label_model.fit(L, Y_dev=Y_dev)
-        >>> label_model.fit(L, class_balance=[0.7, 0.3])
+        >>> label_model.fit(L, Y_dev=Y_dev, seed=2020, lr=0.05)
+        >>> label_model.fit(L, class_balance=[0.7, 0.3], n_epochs=200, l2=0.4)
         """
         # Set random seed
         self.train_config: TrainConfig = merge_config(  # type:ignore

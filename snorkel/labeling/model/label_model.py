@@ -472,7 +472,11 @@ class LabelModel(nn.Module, BaseLabeler):
         Y
             Gold labels associated with data points in L
         metrics
-            A list of metric names
+            A list of metric names. Possbile metrics are - `accuracy`, `coverage`,
+            `precision`, `recall`, `f1`, `f1_micro`, `f1_macro`, `fbeta`,
+            `matthews_corrcoef`, `roc_auc`. See `sklearn.metrics
+            <https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics>`_
+            for details on the metrics.
         tie_break_policy
             Policy to break ties when converting probabilistic labels to predictions
 

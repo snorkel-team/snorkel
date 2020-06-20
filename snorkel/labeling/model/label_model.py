@@ -420,9 +420,10 @@ class LabelModel(nn.Module, BaseLabeler):
         """Return predicted labels, with ties broken according to policy.
 
         Policies to break ties include:
-        "abstain": return an abstain vote (-1)
-        "true-random": randomly choose among the tied options
-        "random": randomly choose among tied option using deterministic hash
+
+        - "abstain": return an abstain vote (-1)
+        - "true-random": randomly choose among the tied options
+        - "random": randomly choose among tied option using deterministic hash
 
         NOTE: if tie_break_policy="true-random", repeated runs may have slightly different
         results due to difference in broken ties
@@ -478,7 +479,8 @@ class LabelModel(nn.Module, BaseLabeler):
             <https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics>`_
             for details on the metrics.
         tie_break_policy
-            Policy to break ties when converting probabilistic labels to predictions
+            Policy to break ties when converting probabilistic labels to predictions.
+            Same as :func:`.predict` method above.
 
 
         Returns

@@ -124,7 +124,7 @@ class Checkpointer:
         elif not self.checkpoint_condition_met and iteration >= self.checkpoint_runway:
             self.checkpoint_condition_met = True
             logging.info(
-                f"checkpoint_runway condition has been met. Start checkpointing."
+                "checkpoint_runway condition has been met. Start checkpointing."
             )
 
         checkpoint_path = f"{self.checkpoint_dir}/checkpoint_{iteration}.pth"
@@ -187,7 +187,7 @@ class Checkpointer:
         """Load the best model from the checkpoint."""
         metric = list(self.checkpoint_metric.keys())[0]
         if metric not in self.best_metric_dict:  # pragma: no cover
-            logging.info(f"No best model found, use the original model.")
+            logging.info("No best model found, use the original model.")
         else:
             # Load the best model of checkpoint_metric
             best_model_path = (

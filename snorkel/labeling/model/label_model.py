@@ -577,7 +577,7 @@ class LabelModel(nn.Module, BaseLabeler):
     def _set_constants(self, L: np.ndarray) -> None:
         self.n, self.m = L.shape
         if self.m < 3:
-            raise ValueError(f"L_train should have at least 3 labeling functions")
+            raise ValueError("L_train should have at least 3 labeling functions")
         self.t = 1
 
     def _create_tree(self) -> None:
@@ -679,7 +679,7 @@ class LabelModel(nn.Module, BaseLabeler):
         if self.train_config.lr_scheduler_config.warmup_steps:
             warmup_steps = self.train_config.lr_scheduler_config.warmup_steps
             if warmup_steps < 0:
-                raise ValueError(f"warmup_steps much greater or equal than 0.")
+                raise ValueError("warmup_steps much greater or equal than 0.")
             warmup_unit = self.train_config.lr_scheduler_config.warmup_unit
             if warmup_unit == "epochs":
                 self.warmup_steps = int(warmup_steps)

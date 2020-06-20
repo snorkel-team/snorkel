@@ -94,10 +94,10 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
     if "base" not in slice_names:
         slice_names = slice_names + ["base"]
 
-    slice_tasks = []
+    slice_tasks: List[Task] = []
 
     # Keep track of all operations related to slice tasks
-    slice_task_ops = []
+    slice_task_ops: List[Operation] = []
 
     # NOTE: We assume here that the last operation uses the head module
     # Identify base task head module
@@ -108,7 +108,9 @@ def convert_to_slice_tasks(base_task: Task, slice_names: List[str]) -> List[Task
         head_module = head_module.module
 
     neck_size = head_module.in_features
+    assert isinstance(neck_size, int)
     base_task_cardinality = head_module.out_features
+    assert isinstance(base_task_cardinality, int)
 
     # Remove the slice-unaware head module from module pool and op sequence
     del base_task.module_pool[head_module_op.module_name]

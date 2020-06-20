@@ -179,7 +179,7 @@ class Trainer:
         # Set to training mode
         model.train()
 
-        logging.info(f"Start training...")
+        logging.info("Start training...")
 
         self.metrics: Dict[str, float] = dict()
         self._reset_losses()
@@ -372,7 +372,7 @@ class Trainer:
         if self.config.lr_scheduler_config.warmup_steps:
             warmup_steps = self.config.lr_scheduler_config.warmup_steps
             if warmup_steps < 0:
-                raise ValueError(f"warmup_steps much greater or equal than 0.")
+                raise ValueError("warmup_steps much greater or equal than 0.")
             warmup_unit = self.config.lr_scheduler_config.warmup_unit
             if warmup_unit == "epochs":
                 self.warmup_steps = int(warmup_steps * self.n_batches_per_epoch)

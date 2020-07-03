@@ -90,7 +90,7 @@ class labeling_function:
         Name of the LF
     resources
         Labeling resources passed in to ``f`` via ``kwargs``
-    preprocessors
+    pre
         Preprocessors to run on data points before LF execution
 
     Examples

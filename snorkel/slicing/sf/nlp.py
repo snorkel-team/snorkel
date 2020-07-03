@@ -49,6 +49,8 @@ class NLPSlicingFunction(BaseNLPLabelingFunction):
         See https://spacy.io/usage/processing-pipelines#disabling
     memoize
         Memoize preprocessor outputs?
+    memoize_key
+        Hashing function to handle the memoization (default to snorkel.map.core.get_hashable)
 
     Raises
     ------

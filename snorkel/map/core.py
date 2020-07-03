@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional
 import numpy as np
 import pandas as pd
 
-from snorkel.types import DataPoint, FieldMap
+from snorkel.types import DataPoint, FieldMap, HashingFunction
 
 MapFunction = Callable[[DataPoint], Optional[DataPoint]]
 
@@ -94,6 +94,8 @@ class BaseMapper:
         Mappers to run before this mapper is executed
     memoize
         Memoize mapper outputs?
+    memoize_key
+        Hashing function to handle the memoization (default to snorkel.map.core.get_hashable)
 
     Raises
     ------
@@ -106,9 +108,18 @@ class BaseMapper:
         Memoize mapper outputs?
     """
 
-    def __init__(self, name: str, pre: List["BaseMapper"], memoize: bool) -> None:
+    def __init__(
+        self,
+        name: str,
+        pre: List["BaseMapper"],
+        memoize: bool,
+        memoize_key: Optional[HashingFunction] = None,
+    ) -> None:
+        if memoize_key is None:
+            memoize_key = get_hashable
         self.name = name
         self._pre = pre
+        self._memoize_key = memoize_key
         self.memoize = memoize
         self.reset_cache()
 
@@ -140,7 +151,7 @@ class BaseMapper:
         """
         if self.memoize:
             # NB: don't do ``self._cache.get(...)`` first in case cached value is ``None``
-            x_hashable = get_hashable(x)
+            x_hashable = self._memoize_key(x)
             if x_hashable in self._cache:
                 return self._cache[x_hashable]
         # NB: using pickle roundtrip as a more robust deepcopy
@@ -199,6 +210,8 @@ class Mapper(BaseMapper):
         Mappers to run before this mapper is executed
     memoize
         Memoize mapper outputs?
+    memoize_key
+        Hashing function to handle the memoization (default to snorkel.map.core.get_hashable)
 
     Raises
     ------
@@ -222,13 +235,14 @@ class Mapper(BaseMapper):
         mapped_field_names: Optional[Mapping[str, str]] = None,
         pre: Optional[List[BaseMapper]] = None,
         memoize: bool = False,
+        memoize_key: Optional[HashingFunction] = None,
     ) -> None:
         if field_names is None:
             # Parse field names from ``run(...)`` if not provided
             field_names = {k: k for k in get_parameters(self.run)[1:]}
         self.field_names = field_names
         self.mapped_field_names = mapped_field_names
-        super().__init__(name, pre or [], memoize)
+        super().__init__(name, pre or [], memoize, memoize_key)
 
     def run(self, **kwargs: Any) -> Optional[FieldMap]:
         """Run the mapping operation using the input fields.
@@ -280,7 +294,7 @@ class LambdaMapper(BaseMapper):
 
     Parameters
     ----------
-    name:
+    name
         Name of mapper
     f
         Function executing the mapping operation
@@ -288,6 +302,8 @@ class LambdaMapper(BaseMapper):
         Mappers to run before this mapper is executed
     memoize
         Memoize mapper outputs?
+    memoize_key
+        Hashing function to handle the memoization (default to snorkel.map.core.get_hashable)
     """
 
     def __init__(
@@ -296,9 +312,10 @@ class LambdaMapper(BaseMapper):
         f: MapFunction,
         pre: Optional[List[BaseMapper]] = None,
         memoize: bool = False,
+        memoize_key: Optional[HashingFunction] = None,
     ) -> None:
         self._f = f
-        super().__init__(name, pre or [], memoize)
+        super().__init__(name, pre or [], memoize, memoize_key)
 
     def _generate_mapped_data_point(self, x: DataPoint) -> Optional[DataPoint]:
         return self._f(x)
@@ -328,6 +345,8 @@ class lambda_mapper:
         Mappers to run before this mapper is executed
     memoize
         Memoize mapper outputs?
+    memoize_key
+        Hashing function to handle the memoization (default to snorkel.map.core.get_hashable)
 
     Attributes
     ----------
@@ -340,12 +359,14 @@ class lambda_mapper:
         name: Optional[str] = None,
         pre: Optional[List[BaseMapper]] = None,
         memoize: bool = False,
+        memoize_key: Optional[HashingFunction] = None,
     ) -> None:
         if callable(name):
             raise ValueError("Looks like this decorator is missing parentheses!")
         self.name = name
         self.pre = pre
         self.memoize = memoize
+        self.memoize_key = memoize_key
 
     def __call__(self, f: MapFunction) -> LambdaMapper:
         """Wrap a function to create a ``LambdaMapper``.
@@ -361,4 +382,10 @@ class lambda_mapper:
             New ``LambdaMapper`` executing operation in wrapped function
         """
         name = self.name or f.__name__
-        return LambdaMapper(name=name, f=f, pre=self.pre, memoize=self.memoize)
+        return LambdaMapper(
+            name=name,
+            f=f,
+            pre=self.pre,
+            memoize=self.memoize,
+            memoize_key=self.memoize_key,
+        )

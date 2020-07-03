@@ -25,7 +25,7 @@ class Preprocessor(Mapper):
 
 
 class LambdaPreprocessor(LambdaMapper):
-    """Convenience class for definining preprocessors from functions.
+    """Convenience class for defining preprocessors from functions.
 
     See ``snorkel.map.core.LambdaMapper`` for details.
     """

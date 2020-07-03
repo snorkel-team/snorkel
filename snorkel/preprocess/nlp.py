@@ -2,7 +2,7 @@ from typing import List, Optional
 
 import spacy
 
-from snorkel.types import FieldMap
+from snorkel.types import FieldMap, HashingFunction
 
 from .core import BasePreprocessor, Preprocessor
 
@@ -40,6 +40,8 @@ class SpacyPreprocessor(Preprocessor):
         Preprocessors to run before this preprocessor is executed
     memoize
         Memoize preprocessor outputs?
+    memoize_key
+        Hashing function to handle the memoization (default to snorkel.map.core.get_hashable)
     gpu
         Prefer Spacy GPU processing?
     """
@@ -52,6 +54,7 @@ class SpacyPreprocessor(Preprocessor):
         disable: Optional[List[str]] = None,
         pre: Optional[List[BasePreprocessor]] = None,
         memoize: bool = False,
+        memoize_key: Optional[HashingFunction] = None,
         gpu: bool = False,
     ) -> None:
         name = type(self).__name__
@@ -61,6 +64,7 @@ class SpacyPreprocessor(Preprocessor):
             mapped_field_names=dict(doc=doc_field),
             pre=pre,
             memoize=memoize,
+            memoize_key=memoize_key,
         )
         self.gpu = gpu
         if self.gpu:

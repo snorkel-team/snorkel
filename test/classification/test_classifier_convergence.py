@@ -80,7 +80,7 @@ def create_data(n: int, offset=0) -> pd.DataFrame:
 
     Create labels with linear decision boundaries related to the two coordinates of X.
     """
-    X = np.random.random((n, 2)) * 2 - 1
+    X = (np.random.random((n, 2)) * 2 - 1).astype(np.float32)
     Y = (X[:, 0] < X[:, 1] + offset).astype(int)
 
     df = pd.DataFrame({"x1": X[:, 0], "x2": X[:, 1], "y": Y})

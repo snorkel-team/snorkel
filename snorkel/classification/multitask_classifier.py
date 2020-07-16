@@ -212,6 +212,7 @@ class MultitaskClassifier(nn.Module):
                                     # one field; use that as the input to the current op
                                     op_name = op_input
                                     inputs.append(outputs[op_name])
+
                             output = self.module_pool[operation.module_name].forward(
                                 *inputs
                             )
@@ -220,8 +221,10 @@ class MultitaskClassifier(nn.Module):
                             output = self.module_pool[operation.module_name].forward(
                                 outputs
                             )
-                    except Exception:
-                        raise ValueError(f"Unsuccessful operation {operation}.")
+                    except Exception as e:
+                        raise ValueError(
+                            f"Unsuccessful operation {operation}: {repr(e)}."
+                        )
                     outputs[operation.name] = output
 
         return outputs

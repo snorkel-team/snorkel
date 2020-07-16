@@ -175,7 +175,7 @@ class SlicingConvergenceTest(unittest.TestCase):
 
 
 def create_data(n: int) -> pd.DataFrame:
-    X = np.random.random((n, 2)) * 2 - 1
+    X = (np.random.random((n, 2)) * 2 - 1).astype(np.float32)
     Y = (X[:, 0] < X[:, 1] + 0.25).astype(int)
 
     df = pd.DataFrame({"x1": X[:, 0], "x2": X[:, 1], "y": Y})

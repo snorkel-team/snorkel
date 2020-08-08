@@ -5,12 +5,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-## [0.9.6]
+## [0.9.7]
 ### [Breaking Changes]
 ### [Added]
 ### [Changed]
 ### [Deprecated]
 ### [Removed]
+
+## [0.9.6] - 2020-08-08
+### [Added]
+
+* PR #1572: Allow specification of `memoize_key` in preprocessors
+* PR #1597: Improved error messages for MultitaskClassifier
+* PR #1592: Improved LabelModel documentation
+
+### [Contributors]
+
+Thanks to @Wirg, @TrigonaMinima, and @dchichkov for recent contributions!
 
 ## [0.9.5] - 2020-04-06
 ### [Breaking Changes]

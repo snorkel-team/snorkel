@@ -1,3 +1,4 @@
+import logging
 from collections import defaultdict
 from typing import DefaultDict, Dict, List, Tuple
 
@@ -104,6 +105,10 @@ def get_label_instances(
             "Number of rows in x does not match number of elements in at least one label list"
         )
     buckets = get_label_buckets(*y)
-    indices = buckets[bucket]
+    try:
+        indices = buckets[bucket]
+    except KeyError:
+        logging.warning("Bucket" + str(bucket) + " does not exist.")
+        return np.array([])
     instances = x[indices]
     return instances

@@ -53,6 +53,26 @@ class ErrorAnalysisTest(unittest.TestCase):
         expected_instances = np.array(["multi"])
         np.testing.assert_equal(instances, expected_instances)
 
+    def test_get_label_instances_exceptions(self) -> None:
+        x = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+        y1 = np.array([1, 0, 0, 0])
+        y2 = np.array([1, 1, 1, 0])
+        instances = get_label_instances((2, 0), x, y1, y2)
+        expected_instances = np.array([])
+        np.testing.assert_equal(instances, expected_instances)
+
+        with self.assertRaisesRegex(
+            ValueError, "Number of lists must match the amount of labels in bucket"
+        ):
+            get_label_instances((1, 0), x, y1)
+
+        x = np.array([[1, 2], [3, 4], [5, 6]])
+        with self.assertRaisesRegex(
+            ValueError,
+            "Number of rows in x does not match number of elements in at least one label list",
+        ):
+            get_label_instances((1, 0), x, y1, y2)
+
 
 if __name__ == "__main__":
     unittest.main()

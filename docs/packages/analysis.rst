@@ -11,4 +11,5 @@ Generic model analysis utilities shared across Snorkel.
 
    Scorer
    get_label_buckets
+   get_label_instances
    metric_score

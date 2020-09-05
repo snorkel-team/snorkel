@@ -61,7 +61,7 @@ def get_label_buckets(*y: np.ndarray) -> Dict[Tuple[int, ...], np.ndarray]:
 def get_label_instances(
     bucket: Tuple[int, ...], x: np.ndarray, *y: np.ndarray
 ) -> np.ndarray:
-    """Return instances in x that were labeled according to bucket.
+    """Return instances in x with the specified combination of labels
 
     Parameters
     ----------
@@ -79,23 +79,27 @@ def get_label_instances(
 
     Example
     -------
-    A common use case is calling ``get_label_instances(bucket, x.to_numpy(), Y_gold, Y_pred)`` where
-    ``x`` is a NumPy array of data instances used to generate labels, `Y_gold`` is a set of
-    gold (i.e. ground truth) labels, and ``Y_pred`` is a corresponding set of predicted labels.
+    A common use case is calling ``get_label_instances(bucket, x.to_numpy(), Y_gold, Y_pred)``
+    where ``x`` is a NumPy array of data instances that the labels correspond to,
+    ``Y_gold`` is a list of gold (i.e. ground truth) labels, and
+    ``Y_pred`` is a corresponding list of predicted labels.
 
     >>> import pandas as pd
     >>> x = pd.DataFrame(data={'col1': ["this is a string", "a second string", "a third string"], 'col2': ["1", "2", "3"]})
     >>> Y_gold = np.array([1, 1, 1])
     >>> Y_pred = np.array([1, 0, 0])
     >>> bucket = (1, 0)
-
+    
+    The returned NumPy array of data instances from ``x`` will correspond to 
+    the rows where the first list had a 1 and the second list had a 0. 
     >>> get_label_instances(bucket, x.to_numpy(), Y_gold, Y_pred)
     array([['a second string', '2'],
            ['a third string', '3']], dtype=object)
-
-    The returned NumPy array of data instances corresponds to the data instances in x where
-    the first list of labels corresponded to the label 1 and the second list of labels
-    corresponded to the label 0.
+    
+    More generally, given bucket ``(i, j, ...)`` and lists ``y1, y2, ...``
+    the returned data instances from ``x`` will correspond to the rows where
+    y1 had label i, y2 had label j, and so on. Note that ``x`` and ``y``
+    must all be the same length.
     """
     if len(y) != len(bucket):
         raise ValueError("Number of lists must match the amount of labels in bucket")

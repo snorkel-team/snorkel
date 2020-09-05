@@ -75,7 +75,7 @@ def get_label_instances(
     Returns
     -------
     np.ndarray
-        NumPy array of instances that were labeled according to bucket
+        NumPy array of instances from x with the specified combination of labels
 
     Example
     -------

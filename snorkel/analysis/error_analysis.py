@@ -61,7 +61,7 @@ def get_label_buckets(*y: np.ndarray) -> Dict[Tuple[int, ...], np.ndarray]:
 def get_label_instances(
     bucket: Tuple[int, ...], x: np.ndarray, *y: np.ndarray
 ) -> np.ndarray:
-    """Return instances in x with the specified combination of labels
+    """Return instances in x with the specified combination of labels.
 
     Parameters
     ----------
@@ -89,13 +89,13 @@ def get_label_instances(
     >>> Y_gold = np.array([1, 1, 1])
     >>> Y_pred = np.array([1, 0, 0])
     >>> bucket = (1, 0)
-    
-    The returned NumPy array of data instances from ``x`` will correspond to 
-    the rows where the first list had a 1 and the second list had a 0. 
+
+    The returned NumPy array of data instances from ``x`` will correspond to
+    the rows where the first list had a 1 and the second list had a 0.
     >>> get_label_instances(bucket, x.to_numpy(), Y_gold, Y_pred)
     array([['a second string', '2'],
            ['a third string', '3']], dtype=object)
-    
+
     More generally, given bucket ``(i, j, ...)`` and lists ``y1, y2, ...``
     the returned data instances from ``x`` will correspond to the rows where
     y1 had label i, y2 had label j, and so on. Note that ``x`` and ``y``

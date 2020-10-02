@@ -280,6 +280,10 @@ class LabelModel(nn.Module, BaseLabeler):
         # Handle single values
         if isinstance(self.train_config.prec_init, (int, float)):
             self._prec_init = self.train_config.prec_init * torch.ones(self.m)
+        if isinstance(self.train_config.prec_init, np.ndarray):
+            self._prec_init = torch.from_numpy(self.train_config.prec_init)
+        if isinstance(self.train_config.prec_init, list):
+            self._prec_init = torch.from_numpy(np.array(self.train_config.prec_init))
         if self._prec_init.shape[0] != self.m:
             raise ValueError(f"prec_init must have shape {self.m}.")
 

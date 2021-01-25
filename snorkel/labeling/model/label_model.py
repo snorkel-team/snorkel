@@ -58,7 +58,7 @@ class TrainConfig(Config):
     optimizer_config: OptimizerConfig = OptimizerConfig()  # type: ignore
     lr_scheduler: str = "constant"
     lr_scheduler_config: LRSchedulerConfig = LRSchedulerConfig()  # type: ignore
-    prec_init: float = 0.7
+    prec_init: Union[int, float, np.ndarray, torch.Tensor] = 0.7
     seed: int = np.random.randint(1e6)
     log_freq: int = 10
     mu_eps: Optional[float] = None
@@ -280,10 +280,15 @@ class LabelModel(nn.Module, BaseLabeler):
         # Handle single values
         if isinstance(self.train_config.prec_init, (int, float)):
             self._prec_init = self.train_config.prec_init * torch.ones(self.m)
-        if isinstance(self.train_config.prec_init, np.ndarray):
+        elif isinstance(self.train_config.prec_init, np.ndarray):
             self._prec_init = torch.from_numpy(self.train_config.prec_init)
-        if isinstance(self.train_config.prec_init, list):
-            self._prec_init = torch.from_numpy(np.array(self.train_config.prec_init))
+        elif isinstance(self.train_config.prec_init, list):
+            self._prec_init = torch.Tensor(self.train_config.prec_init)
+        elif not isinstance(self.train_config.prec_init, torch.Tensor):
+            print("TYPE ERROR")
+            raise TypeError(
+                f"prec_init is of type {type(self.train_config.prec_init)} which is not supported currently."
+            )
         if self._prec_init.shape[0] != self.m:
             raise ValueError(f"prec_init must have shape {self.m}.")
 

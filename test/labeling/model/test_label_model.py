@@ -94,7 +94,7 @@ class LabelModelTest(unittest.TestCase):
 
         with self.assertRaisesRegex(
             TypeError,
-            f"prec_init is of type <class 'str'> which is not supported currently.",
+            "prec_init is of type <class 'str'> which is not supported currently.",
         ):
             # test with unsupported type (string)
             prec_init = "skibidi bop mm dada"

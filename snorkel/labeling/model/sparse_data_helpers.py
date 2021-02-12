@@ -1,0 +1,81 @@
+# -*- coding: utf-8 -*-
+"""Sparse Data Helpers
+
+Indexing throughout this module is 0 based, with the assumption that "abstains" are ommited. 
+
+When working with larger datasets, it can be convenient to load the data in sparse format. This module
+provides utilities to do so. We provide functions for a number of cases. 
+
+The user has the AugmentedMatrix (L_ind) in tuple form. AugmentedMatrix is of shape (num_examples,numfuncs*num_classes) 
+and the user has a list of tuples (i,j) that indicate that event j occoured for example i. 
+
+The user has a list of 3-tuples(i,j,k) such that for document i, labeling function j predicted class k.
+
+The user has a list of 3-tuples (i,j,c) where i and j range over [0,num_funcs*num_classes] such that 
+the events  i and j were observed to have co-occur c times. 
+
+The user has a list of 3-tuples (i,j,f) where i and j range over [0,num_funcs*num_classes] such that 
+the events  i and j co-occur with frequency f where f is in (0,1]
+
+"""
+from snorkel.labeling.model.label_model import LabelModel
+from typing import List, NamedTuple, Optional, Tuple
+from scipy.sparse import csr_matrix
+import numpy as np
+
+
+class KnownDimensions(NamedTuple):
+    num_functions: int
+    num_classes: int
+    num_examples: Optional[int]
+
+    @property
+    def num_events(self):
+        """
+            How many indicator random variables do we have (1 per event)
+        """
+        return self.num_functions * self.num_classes
+
+
+def train_model_from_known_objective(
+    objective: np.array, known_dimensions: KnownDimensions, **kwargs
+):
+    model = LabelModel(cardinality=known_dimensions.num_classes, **kwargs)
+    model._set_constants(known_dimensions=known_dimensions)
+    model._common_training_preamble()
+    model._common_training_loop()
+    return model
+
+
+def train_model_from_sparse_event_cooccurence(
+    sparse_event_cooccurence: Tuple[int, int], known_dimensions: KnownDimensions
+):
+    objective = _prepare_objective_from_sparse_event_cooccurence(
+        sparse_event_cooccurence, known_dimensions
+    )
+    return train_model_from_known_objective(
+        objective=objective, known_dimensions=known_dimensions
+    )
+
+
+def _prepare_objective_from_sparse_event_cooccurence(
+    sparse_event_cooccurence: List[Tuple[int, int, int]],
+    known_dimensions: KnownDimensions,
+):
+    rows = []
+    cols = []
+    data = []
+    for (row, col, count) in sparse_event_cooccurence:
+        rows.append(row)
+        cols.append(col)
+        data.append(count)
+    objective = csr_matrix(
+        data,
+        (np.array(rows), np.array(cols)),
+        shape=(known_dimensions.num_events, known_dimensions.num_events),
+    )
+    objective = (objective / known_dimensions.num_events).to_dense()
+    return objective
+
+    pass
+

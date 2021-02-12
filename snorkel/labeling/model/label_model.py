@@ -22,6 +22,8 @@ from snorkel.utils.optimizers import OptimizerConfig
 Metrics = Dict[str, float]
 
 
+
+
 class TrainConfig(Config):
     """Settings for the fit() method of LabelModel.
 
@@ -580,8 +582,27 @@ class LabelModel(nn.Module, BaseLabeler):
             )
         self.P = torch.diag(torch.from_numpy(self.p)).float().to(self.config.device)
 
-    def _set_constants(self, L: np.ndarray) -> None:
-        self.n, self.m = L.shape
+    def _set_constants(
+        self,
+        L: Optional[np.ndarray] = None,
+        known_dimensions: Optional[KnownDimensions] = None,
+    ) -> None:
+        if L is None and known_dimensions is None:
+            raise ValueError(
+                "You must either provide a LabelMatrix or specify known_dimensions"
+            )
+        elif known_dimensions is not None:
+            self.n = known_dimensions.num_examples
+            self.m = known_dimensions.num_functions
+            self.d = known_dimensions.num_events
+            self.cardinality = known_dimensions.num_classes
+        elif L is not None:
+            # We know L is not none, but the linter can't figure it out ...
+            self.n, self.m = L.shape
+        else:
+            raise ValueError(
+                "Something impossible happened. This is here for the sake of the linter"
+            )
         if self.m < 3:
             raise ValueError("L_train should have at least 3 labeling functions")
         self.t = 1
@@ -861,13 +882,6 @@ class LabelModel(nn.Module, BaseLabeler):
         >>> label_model.fit(L, class_balance=[0.7, 0.3], n_epochs=200, l2=0.4)
         """
         # Set random seed
-        self.train_config: TrainConfig = merge_config(  # type:ignore
-            TrainConfig(), kwargs  # type:ignore
-        )
-        # Update base config so that it includes all parameters
-        random.seed(self.train_config.seed)
-        np.random.seed(self.train_config.seed)
-        torch.manual_seed(self.train_config.seed)
 
         L_shift = L_train + 1  # convert to {0, 1, ..., k}
         if L_shift.max() > self.cardinality:
@@ -876,8 +890,7 @@ class LabelModel(nn.Module, BaseLabeler):
             )
 
         self._set_constants(L_shift)
-        self._set_class_balance(class_balance, Y_dev)
-        self._create_tree()
+        self._common_training_preamble(**kwargs)
         lf_analysis = LFAnalysis(L_train)
         self.coverage = lf_analysis.lf_coverages()
 
@@ -885,6 +898,26 @@ class LabelModel(nn.Module, BaseLabeler):
         if self.config.verbose:  # pragma: no cover
             logging.info("Computing O...")
         self._generate_O(L_shift)
+        self._common_training_loop()
+
+    def _common_training_preamble(self, **kwargs):
+        """
+            Performs the training preamble, regardless of user input
+        """
+        self.train_config: TrainConfig = merge_config(  # type:ignore
+            TrainConfig(), kwargs  # type:ignore
+        )
+        # Update base config so that it includes all parameters
+        random.seed(self.train_config.seed)
+        np.random.seed(self.train_config.seed)
+        torch.manual_seed(self.train_config.seed)
+        self._set_class_balance(class_balance, Y_dev)
+        self._create_tree()
+
+    def _common_training_loop(self):
+        """
+            Training Logic that is shared across different fit methods, irrespective of the user input format
+        """
         self._init_params()
 
         # Estimate \mu

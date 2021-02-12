@@ -23,18 +23,7 @@ from typing import List, NamedTuple, Optional, Tuple
 from scipy.sparse import csr_matrix
 import numpy as np
 
-
-class KnownDimensions(NamedTuple):
-    num_functions: int
-    num_classes: int
-    num_examples: Optional[int]
-
-    @property
-    def num_events(self):
-        """
-            How many indicator random variables do we have (1 per event)
-        """
-        return self.num_functions * self.num_classes
+from snorkel.types.data import KnownDimensions
 
 
 def train_model_from_known_objective(
@@ -42,13 +31,15 @@ def train_model_from_known_objective(
 ):
     model = LabelModel(cardinality=known_dimensions.num_classes, **kwargs)
     model._set_constants(known_dimensions=known_dimensions)
+    model.O = objective
     model._common_training_preamble()
     model._common_training_loop()
     return model
 
 
 def train_model_from_sparse_event_cooccurence(
-    sparse_event_cooccurence: Tuple[int, int], known_dimensions: KnownDimensions
+    sparse_event_cooccurence: List[Tuple[int, int, int]],
+    known_dimensions: KnownDimensions,
 ):
     objective = _prepare_objective_from_sparse_event_cooccurence(
         sparse_event_cooccurence, known_dimensions
@@ -62,6 +53,12 @@ def _prepare_objective_from_sparse_event_cooccurence(
     sparse_event_cooccurence: List[Tuple[int, int, int]],
     known_dimensions: KnownDimensions,
 ):
+    sparse_L_ind = _prepare_sparse_L_ind(known_dimensions, sparse_event_cooccurence)
+    objective = ((sparse_L_ind.T @ sparse_L_ind) / known_dimensions.num_examples)
+    return objective.todense()
+
+
+def _prepare_sparse_L_ind(known_dimensions, sparse_event_cooccurence):
     rows = []
     cols = []
     data = []
@@ -69,13 +66,12 @@ def _prepare_objective_from_sparse_event_cooccurence(
         rows.append(row)
         cols.append(col)
         data.append(count)
-    objective = csr_matrix(
-        data,
-        (np.array(rows), np.array(cols)),
-        shape=(known_dimensions.num_events, known_dimensions.num_events),
+    rows = np.array(rows)
+    cols = np.array(cols)
+    sparse_L_ind = csr_matrix(
+        (data,
+         (rows, cols),),  # Notice that this is a tuple with a tuple
+        shape=(known_dimensions.num_examples, known_dimensions.num_events),
     )
-    objective = (objective / known_dimensions.num_events).to_dense()
-    return objective
-
-    pass
+    return sparse_L_ind
 

@@ -15,6 +15,7 @@ from snorkel.labeling.model.base_labeler import BaseLabeler
 from snorkel.labeling.model.graph_utils import get_clique_tree
 from snorkel.labeling.model.logger import Logger
 from snorkel.types import Config
+from snorkel.types.data import KnownDimensions
 from snorkel.utils.config_utils import merge_config
 from snorkel.utils.lr_schedulers import LRSchedulerConfig
 from snorkel.utils.optimizers import OptimizerConfig
@@ -254,6 +255,11 @@ class LabelModel(nn.Module, BaseLabeler):
         """
         L_aug = self._get_augmented_label_matrix(L, higher_order=higher_order)
         self.d = L_aug.shape[1]
+        self._generate_O_from_L_aug(L_aug)
+    def _generate_O_from_L_aug(self,L_aug):
+        ''' Generates O from L_aug. Extracted to a seperate method for the sake of testing
+
+        '''
         self.O = (
             torch.from_numpy(L_aug.T @ L_aug / self.n).float().to(self.config.device)
         )

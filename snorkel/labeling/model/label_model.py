@@ -23,8 +23,6 @@ from snorkel.utils.optimizers import OptimizerConfig
 Metrics = Dict[str, float]
 
 
-
-
 class TrainConfig(Config):
     """Settings for the fit() method of LabelModel.
 
@@ -191,19 +189,7 @@ class LabelModel(nn.Module, BaseLabeler):
         # Create a helper data structure which maps cliques (as tuples of member
         # sources) --> {start_index, end_index, maximal_cliques}, where
         # the last value is a set of indices in this data structure
-        self.c_data: Dict[int, _CliqueData] = {}
-        for i in range(self.m):
-            self.c_data[i] = _CliqueData(
-                start_index=i * self.cardinality,
-                end_index=(i + 1) * self.cardinality,
-                max_cliques=set(
-                    [
-                        j
-                        for j in self.c_tree.nodes()
-                        if i in self.c_tree.node[j]["members"]
-                    ]
-                ),
-            )
+
 
         L_ind = self._create_L_ind(L)
 
@@ -227,6 +213,21 @@ class LabelModel(nn.Module, BaseLabeler):
             return L_aug
         else:
             return L_ind
+
+    def _calculate_clique_data(self):
+        self.c_data: Dict[int, _CliqueData] = {}
+        for i in range(self.m):
+            self.c_data[i] = _CliqueData(
+                start_index=i * self.cardinality,
+                end_index=(i + 1) * self.cardinality,
+                max_cliques=set(
+                    [
+                        j
+                        for j in self.c_tree.nodes()
+                        if i in self.c_tree.node[j]["members"]
+                    ]
+                ),
+            )
 
     def _build_mask(self) -> None:
         """Build mask applied to O^{-1}, O for the matrix approx constraint."""
@@ -256,10 +257,11 @@ class LabelModel(nn.Module, BaseLabeler):
         L_aug = self._get_augmented_label_matrix(L, higher_order=higher_order)
         self.d = L_aug.shape[1]
         self._generate_O_from_L_aug(L_aug)
-    def _generate_O_from_L_aug(self,L_aug):
-        ''' Generates O from L_aug. Extracted to a seperate method for the sake of testing
 
-        '''
+    def _generate_O_from_L_aug(self, L_aug):
+        """ Generates O from L_aug. Extracted to a seperate method for the sake of testing
+
+        """
         self.O = (
             torch.from_numpy(L_aug.T @ L_aug / self.n).float().to(self.config.device)
         )
@@ -616,6 +618,7 @@ class LabelModel(nn.Module, BaseLabeler):
     def _create_tree(self) -> None:
         nodes = range(self.m)
         self.c_tree = get_clique_tree(nodes, [])
+        self._calculate_clique_data()
 
     def _execute_logging(self, loss: torch.Tensor) -> Metrics:
         self.eval()
@@ -896,7 +899,9 @@ class LabelModel(nn.Module, BaseLabeler):
             )
 
         self._set_constants(L_shift)
-        self._common_training_preamble(**kwargs)
+        self._common_training_preamble(
+            class_balance=class_balance, Y_dev=Y_dev, **kwargs
+        )
         lf_analysis = LFAnalysis(L_train)
         self.coverage = lf_analysis.lf_coverages()
 
@@ -906,7 +911,12 @@ class LabelModel(nn.Module, BaseLabeler):
         self._generate_O(L_shift)
         self._common_training_loop()
 
-    def _common_training_preamble(self, **kwargs):
+    def _common_training_preamble(
+        self,
+        Y_dev: Optional[np.ndarray] = None,
+        class_balance: Optional[List[float]] = None,
+        **kwargs
+    ):
         """
             Performs the training preamble, regardless of user input
         """

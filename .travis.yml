@@ -37,7 +37,7 @@ before_install:
   - sudo update-java-alternatives -s java-1.8.0-openjdk-amd64
 
 install:
-  - pip install -U pip setuptools wheel
+  - pip install -U pip setuptools
   - pip install -U tox==3.12.0
   - pip install -U codecov
   - tox --notest

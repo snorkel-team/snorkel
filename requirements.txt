@@ -17,7 +17,7 @@ pandas>=0.25.0,<2.0.0
 tqdm>=4.33.0,<5.0.0
 
 # Internal models
-scikit-learn>=0.23.0,<0.25.0
+scikit-learn>=0.20.2,<0.25.0
 torch>=1.2.0,<2.0.0
 munkres>=1.0.6
 
@@ -33,9 +33,7 @@ tensorboard>=1.14.0,<2.0.0
 spacy>=2.1.0,<3.0.0
 
 # Scale-up/out
-dask-glm==0.2.0
-dask-ml==1.7.0
-dask[array,dataframe]==2.18.0
+dask[complete]>=2.1.0,<2.30.0
 
 # Serialization
 dill>=0.3.0,<0.4.0

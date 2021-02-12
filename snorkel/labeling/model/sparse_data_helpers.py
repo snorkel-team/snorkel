@@ -19,11 +19,47 @@ the events  i and j co-occur with frequency f where f is in (0,1]
 
 """
 from snorkel.labeling.model.label_model import LabelModel
-from typing import List, NamedTuple, Optional, Tuple
+from typing import List,  Tuple, Iterable, Dict
 from scipy.sparse import csr_matrix
 import numpy as np
-
+import torch
 from snorkel.types.data import KnownDimensions
+
+
+def predict_probs_from_cliqueset(
+    trained_model: LabelModel, cliqueset_indice_list: Iterable[Iterable[int]]
+):
+    """
+        This function can make inference many orders of magnitude faster for larger datasets.
+
+        In the data representation of L_ind where each row is a document and each column corresponds to an event "
+        function x predicted class y", the 1s on L_ind essentially define a fully connected graph, or cliqueset.
+        while their are num_classes^num_functions possible cliquesets, in practice we'll see a very small subset of
+        those.
+        In our exerpiments, where num_functions=40 and num_classes=3 we observed 600 cliquesets whereas 3^40 were possible.
+
+        This function receives a trained model, and a list of cliquesets (indexed by event_id "func_id*num_labels+label_id")
+        loads those in a sparse format and returns to predictions keyed by cliqueset
+
+
+
+    """
+    rows = []
+    cols = []
+    data = []
+    for num, cs in enumerate(cliqueset_indice_list):
+        for event_id in cs:
+            rows.append(num)
+            cols.append(event_id)
+            data.append(1)
+    sparse_input_l_ind = csr_matrix(
+        (data, (rows, cols)), shape=(len(rows), trained_model.d)
+    )
+    predicted_probs = trained_model.predict_proba(sparse_input_l_ind.todense(),is_augmented=True)
+    result_dict: Dict[tuple, np.array] ={}
+    for cs, probs in zip(cliqueset_indice_list, predicted_probs):
+        result_dict[tuple(cs)] = probs
+    return result_dict
 
 
 def train_model_from_known_objective(
@@ -31,7 +67,7 @@ def train_model_from_known_objective(
 ):
     model = LabelModel(cardinality=known_dimensions.num_classes, **kwargs)
     model._set_constants(known_dimensions=known_dimensions)
-    model.O = objective
+    model.O = torch.from_numpy(objective)
     model._common_training_preamble()
     model._common_training_loop()
     return model
@@ -54,7 +90,7 @@ def _prepare_objective_from_sparse_event_cooccurence(
     known_dimensions: KnownDimensions,
 ):
     sparse_L_ind = _prepare_sparse_L_ind(known_dimensions, sparse_event_cooccurence)
-    objective = ((sparse_L_ind.T @ sparse_L_ind) / known_dimensions.num_examples)
+    objective = (sparse_L_ind.T @ sparse_L_ind) / known_dimensions.num_examples
     return objective.todense()
 
 
@@ -69,9 +105,7 @@ def _prepare_sparse_L_ind(known_dimensions, sparse_event_cooccurence):
     rows = np.array(rows)
     cols = np.array(cols)
     sparse_L_ind = csr_matrix(
-        (data,
-         (rows, cols),),  # Notice that this is a tuple with a tuple
+        (data, (rows, cols),),  # Notice that this is a tuple with a tuple
         shape=(known_dimensions.num_examples, known_dimensions.num_events),
     )
     return sparse_L_ind
-

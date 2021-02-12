@@ -381,13 +381,15 @@ class LabelModel(nn.Module, BaseLabeler):
         >>> np.around(label_model.get_weights(), 2)  # doctest: +SKIP
         array([0.99, 0.99, 0.99])
         """
+        if not hasattr(self,'coverage'):
+            raise NotImplementedError("Models Initialized from an Objective don't have statistics to generate weights")
         accs = np.zeros(self.m)
         cprobs = self.get_conditional_probs()
         for i in range(self.m):
             accs[i] = np.diag(cprobs[i, 1:, :] @ self.P.cpu().detach().numpy()).sum()
         return np.clip(accs / self.coverage, 1e-6, 1.0)
 
-    def predict_proba(self, L: np.ndarray) -> np.ndarray:
+    def predict_proba(self, L: np.ndarray,is_augmented=False) -> np.ndarray:
         r"""Return label probabilities P(Y | \lambda).
 
         Parameters
@@ -410,9 +412,14 @@ class LabelModel(nn.Module, BaseLabeler):
                [0., 1.],
                [0., 1.]])
         """
-        L_shift = L + 1  # convert to {0, 1, ..., k}
-        self._set_constants(L_shift)
-        L_aug = self._get_augmented_label_matrix(L_shift)
+        if not is_augmented:
+            #This is the usual mode
+            L_shift = L + 1  # convert to {0, 1, ..., k}
+            self._set_constants(L_shift) ##TODO - Why do we need this here ?
+            L_aug = self._get_augmented_label_matrix(L_shift)
+        else:
+            #The data came in augmented format, and constants are already set
+            L_aug = L
         mu = self.mu.cpu().detach().numpy()
         jtm = np.ones(L_aug.shape[1])
 

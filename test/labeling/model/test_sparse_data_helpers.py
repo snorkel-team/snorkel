@@ -15,7 +15,7 @@ class SparseHelpersTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         known_dimensions = KnownDimensions(
-            num_classes=10, num_examples=100, num_functions=3
+            num_classes=3, num_examples=5, num_functions=7
         )
 
         possible_function_values = np.eye(known_dimensions.num_classes)
@@ -60,6 +60,22 @@ class SparseHelpersTest(unittest.TestCase):
         calculated_obective = sparse_data_helpers._prepare_objective_from_sparse_event_cooccurence(tuples,known_dimensions=self.known_dimensions)
         self.assertEqual(self.model_O.shape,calculated_obective.shape)
         np.testing.assert_almost_equal(self.model_O, calculated_obective)
+    def test_train_model_from_sparse_O(self):
+        trained_model = sparse_data_helpers.train_model_from_known_objective(objective=self.O,known_dimensions=self.known_dimensions)
+        mu_cpu = trained_model.mu.detach().numpy()
+        self.assertEqual((self.known_dimensions.num_events,self.known_dimensions.num_classes),mu_cpu.shape)
+        with self.assertRaises(NotImplementedError):
+            trained_model.get_weights()
+    def test_sparse_prediction(self):
+        trained_model = sparse_data_helpers.train_model_from_known_objective(objective=self.O,
+                                                                   known_dimensions=self.known_dimensions)
+        events = np.arange(self.known_dimensions.num_events)
+        np.random.shuffle(events) # for fun
+        cliquesets = set(tuple(events[i:i**i % self.known_dimensions.num_events]) for i in range(self.known_dimensions.num_events))
+        prediction_dict = sparse_data_helpers.predict_probs_from_cliqueset(trained_model=trained_model,cliqueset_indice_list=cliquesets)
+        for cs in cliquesets:
+            self.assertIn(tuple(cs),prediction_dict)
+        self.assertEqual(len(cliquesets),len(prediction_dict.keys())) #if all elements match, and they have the same size, they are equal
 
 
 

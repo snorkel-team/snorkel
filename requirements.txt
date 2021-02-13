@@ -34,7 +34,7 @@ spacy>=2.1.0,<3.0.0
 blis>=0.3.0,<0.5.0
 
 # Dask (parallelism)
-dask>=2.1.0,<2.31.0
+dask[dataframe]>=2.1.0,<2.31.0
 distributed>=2.1.0,<2.31.0
 
 # Dill (serialization)

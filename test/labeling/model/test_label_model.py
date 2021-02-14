@@ -65,32 +65,26 @@ class LabelModelTest(unittest.TestCase):
 
         # test without prec_init
         label_model.fit(L_train=L, n_epochs=1000, seed=123)
-        Y_pred = label_model.predict(L)
-        assert set(Y_pred.flatten()) == {0, 1}
 
         # test with prec_init as float
         prec_init = 0.6
         label_model.fit(L_train=L, prec_init=prec_init, n_epochs=1000, seed=123)
-        Y_pred = label_model.predict(L)
-        assert set(Y_pred.flatten()) == {0, 1}
+        label_model.predict(L)
 
         # test with prec_init as int
         prec_init = 1
         label_model.fit(L_train=L, prec_init=prec_init, n_epochs=1000, seed=123)
-        Y_pred = label_model.predict(L)
-        assert set(Y_pred.flatten()) == {0, 1}
+        label_model.predict(L)
 
         # test with prec_init as list
         prec_init = [0.1, 0.2, 0.3]
         label_model.fit(L_train=L, prec_init=prec_init, n_epochs=1000, seed=123)
-        Y_pred = label_model.predict(L)
-        assert set(Y_pred.flatten()) == {0, 1}
+        label_model.predict(L)
 
         # test with prec_init as np.array
         prec_init = np.array([0.1, 0.2, 0.3])
         label_model.fit(L_train=L, prec_init=prec_init, n_epochs=1000, seed=123)
-        Y_pred = label_model.predict(L)
-        assert set(Y_pred.flatten()) == {0, 1}
+        label_model.predict(L)
 
         with self.assertRaisesRegex(
             TypeError,

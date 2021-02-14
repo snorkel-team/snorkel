@@ -58,7 +58,7 @@ class TrainConfig(Config):
     optimizer_config: OptimizerConfig = OptimizerConfig()  # type: ignore
     lr_scheduler: str = "constant"
     lr_scheduler_config: LRSchedulerConfig = LRSchedulerConfig()  # type: ignore
-    prec_init: Union[int, float, np.ndarray, torch.Tensor] = 0.7
+    prec_init: Union[float, List[float], np.ndarray, torch.Tensor] = 0.7
     seed: int = np.random.randint(1e6)
     log_freq: int = 10
     mu_eps: Optional[float] = None
@@ -281,7 +281,7 @@ class LabelModel(nn.Module, BaseLabeler):
         if isinstance(self.train_config.prec_init, (int, float)):
             self._prec_init = self.train_config.prec_init * torch.ones(self.m)
         elif isinstance(self.train_config.prec_init, np.ndarray):
-            self._prec_init = torch.from_numpy(self.train_config.prec_init)
+            self._prec_init = torch.Tensor(self.train_config.prec_init)
         elif isinstance(self.train_config.prec_init, list):
             self._prec_init = torch.Tensor(self.train_config.prec_init)
         elif not isinstance(self.train_config.prec_init, torch.Tensor):

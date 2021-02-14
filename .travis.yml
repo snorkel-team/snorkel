@@ -19,11 +19,11 @@ jobs:
     - if: type = pull_request
       name: "Python 3.7: unit tests"
       python: 3.7
-      env: TOXENV=coverage,doctest,type,check TOX_INSTALL_DIR=.env JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+      env: TOXENV=type,check TOX_INSTALL_DIR=.env JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
     - if: type = pull_request
       name: "Python 3.8: unit tests"
       python: 3.8
-      env: TOXENV=coverage,doctest,type,check TOX_INSTALL_DIR=.env JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+      env: TOXENV=type,check TOX_INSTALL_DIR=.env JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
     - if: type != pull_request
       name: "Python 3.6: unit + integration tests"
       python: 3.6
@@ -31,11 +31,11 @@ jobs:
     - if: type != pull_request
       name: "Python 3.7: unit + integration tests"
       python: 3.7
-      env: TOXENV=coverage,complex,spark,doctest,type,check TOX_INSTALL_DIR=.env JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+      env: TOXENV=complex,spark,type,check TOX_INSTALL_DIR=.env JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
     - if: type != pull_request
       name: "Python 3.8: unit + integration tests"
       python: 3.8
-      env: TOXENV=coverage,complex,spark,doctest,type,check TOX_INSTALL_DIR=.env JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+      env: TOXENV=complex,type,check TOX_INSTALL_DIR=.env JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 
 # Install JDK8 for PySpark tests
 before_install:

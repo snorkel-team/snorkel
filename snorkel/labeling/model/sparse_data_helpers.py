@@ -58,7 +58,7 @@ def predict_probs_from_cliqueset(
     predicted_probs = trained_model.predict_proba(sparse_input_l_ind.todense(),is_augmented=True)
     result_dict: Dict[tuple, np.array] ={}
     for cs, probs in zip(cliqueset_indice_list, predicted_probs):
-        result_dict[tuple(cs)] = probs
+        result_dict[tuple(cs)] = probs.tolist()[0]
     return result_dict
 
 

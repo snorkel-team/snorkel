@@ -641,10 +641,10 @@ class LabelModel(nn.Module, BaseLabeler):
             if self.config.verbose:
                 self.logger.log(metrics_dict)
 
+
             # Reset running loss and examples counts
             self.running_loss = 0.0
             self.running_examples = 0
-
         self.train()
         return metrics_dict
 

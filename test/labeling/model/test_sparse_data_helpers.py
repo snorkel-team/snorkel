@@ -5,9 +5,8 @@ import numpy as np
 
 from snorkel.labeling.model import LabelModel
 from snorkel.labeling.model.sparse_label_model import (
-    KnownDimensions,
-    SparseLabelModel, CliqueSetProbs,
-)
+    SparseLabelModel, )
+from snorkel.labeling.model.sparse_label_model_helpers import CliqueSetProbs, UnnormalizedObjective, KnownDimensions
 from scipy.sparse import csr_matrix
 
 
@@ -40,7 +39,11 @@ class SparseHelpersTest(unittest.TestCase):
             (self.known_dimensions.num_examples, self.known_dimensions.num_events,),
             self.L_ind.shape,
         )
-
+    def test_fit_on_objective_raises_on_malformed(self):
+        bad_objective = np.random.randint(-5,5,size=[self.known_dimensions.num_events,self.known_dimensions.num_events])
+        with self.assertRaises(UnnormalizedObjective):
+            sparse_model = SparseLabelModel()
+            sparse_model.fit_from_objective(objective=bad_objective,known_dimensions=self.known_dimensions)
     def test_that_tests_generate_O_correctly(self):
         np.testing.assert_almost_equal(self.model_O, self.O)
 

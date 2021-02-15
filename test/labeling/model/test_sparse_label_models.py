@@ -12,7 +12,6 @@ from snorkel.labeling.model.sparse_label_model.sparse_event_pair_label_model imp
 
 from snorkel.labeling.model.sparse_label_model.sparse_label_model_helpers import UnnormalizedObjective, KnownDimensions, \
     EventCooccurence,  ExampleEventListOccurence
-from scipy.sparse import csr_matrix
 
 from snorkel.synthetic.synthetic_data import generate_simple_label_matrix
 
@@ -56,30 +55,7 @@ class BaseSparseLabelModelTest(SparseModelTestCase):
     def test_that_tests_generate_O_correctly(self):
         np.testing.assert_almost_equal(self.model_O, self.O)
 
-    def test_prepare_objective_from_sparse_event_cooccurence(self):
-        sparse_model = BaseSparseLabelModel()
-        sparse_L_ind = csr_matrix(self.L_ind)
-        data = sparse_L_ind.data
-        indptr = sparse_L_ind.indptr
-        indices = sparse_L_ind.indices
-        tuples: List[Tuple[int, int, int]] = []
-        for row in range(self.L_ind.shape[0]):
-            col_range = indices[sparse_L_ind.indptr[row] : indptr[row + 1]]
-            val_range = data[indptr[row] : indptr[row + 1]]
-            self.assertEqual(len(col_range), len(val_range))
-            for col, value in zip(col_range, val_range):
-                self.assertEqual(value, self.L_ind[row, col])
-                tuples.append((row, col, value))
 
-        sparse_L_ind = sparse_model._prepare_sparse_L_ind(
-            known_dimensions=self.known_dimensions, sparse_event_cooccurence=tuples
-        )
-        np.testing.assert_almost_equal(self.L_ind, sparse_L_ind.todense())
-        calculated_obective = sparse_model._prepare_objective_from_sparse_event_cooccurence(
-            tuples, known_dimensions=self.known_dimensions
-        )
-        self.assertEqual(self.model_O.shape, calculated_obective.shape)
-        np.testing.assert_almost_equal(self.model_O, calculated_obective)
 
     def test_train_model_from_sparse_O(self):
         sparse_model = BaseSparseLabelModel()
@@ -135,22 +111,70 @@ class BaseSparseLabelModelTest(SparseModelTestCase):
         self.assertIsInstance(classes,np.ndarray)
         self.assertEqual(self.known_dimensions.num_classes,probs.shape[1])
 
+@pytest.mark.complex
 class SparseEventPairLabelModelTest(SparseModelTestCase):
 
-    def test_train_from_event_pairs(self):
-        events  :List[EventCooccurence] =[]
-        for a in range(self.known_dimensions.num_events):
-            for b in range(self.known_dimensions.num_events):
-                events.append(EventCooccurence(a,b,np.random.randint(0,self.known_dimensions.num_examples)))
-        model = SparseEventPairLabelModel()
-        model.fit_from_sparse_event_cooccurrence(sparse_event_occurence=events,known_dimensions=self.known_dimensions)
+    def test_sparse_and_regular_make_same_objective(self):
+        np.random.seed(123)
+        P, Y, L = generate_simple_label_matrix(self.known_dimensions.num_examples, self.known_dimensions.num_functions,
+                                               self.known_dimensions.num_classes)
+        sparse_event_occurence: List[EventCooccurence] = []
+        label_model = LabelModel(cardinality=self.known_dimensions.num_classes)
+        label_model._set_constants(L)
+        L_shift = L + 1
+        label_model_lind = label_model._create_L_ind(L_shift)
+        co_oc_matrix  = label_model_lind.T @label_model_lind
+        for a_id, cols in enumerate(co_oc_matrix):
+            for b_id, freq in enumerate(cols):
+                sparse_event_occurence.append(EventCooccurence(a_id,b_id,frequency=freq))
 
+        sparse_model = SparseEventPairLabelModel()
+        sparse_model._set_constants(known_dimensions=self.known_dimensions)
+
+        sparse_model_objective = sparse_model._prepare_objective_from_sparse_event_cooccurence(
+            known_dimensions=self.known_dimensions, sparse_event_occurence=sparse_event_occurence)
+        self.assertEqual(label_model.n, sparse_model.n)
+        self.assertEqual(label_model.m, sparse_model.m)
+        self.assertEqual(label_model.cardinality, sparse_model.cardinality)
+        label_model._generate_O(L_shift, )
+        label_model_O = label_model.O.detach().numpy()
+        np.testing.assert_almost_equal(label_model_O, sparse_model_objective)
+
+    def test_sparse_and_regular_make_same_probs(self) -> None:
+        """Test the LabelModel's estimate of P and Y on a simple synthetic dataset."""
+        np.random.seed(123)
+        P, Y, L = generate_simple_label_matrix(self.known_dimensions.num_examples, self.known_dimensions.num_functions,
+                                               self.known_dimensions.num_classes)
+        sparse_event_occurence: List[EventCooccurence] = []
+        label_model = LabelModel(cardinality=self.known_dimensions.num_classes)
+        label_model._set_constants(L)
+        L_shift = L + 1
+        label_model_lind = label_model._create_L_ind(L_shift)
+        co_oc_matrix = label_model_lind.T @ label_model_lind
+        for a_id, cols in enumerate(co_oc_matrix):
+            for b_id, freq in enumerate(cols):
+                sparse_event_occurence.append(EventCooccurence(a_id, b_id, frequency=freq))
+
+        sparse_model = SparseEventPairLabelModel()
+
+        sparse_model.fit_from_sparse_event_cooccurrence(sparse_event_occurence=sparse_event_occurence,
+                                                        known_dimensions=self.known_dimensions,
+                                                        n_epochs=200, lr=0.01, seed=123
+                                                        )
+        label_model = LabelModel(cardinality=self.known_dimensions.num_classes)
+        label_model.fit(L, n_epochs=200, lr=0.01, seed=123)
+        P_lm = label_model.get_conditional_probs()
+        P_slm = sparse_model.get_conditional_probs()
+        np.testing.assert_array_almost_equal(P_slm, P_lm, )
+
+
+@pytest.mark.complex
 class SparseExampleEventListLabelModelTest(SparseModelTestCase):
     def test_sparse_and_regular_make_same_l_ind_and_o(self):
         np.random.seed(123)
         P, Y, L = generate_simple_label_matrix(self.known_dimensions.num_examples, self.known_dimensions.num_functions, self.known_dimensions.num_classes)
         example_event_lists: List[ExampleEventListOccurence] = []
-        label_model = LabelModel()
+        label_model = LabelModel(cardinality=self.known_dimensions.num_classes)
         label_model._set_constants(L)
         L_shift = L+1
         label_model_lind = label_model._create_L_ind(L_shift)
@@ -177,7 +201,7 @@ class SparseExampleEventListLabelModelTest(SparseModelTestCase):
         np.testing.assert_almost_equal(label_model_O, sparse_model_objective)
 
 
-    @pytest.mark.complex
+
     def test_sparse_and_regular_make_same_probs(self) -> None:
         """Test the LabelModel's estimate of P and Y on a simple synthetic dataset."""
         np.random.seed(123)

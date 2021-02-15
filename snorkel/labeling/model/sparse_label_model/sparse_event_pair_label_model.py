@@ -30,3 +30,4 @@ class SparseEventPairLabelModel(BaseSparseLabelModel):
             objective[co_oc.event_a, co_oc.event_b] = co_oc.frequency / known_dimensions.num_examples
             objective[co_oc.event_b, co_oc.event_a] = co_oc.frequency / known_dimensions.num_examples
         return objective
+

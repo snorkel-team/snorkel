@@ -14,8 +14,10 @@ from snorkel.labeling.analysis import LFAnalysis
 from snorkel.labeling.model.base_labeler import BaseLabeler
 from snorkel.labeling.model.graph_utils import get_clique_tree
 from snorkel.labeling.model.logger import Logger
+from snorkel.labeling.model.sparse_label_model.sparse_label_model_helpers import (
+    KnownDimensions,
+)
 from snorkel.types import Config
-from snorkel.labeling.model.sparse_label_model.sparse_label_model_helpers import KnownDimensions
 from snorkel.utils.config_utils import merge_config
 from snorkel.utils.lr_schedulers import LRSchedulerConfig
 from snorkel.utils.optimizers import OptimizerConfig
@@ -190,7 +192,6 @@ class LabelModel(nn.Module, BaseLabeler):
         # sources) --> {start_index, end_index, maximal_cliques}, where
         # the last value is a set of indices in this data structure
 
-
         L_ind = self._create_L_ind(L)
 
         # Get the higher-order clique statistics based on the clique tree
@@ -214,7 +215,7 @@ class LabelModel(nn.Module, BaseLabeler):
         else:
             return L_ind
 
-    def _calculate_clique_data(self):
+    def _calculate_clique_data(self) -> None:
         self.c_data: Dict[int, _CliqueData] = {}
         for i in range(self.m):
             self.c_data[i] = _CliqueData(
@@ -258,7 +259,7 @@ class LabelModel(nn.Module, BaseLabeler):
         self.d = L_aug.shape[1]
         self._generate_O_from_L_aug(L_aug)
 
-    def _generate_O_from_L_aug(self, L_aug):
+    def _generate_O_from_L_aug(self, L_aug: np.ndarray) -> None:
         """ Generates O from L_aug. Extracted to a seperate method for the sake of testing
 
         """
@@ -387,7 +388,7 @@ class LabelModel(nn.Module, BaseLabeler):
             accs[i] = np.diag(cprobs[i, 1:, :] @ self.P.cpu().detach().numpy()).sum()
         return np.clip(accs / self.coverage, 1e-6, 1.0)
 
-    def predict_proba(self, L: np.ndarray,is_augmented=False) -> np.ndarray:
+    def predict_proba(self, L: np.ndarray, is_augmented: bool = False) -> np.ndarray:
         r"""Return label probabilities P(Y | \lambda).
 
         Parameters
@@ -411,12 +412,12 @@ class LabelModel(nn.Module, BaseLabeler):
                [0., 1.]])
         """
         if not is_augmented:
-            #This is the usual mode
+            # This is the usual mode
             L_shift = L + 1  # convert to {0, 1, ..., k}
-            self._set_constants(L_shift) ##TODO - Why do we need this here ?
+            self._set_constants(L_shift)  ##TODO - Why do we need this here ?
             L_aug = self._get_augmented_label_matrix(L_shift)
         else:
-            #The data came in augmented format, and constants are already set
+            # The data came in augmented format, and constants are already set
             L_aug = L
         mu = self.mu.cpu().detach().numpy()
         jtm = np.ones(L_aug.shape[1])
@@ -638,7 +639,6 @@ class LabelModel(nn.Module, BaseLabeler):
         if self.logger.check():
             if self.config.verbose:
                 self.logger.log(metrics_dict)
-
 
             # Reset running loss and examples counts
             self.running_loss = 0.0
@@ -920,8 +920,8 @@ class LabelModel(nn.Module, BaseLabeler):
         self,
         Y_dev: Optional[np.ndarray] = None,
         class_balance: Optional[List[float]] = None,
-        **kwargs
-    ):
+        **kwargs: Any
+    ) -> None:
         """
             Performs the training preamble, regardless of user input
         """
@@ -935,7 +935,7 @@ class LabelModel(nn.Module, BaseLabeler):
         self._set_class_balance(class_balance, Y_dev)
         self._create_tree()
 
-    def _common_training_loop(self):
+    def _common_training_loop(self) -> None:
         """
             Training Logic that is shared across different fit methods, irrespective of the user input format
         """

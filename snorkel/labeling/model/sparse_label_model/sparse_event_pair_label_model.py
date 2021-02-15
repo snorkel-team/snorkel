@@ -1,9 +1,14 @@
-from typing import List, Optional
+from typing import List, Optional, Any
 
 import numpy as np
 
-from snorkel.labeling.model.sparse_label_model.base_sparse_label_model import BaseSparseLabelModel
-from snorkel.labeling.model.sparse_label_model.sparse_label_model_helpers import EventCooccurence, KnownDimensions
+from snorkel.labeling.model.sparse_label_model.base_sparse_label_model import (
+    BaseSparseLabelModel,
+)
+from snorkel.labeling.model.sparse_label_model.sparse_label_model_helpers import (
+    EventCooccurence,
+    KnownDimensions,
+)
 
 
 class SparseEventPairLabelModel(BaseSparseLabelModel):
@@ -13,9 +18,9 @@ class SparseEventPairLabelModel(BaseSparseLabelModel):
         known_dimensions: KnownDimensions,
         Y_dev: Optional[np.ndarray] = None,
         class_balance: Optional[List[float]] = None,
-        **kwargs
-    ):
-                '''
+        **kwargs: Any
+    ) -> None:
+        '''
         """Train label model on a list of EventCooccurence.
 
         If you have data in the form event_a,event_b,frequency then use this class (on large datasets). It skips
@@ -80,12 +85,19 @@ class SparseEventPairLabelModel(BaseSparseLabelModel):
         group by a.doc_id,b.doc_id
         '''
 
-
     @staticmethod
-    def _prepare_objective_from_sparse_event_cooccurence(known_dimensions, sparse_event_occurence : List[EventCooccurence]):
-        objective = np.zeros(shape=[known_dimensions.num_events, known_dimensions.num_events])
+    def _prepare_objective_from_sparse_event_cooccurence(
+        known_dimensions: KnownDimensions,
+        sparse_event_occurence: List[EventCooccurence],
+    ) -> np.ndarray:
+        objective = np.zeros(
+            shape=[known_dimensions.num_events, known_dimensions.num_events]
+        )
         for co_oc in sparse_event_occurence:
-            objective[co_oc.event_a, co_oc.event_b] = co_oc.frequency / known_dimensions.num_examples
-            objective[co_oc.event_b, co_oc.event_a] = co_oc.frequency / known_dimensions.num_examples
+            objective[co_oc.event_a, co_oc.event_b] = (
+                co_oc.frequency / known_dimensions.num_examples
+            )
+            objective[co_oc.event_b, co_oc.event_a] = (
+                co_oc.frequency / known_dimensions.num_examples
+            )
         return objective
-

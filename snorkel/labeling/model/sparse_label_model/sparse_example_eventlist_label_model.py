@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Union, Any
 
 import numpy as np
 from scipy.sparse import csr_matrix
@@ -7,8 +7,8 @@ from snorkel.labeling.model.sparse_label_model.base_sparse_label_model import (
     BaseSparseLabelModel,
 )
 from snorkel.labeling.model.sparse_label_model.sparse_label_model_helpers import (
-    KnownDimensions,
     ExampleEventListOccurence,
+    KnownDimensions,
 )
 
 
@@ -19,8 +19,8 @@ class SparseExampleEventListLabelModel(BaseSparseLabelModel):
         known_dimensions: KnownDimensions,
         Y_dev: Optional[np.ndarray] = None,
         class_balance: Optional[List[float]] = None,
-        **kwargs
-    ):
+        **kwargs: Any
+    ) -> None:
         '''
         """Train label model on a list of ExampleEventOccourrences
 
@@ -123,7 +123,7 @@ class SparseExampleEventListLabelModel(BaseSparseLabelModel):
     def _prepare_objective_from_sparse_example_eventlist(
         known_dimensions: KnownDimensions,
         example_events_list: List[ExampleEventListOccurence],
-    ):
+    ) -> None:
 
         L_index = SparseExampleEventListLabelModel.get_l_ind(
             example_events_list, known_dimensions
@@ -135,8 +135,8 @@ class SparseExampleEventListLabelModel(BaseSparseLabelModel):
     def get_l_ind(
         example_events_list: List[ExampleEventListOccurence],
         known_dimensions: KnownDimensions,
-        return_array=False,
-    ):
+        return_array: bool = False,
+    ) -> Union[csr_matrix, np.ndarray]:
         """
         Calculates the L_ind matrix, in a sparse format by default.
         We separate this out for easier testing.

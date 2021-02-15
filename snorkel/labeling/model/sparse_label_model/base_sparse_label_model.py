@@ -18,21 +18,22 @@ The user has a list of 3-tuples (i,j,f) where i and j range over [0,num_funcs*nu
 the events  i and j co-occur with frequency f where f is in (0,1]
 
 """
-from snorkel.labeling.model.label_model import LabelModel
-from typing import List, Optional, Union, Any
-from scipy.sparse import csr_matrix
+from typing import Any, List, Optional, Union
+
 import numpy as np
 import torch
+from scipy.sparse import csr_matrix
 
+from snorkel.labeling.model.label_model import LabelModel
 from snorkel.labeling.model.sparse_label_model.sparse_label_model_helpers import (
     CliqueSetList,
     CliqueSetProbs,
     CliqueSetProbsAndPreds,
-    UnnormalizedObjective,
     KnownDimensions,
-
+    UnnormalizedObjective,
 )
 from snorkel.utils import probs_to_preds
+
 
 """
     A cliqueset is a variable length tuple. An instance of a Cliqueset represents the event ids that co-occured (e.g. a
@@ -112,10 +113,9 @@ class BaseSparseLabelModel(LabelModel):
         cliqsets_list, Y_probs = self.predict_proba_from_cliqueset(cliquesets)
         if return_probs:
             Y_p = probs_to_preds(Y_probs, tie_break_policy)
-            result: CliqueSetProbsAndPreds = (cliqsets_list, Y_probs, Y_p)
+            return (cliqsets_list, Y_probs, Y_p)
         else:
-            result: CliqueSetProbs = (cliqsets_list, Y_probs)
-        return result
+            return (cliqsets_list, Y_probs)
 
     def predict_proba_from_cliqueset(self, cliquesets: CliqueSetList) -> CliqueSetProbs:
         """Return label probabilities P(Y | \lambda).
@@ -147,15 +147,15 @@ class BaseSparseLabelModel(LabelModel):
         cliquesets_list = (
             []
         )  # We rehold the cliquesets in a list, because the input might be an unorderable set
+        count = 0
         for num, cs in enumerate(cliquesets):
+            count += 1
             cliquesets_list.append(cs)
             for event_id in cs:
                 rows.append(num)
                 cols.append(event_id)
                 data.append(1)
-        sparse_input_l_ind = csr_matrix(
-            (data, (rows, cols)), shape=(len(cliquesets), self.d)
-        )
+        sparse_input_l_ind = csr_matrix((data, (rows, cols)), shape=(count, self.d))
         predicted_probs = self.predict_proba(
             sparse_input_l_ind.todense(), is_augmented=True
         )
@@ -179,8 +179,8 @@ class BaseSparseLabelModel(LabelModel):
 
         """
         raise NotImplementedError(
-            # Using the function __name__ in an f-string makes refactoring/renaming easier
-            f"SparseLabelModel doesn't support calls to fit. Please use {self.fit_from_objective.__name__} or {self.fit_from_sparse_example_event_occurence.__name__}"
+            f"BaseSparseLabelModel does not support training. Use one of the derived classes and their explicit fit "
+            f"functions"
         )
 
     def fit_from_objective(
@@ -189,8 +189,8 @@ class BaseSparseLabelModel(LabelModel):
         known_dimensions: KnownDimensions,
         Y_dev: Optional[np.ndarray] = None,
         class_balance: Optional[List[float]] = None,
-        **kwargs
-    ):
+        **kwargs: Any
+    ) -> None:
         """Fits the LabelModel to a given Objective matrix
 
         Parameters
@@ -238,7 +238,3 @@ class BaseSparseLabelModel(LabelModel):
             Y_dev=Y_dev, class_balance=class_balance, **kwargs
         )
         self._common_training_loop()
-
-
-
-

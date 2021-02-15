@@ -1,4 +1,4 @@
-from typing import Iterable, Tuple, NamedTuple, Optional
+from typing import Iterable, NamedTuple, Optional, Tuple
 
 import numpy as np
 
@@ -33,20 +33,20 @@ class KnownDimensions(NamedTuple):
     """
     num_functions: int
     num_classes: int
-    num_examples: Optional[int]
+    num_examples: int
 
     @property
-    def num_events(self):
+    def num_events(self) -> int:
         """How many indicator random variables do we have (1 per event)
         """
         return self.num_functions * self.num_classes
 
 
 class ExampleEventListOccurence(NamedTuple):
-    event_ids :Iterable[int]
+    event_ids: Iterable[int]
 
 
 class EventCooccurence(NamedTuple):
-    event_a :int
-    event_b :int
-    frequency : int
+    event_a: int
+    event_b: int
+    frequency: int

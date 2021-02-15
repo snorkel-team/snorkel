@@ -381,8 +381,6 @@ class LabelModel(nn.Module, BaseLabeler):
         >>> np.around(label_model.get_weights(), 2)  # doctest: +SKIP
         array([0.99, 0.99, 0.99])
         """
-        if not hasattr(self,'coverage'):
-            raise NotImplementedError("Models Initialized from an Objective don't have statistics to generate weights")
         accs = np.zeros(self.m)
         cprobs = self.get_conditional_probs()
         for i in range(self.m):

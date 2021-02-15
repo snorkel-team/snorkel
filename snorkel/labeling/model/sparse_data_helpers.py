@@ -18,22 +18,62 @@ The user has a list of 3-tuples (i,j,f) where i and j range over [0,num_funcs*nu
 the events  i and j co-occur with frequency f where f is in (0,1]
 
 """
-from snorkel.labeling.model.label_model import LabelModel
-from typing import List, Tuple, Iterable, Dict, Optional
+from snorkel.labeling.model.label_model import LabelModel, TrainConfig
+from typing import List, Tuple, Iterable, Dict, Optional, Union, Any
 from scipy.sparse import csr_matrix
 import numpy as np
 import torch
 from snorkel.types.data import KnownDimensions
+from snorkel.utils import probs_to_preds
+
+CliqueSet = Iterable[int,]
+"""
+    A cliqueset is a variable length tuple. An instance of a Cliqueset represents the event ids that co-occured (e.g. a
+    clique). Where an event_id is defined as fund_id*num_labels+label_id
+"""
+CliqueSetList = Iterable[CliqueSet]
+
+CliqueSetProbs = Tuple[CliqueSetList, np.ndarray]
+"""
+     CliqueSetProbs is a tuple whose first element is a list of CliqueSets and second element is an array of 
+     probabiltiies  returned from the label model such that the probabilities at index i of the array correspond
+     to the clique at index i of the CliqueSetList. 
+     This could be a dict, but we want to preserve the whole array to leverage the pre-existing code for calculating
+     a predicted class
+"""
+CliqueSetProbsAndPreds = Tuple[CliqueSetList, np.ndarray, np.ndarray]
+"""
+    CliqueSetProbsAndPreds extends CliqueSetProbs with a third tuple element, an array of predicted class_ids 
+"""
+
 
 class SparseLabelModel(LabelModel):
-    def __init__(self,known_dimensions:Optional[KnownDimensions]=None):
+    def __init__(self, known_dimensions: Optional[KnownDimensions] = None):
         super().__init__()
         if known_dimensions:
             self._set_constants(known_dimensions=known_dimensions)
+    def get_weights(self) -> np.ndarray:
+        raise NotImplementedError("SparseLabelModel doesn't support get_weights")
 
-    def predict_probs_from_cliqueset(
-        self, cliqueset_indice_list: Iterable[Iterable[int]]
-    ):
+    def predict(
+        self,
+        cliquesets: CliqueSetList,
+        return_probs: Optional[bool] = False,
+        tie_break_policy: str = "abstain",
+    ) -> Union[CliqueSetProbs, CliqueSetProbsAndPreds]:
+        #the users cliqueset might be an unordered iterable (set) so we take the ordered list
+        cliqsets_list,Y_probs = self.predict_proba_from_cliqueset(cliquesets)
+        if return_probs:
+            Y_p = probs_to_preds(Y_probs, tie_break_policy)
+            result : CliqueSetProbsAndPreds = (cliqsets_list,Y_probs,Y_p)
+        else:
+            result : CliqueSetProbs = (cliqsets_list,Y_probs)
+        return result
+
+
+    def predict_proba_from_cliqueset(
+        self, cliquesets: CliqueSetList
+    ) -> CliqueSetProbs:
         """
             This function can make inference many orders of magnitude faster for larger datasets.
 
@@ -52,55 +92,72 @@ class SparseLabelModel(LabelModel):
         rows = []
         cols = []
         data = []
-        for num, cs in enumerate(cliqueset_indice_list):
+        cliquesets_list =[] #We rehold the cliquesets in a list, because the input might be an unorderable set
+        for num, cs in enumerate(cliquesets):
+            cliquesets_list.append(cs)
             for event_id in cs:
                 rows.append(num)
                 cols.append(event_id)
                 data.append(1)
-        sparse_input_l_ind = csr_matrix(
-            (data, (rows, cols)), shape=(len(rows), self.d)
+        sparse_input_l_ind = csr_matrix((data, (rows, cols)), shape=(len(cliquesets), self.d))
+        predicted_probs = self.predict_proba(
+            sparse_input_l_ind.todense(), is_augmented=True
         )
-        predicted_probs = self.predict_proba(sparse_input_l_ind.todense(),is_augmented=True)
-        result_dict: Dict[tuple, np.array] ={}
-        for cs, probs in zip(cliqueset_indice_list, predicted_probs):
-            result_dict[tuple(cs)] = probs.tolist()[0]
-        return result_dict
+        result: CliqueSetProbs = (cliquesets_list, predicted_probs)
 
+        return result
 
-    def train_model_from_known_objective(
-            self,
-        objective: np.array, known_dimensions: KnownDimensions, **kwargs
+    def fit(
+        self,
+        L_train: np.ndarray,
+        Y_dev: Optional[np.ndarray] = None,
+        class_balance: Optional[List[float]] = None,
+        **kwargs: Any,
+    ) -> None:
+        raise NotImplementedError(
+            #Using the function __name__ in an f-string makes refactoring/renaming easier
+            f"SparseLabelModel doesn't support calls to fit. Please use {self.fit_from_objective.__name__} or {self.fit_from_sparse_indicators.__name__}"
+        )
+
+    def fit_from_objective(
+        self, objective: np.ndarray, known_dimensions: KnownDimensions,         Y_dev: Optional[np.ndarray] = None,
+        class_balance: Optional[List[float]] = None,
+        **kwargs
     ):
         self._set_constants(known_dimensions=known_dimensions)
         self.O = torch.from_numpy(objective)
-        self._common_training_preamble()
+        self._common_training_preamble(Y_dev=Y_dev,class_balance=class_balance,**kwargs)
         self._common_training_loop()
 
-
-
-    def train_model_from_sparse_event_cooccurence(
-            self,
+    def fit_from_sparse_indicators(
+        self,
         sparse_event_cooccurence: List[Tuple[int, int, int]],
         known_dimensions: KnownDimensions,
+            Y_dev: Optional[np.ndarray] = None,
+            class_balance: Optional[List[float]] = None,
+            **kwargs
     ):
         objective = self._prepare_objective_from_sparse_event_cooccurence(
             sparse_event_cooccurence, known_dimensions
         )
-        return self.train_model_from_known_objective(
-            objective=objective, known_dimensions=known_dimensions
+        return self.fit_from_objective(
+            objective=objective, known_dimensions=known_dimensions,
+            Y_dev=Y_dev, class_balance=class_balance, **kwargs
         )
+    @staticmethod
+    def _prepare_objective_from_sparse_event_cooccurence(
 
-
-    def _prepare_objective_from_sparse_event_cooccurence(self,
         sparse_event_cooccurence: List[Tuple[int, int, int]],
         known_dimensions: KnownDimensions,
     ):
-        sparse_L_ind = self._prepare_sparse_L_ind(known_dimensions, sparse_event_cooccurence)
+        sparse_L_ind = SparseLabelModel._prepare_sparse_L_ind(
+            known_dimensions, sparse_event_cooccurence
+        )
         objective = (sparse_L_ind.T @ sparse_L_ind) / known_dimensions.num_examples
         return objective.todense()
 
-
-    def _prepare_sparse_L_ind(self,known_dimensions, sparse_event_cooccurence):
+    @staticmethod
+    def _prepare_sparse_L_ind(known_dimensions, sparse_event_cooccurence):
         rows = []
         cols = []
         data = []

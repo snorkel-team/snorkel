@@ -17,7 +17,7 @@ pandas>=0.25.0,<2.0.0
 tqdm>=4.33.0,<5.0.0
 
 # Internal models
-scikit-learn>=0.20.2,<0.22.0
+scikit-learn>=0.24.0
 torch>=1.2.0,<2.0.0
 munkres>=1.0.6
 

@@ -1,13 +1,30 @@
-from typing import Iterable, NamedTuple, Optional, Tuple
+from typing import Iterable, NamedTuple, Tuple
 
 import numpy as np
 
 CliqueSet = Iterable[
     int,
 ]
+"""
+    A cliqueset is a variable length tuple. An instance of a Cliqueset represents the event ids that co-occured (e.g. a
+    clique). Where an event_id is defined as fund_id*num_labels+label_id
+"""
+
+
 CliqueSetList = Iterable[CliqueSet]
+
 CliqueSetProbs = Tuple[CliqueSetList, np.ndarray]
+"""
+     CliqueSetProbs is a tuple whose first element is a list of CliqueSets and second element is an array of
+     probabiltiies  returned from the label model such that the probabilities at index i of the array correspond
+     to the clique at index i of the CliqueSetList.
+     This could be a dict, but we want to preserve the whole array to leverage the pre-existing code for calculating
+     a predicted class
+"""
 CliqueSetProbsAndPreds = Tuple[CliqueSetList, np.ndarray, np.ndarray]
+"""
+    CliqueSetProbsAndPreds extends CliqueSetProbs with a third tuple element, an array of predicted class_ids
+"""
 
 
 class UnnormalizedObjective(Exception):

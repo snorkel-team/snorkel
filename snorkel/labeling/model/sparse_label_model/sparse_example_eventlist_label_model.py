@@ -1,4 +1,4 @@
-from typing import List, Optional, Union, Any
+from typing import Any, List, Optional, Union
 
 import numpy as np
 from scipy.sparse import csr_matrix

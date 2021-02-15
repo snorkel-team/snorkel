@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
 """Sparse Data Helpers
 
-Indexing throughout this module is 0 based, with the assumption that "abstains" are ommited. 
+Indexing throughout this module is 0 based, with the assumption that "abstains" are ommited.
 
 When working with larger datasets, it can be convenient to load the data in sparse format. This module
-provides utilities to do so. We provide functions for a number of cases. 
+provides utilities to do so. We provide functions for a number of cases.
 
-The user has the AugmentedMatrix (L_ind) in tuple form. AugmentedMatrix is of shape (num_examples,numfuncs*num_classes) 
-and the user has a list of tuples (i,j) that indicate that event j occoured for example i. 
+The user has the AugmentedMatrix (L_ind) in tuple form. AugmentedMatrix is of shape (num_examples,numfuncs*num_classes)
+and the user has a list of tuples (i,j) that indicate that event j occoured for example i.
 
 The user has a list of 3-tuples(i,j,k) such that for document i, labeling function j predicted class k.
 
-The user has a list of 3-tuples (i,j,c) where i and j range over [0,num_funcs*num_classes] such that 
-the events  i and j were observed to have co-occur c times. 
+The user has a list of 3-tuples (i,j,c) where i and j range over [0,num_funcs*num_classes] such that
+the events  i and j were observed to have co-occur c times.
 
-The user has a list of 3-tuples (i,j,f) where i and j range over [0,num_funcs*num_classes] such that 
+The user has a list of 3-tuples (i,j,f) where i and j range over [0,num_funcs*num_classes] such that
 the events  i and j co-occur with frequency f where f is in (0,1]
 
 """
@@ -33,23 +33,6 @@ from snorkel.labeling.model.sparse_label_model.sparse_label_model_helpers import
     UnnormalizedObjective,
 )
 from snorkel.utils import probs_to_preds
-
-
-"""
-    A cliqueset is a variable length tuple. An instance of a Cliqueset represents the event ids that co-occured (e.g. a
-    clique). Where an event_id is defined as fund_id*num_labels+label_id
-"""
-
-"""
-     CliqueSetProbs is a tuple whose first element is a list of CliqueSets and second element is an array of 
-     probabiltiies  returned from the label model such that the probabilities at index i of the array correspond
-     to the clique at index i of the CliqueSetList. 
-     This could be a dict, but we want to preserve the whole array to leverage the pre-existing code for calculating
-     a predicted class
-"""
-"""
-    CliqueSetProbsAndPreds extends CliqueSetProbs with a third tuple element, an array of predicted class_ids 
-"""
 
 
 class BaseSparseLabelModel(LabelModel):
@@ -179,8 +162,8 @@ class BaseSparseLabelModel(LabelModel):
 
         """
         raise NotImplementedError(
-            f"BaseSparseLabelModel does not support training. Use one of the derived classes and their explicit fit "
-            f"functions"
+            "BaseSparseLabelModel does not support training. Use one of the derived classes and their explicit fit "
+            "functions"
         )
 
     def fit_from_objective(

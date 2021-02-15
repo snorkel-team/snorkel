@@ -414,7 +414,7 @@ class LabelModel(nn.Module, BaseLabeler):
         if not is_augmented:
             # This is the usual mode
             L_shift = L + 1  # convert to {0, 1, ..., k}
-            self._set_constants(L_shift)  ##TODO - Why do we need this here ?
+            self._set_constants(L_shift)  # TODO - Why do we need this here ?
             L_aug = self._get_augmented_label_matrix(L_shift)
         else:
             # The data came in augmented format, and constants are already set

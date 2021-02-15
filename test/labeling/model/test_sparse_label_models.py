@@ -1,27 +1,25 @@
 import unittest
-from typing import List, Tuple
+from typing import List
 
 import numpy as np
 import pytest
 
 from snorkel.labeling.model import LabelModel
-from snorkel.labeling.model.sparse_label_model.sparse_example_eventlist_label_model import (
-    SparseExampleEventListLabelModel,
-)
 from snorkel.labeling.model.sparse_label_model.base_sparse_label_model import (
     BaseSparseLabelModel,
 )
 from snorkel.labeling.model.sparse_label_model.sparse_event_pair_label_model import (
     SparseEventPairLabelModel,
 )
-
+from snorkel.labeling.model.sparse_label_model.sparse_example_eventlist_label_model import (
+    SparseExampleEventListLabelModel,
+)
 from snorkel.labeling.model.sparse_label_model.sparse_label_model_helpers import (
-    UnnormalizedObjective,
-    KnownDimensions,
     EventCooccurence,
     ExampleEventListOccurence,
+    KnownDimensions,
+    UnnormalizedObjective,
 )
-
 from snorkel.synthetic.synthetic_data import generate_simple_label_matrix
 
 

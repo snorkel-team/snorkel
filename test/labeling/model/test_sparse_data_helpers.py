@@ -4,7 +4,7 @@ from typing import List, Tuple
 import numpy as np
 
 from snorkel.labeling.model import LabelModel
-from snorkel.labeling.model.sparse_data_helpers import (
+from snorkel.labeling.model.sparse_label_model import (
     KnownDimensions,
     SparseLabelModel, CliqueSetProbs,
 )
@@ -83,7 +83,7 @@ class SparseHelpersTest(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             sparse_model.get_weights()
 
-    def test_sparse_prediction(self):
+    def test_sparse_predict_proba(self):
         sparse_model = SparseLabelModel()
         sparse_model.fit_from_objective(
             objective=self.O, known_dimensions=self.known_dimensions
@@ -104,4 +104,22 @@ class SparseHelpersTest(unittest.TestCase):
         self.assertIsInstance(probs_array, np.ndarray)
         self.assertEqual(len(cliqueset_list),probs_array.shape[0])
         self.assertEqual(self.known_dimensions.num_classes,probs_array.shape[1])
+
+    def test_sparse_predict_with_classes(self):
+        sparse_model = SparseLabelModel()
+        sparse_model.fit_from_objective(
+            objective=self.O, known_dimensions=self.known_dimensions
+        )
+        events = np.arange(self.known_dimensions.num_events)
+        np.random.shuffle(events)  # for fun
+        cliquesets = set(
+            tuple(events[i: i ** i % self.known_dimensions.num_events])
+            for i in range(self.known_dimensions.num_events)
+        )
+        cliqueset_list,probs,classes = sparse_model.predict(cliquesets,return_probs=True)
+        self.assertEqual(len(cliquesets),len(cliqueset_list))
+        self.assertEqual(len(cliquesets), (probs.shape[0]))
+        self.assertEqual(len(cliquesets), (classes.shape[0]))
+        self.assertIsInstance(classes,np.ndarray)
+        self.assertEqual(self.known_dimensions.num_classes,probs.shape[1])
 

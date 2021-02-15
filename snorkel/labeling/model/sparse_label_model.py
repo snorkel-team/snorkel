@@ -19,11 +19,10 @@ the events  i and j co-occur with frequency f where f is in (0,1]
 
 """
 from snorkel.labeling.model.label_model import LabelModel, TrainConfig
-from typing import List, Tuple, Iterable, Dict, Optional, Union, Any
+from typing import List, Tuple, Iterable, Dict, Optional, Union, Any, NamedTuple
 from scipy.sparse import csr_matrix
 import numpy as np
 import torch
-from snorkel.types.data import KnownDimensions
 from snorkel.utils import probs_to_preds
 
 CliqueSet = Iterable[int,]
@@ -172,3 +171,16 @@ class SparseLabelModel(LabelModel):
             shape=(known_dimensions.num_examples, known_dimensions.num_events),
         )
         return sparse_L_ind
+
+
+class KnownDimensions(NamedTuple):
+    num_functions: int
+    num_classes: int
+    num_examples: Optional[int]
+
+    @property
+    def num_events(self):
+        """
+            How many indicator random variables do we have (1 per event)
+        """
+        return self.num_functions * self.num_classes

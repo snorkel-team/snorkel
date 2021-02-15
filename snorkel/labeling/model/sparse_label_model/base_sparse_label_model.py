@@ -19,19 +19,18 @@ the events  i and j co-occur with frequency f where f is in (0,1]
 
 """
 from snorkel.labeling.model.label_model import LabelModel
-from typing import List, Tuple, Optional, Union, Any
+from typing import List, Optional, Union, Any
 from scipy.sparse import csr_matrix
 import numpy as np
 import torch
 
-from snorkel.labeling.model.sparse_label_model_helpers import (
+from snorkel.labeling.model.sparse_label_model.sparse_label_model_helpers import (
     CliqueSetList,
     CliqueSetProbs,
     CliqueSetProbsAndPreds,
     UnnormalizedObjective,
     KnownDimensions,
-    ExampleEventOccurence,
-    EventCooccurence,
+
 )
 from snorkel.utils import probs_to_preds
 
@@ -52,7 +51,7 @@ from snorkel.utils import probs_to_preds
 """
 
 
-class SparseLabelModel(LabelModel):
+class BaseSparseLabelModel(LabelModel):
     """A ```LabelModel``` that accepts sparse formatted inputs for training and prediction.
 
     """
@@ -240,77 +239,6 @@ class SparseLabelModel(LabelModel):
         )
         self._common_training_loop()
 
-    def fit_from_sparse_example_event_occurrence(
-        self,
-        sparse_example_event_occurence: List[ExampleEventOccurence],
-        known_dimensions: KnownDimensions,
-        Y_dev: Optional[np.ndarray] = None,
-        class_balance: Optional[List[float]] = None,
-        **kwargs
-    ):
-        objective = self._prepare_objective_from_sparse_event_cooccurence(
-            sparse_example_event_occurence, known_dimensions
-        )
-        return self.fit_from_objective(
-            objective=objective,
-            known_dimensions=known_dimensions,
-            Y_dev=Y_dev,
-            class_balance=class_balance,
-            **kwargs,
-        )
 
-    def fit_from_sparse_event_cooccurrence(
-        self,
-        sparse_event_occurence: List[EventCooccurence],
-        known_dimensions: KnownDimensions,
-        Y_dev: Optional[np.ndarray] = None,
-        class_balance: Optional[List[float]] = None,
-        **kwargs
-    ):
-        objective = self._prepare_objective_from_sparse_event_cooccurence(known_dimensions, sparse_event_occurence)
-        return self.fit_from_objective(
-            objective=objective,
-            known_dimensions=known_dimensions,
-            Y_dev=Y_dev,
-            class_balance=class_balance,
-            **kwargs,
-        )
 
-    @staticmethod
-    def _prepare_objective_from_sparse_event_cooccurence(known_dimensions, sparse_event_occurence):
-        objective = np.array(shape=[known_dimensions.num_events, known_dimensions.num_events])
-        for co_oc in sparse_event_occurence:
-            objective[co_oc.event_a, co_oc.event_b] = co_oc.frequency / known_dimensions.num_examples
-            objective[co_oc.event_b, co_oc.event_a] = co_oc.frequency / known_dimensions.num_examples
-        return objective
 
-    @staticmethod
-    def _prepare_objective_from_sparse_example_event_cooccurrence(
-        sparse_example_event_occurence: List[ExampleEventOccurence],
-        known_dimensions: KnownDimensions,
-    ):
-        sparse_L_ind = SparseLabelModel._prepare_sparse_L_ind(
-            known_dimensions, sparse_example_event_occurence
-        )
-        objective = (sparse_L_ind.T @ sparse_L_ind) / known_dimensions.num_examples
-        return objective.todense()
-
-    @staticmethod
-    def _prepare_sparse_L_ind(
-        known_dimensions: KnownDimensions,
-        sparse_event_cooccurence: List[ExampleEventOccurence],
-    ):
-        rows = []
-        cols = []
-        data = []
-        for doc_event in sparse_event_cooccurence:
-            rows.append(doc_event.example)
-            cols.append(doc_event.event_id)
-            data.append(1)
-        rows = np.array(rows)
-        cols = np.array(cols)
-        sparse_L_ind = csr_matrix(
-            (data, (rows, cols),),  # Notice that this is a tuple with a tuple
-            shape=(known_dimensions.num_examples, known_dimensions.num_events),
-        )
-        return sparse_L_ind

@@ -41,9 +41,10 @@ class KnownDimensions(NamedTuple):
         """
         return self.num_functions * self.num_classes
 
-class ExampleEventOccurence(NamedTuple):
-    example:int
-    event_id :int
+
+class ExampleEventListOccurence(NamedTuple):
+    event_ids :Iterable[int]
+
 
 class EventCooccurence(NamedTuple):
     event_a :int

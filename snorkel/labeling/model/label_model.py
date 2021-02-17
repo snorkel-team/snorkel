@@ -285,7 +285,6 @@ class LabelModel(nn.Module, BaseLabeler):
         elif isinstance(self.train_config.prec_init, list):
             self._prec_init = torch.Tensor(self.train_config.prec_init)
         elif not isinstance(self.train_config.prec_init, torch.Tensor):
-            print("TYPE ERROR")
             raise TypeError(
                 f"prec_init is of type {type(self.train_config.prec_init)} which is not supported currently."
             )

@@ -57,7 +57,8 @@ class KnownDimensions(NamedTuple):
 
 
 class ExampleEventListOccurence(NamedTuple):
-    r"""Represents a list of event_ids that occourred together in a single example
+    r"""Represents a list of event_ids that occourred together in a single example.
+
     Parameters
     ----------
     event_ids
@@ -68,7 +69,8 @@ class ExampleEventListOccurence(NamedTuple):
 
 
 class EventCooccurence(NamedTuple):
-    r"""Represents an entry in the unnormalized objective matrix
+    r"""Represents an entry in the unnormalized objective matrix.
+
     Parameters
     ----------
     event_a

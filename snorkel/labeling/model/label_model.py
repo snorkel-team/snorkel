@@ -260,7 +260,7 @@ class LabelModel(nn.Module, BaseLabeler):
         self._generate_O_from_L_aug(L_aug)
 
     def _generate_O_from_L_aug(self, L_aug: np.ndarray) -> None:
-        """ Generate O from L_aug. Extracted to a seperate method for the sake of testing."""
+        """Generate O from L_aug. Extracted to a seperate method for the sake of testing."""
         self.O = (
             torch.from_numpy(L_aug.T @ L_aug / self.n).float().to(self.config.device)
         )
@@ -925,7 +925,7 @@ class LabelModel(nn.Module, BaseLabeler):
         self._set_class_balance(class_balance, Y_dev)
         self._create_tree()
 
-    def _set_config_and_seed(self, **kwargs):
+    def _set_config_and_seed(self, **kwargs: Any) -> None:
         self.train_config: TrainConfig = merge_config(  # type:ignore
             TrainConfig(), kwargs  # type:ignore
         )
@@ -933,7 +933,7 @@ class LabelModel(nn.Module, BaseLabeler):
         random.seed(self.train_config.seed)
 
     def _training_loop(self) -> None:
-        """ Perform training logic that is shared across different fit methods, irrespective of the user input format."""
+        """Perform training logic that is shared across different fit methods, irrespective of the user input format."""
         self._init_params()
 
         # Estimate \mu

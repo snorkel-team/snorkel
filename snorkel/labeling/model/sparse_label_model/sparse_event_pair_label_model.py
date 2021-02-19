@@ -12,7 +12,7 @@ from snorkel.labeling.model.sparse_label_model.sparse_label_model_helpers import
 
 
 class SparseEventPairLabelModel(BaseSparseLabelModel):
-    """A  subclass```LabelModel``` that trains on a list of Event Concurrences"""
+    """A  subclass```LabelModel``` that trains on a list of Event Concurrences."""
 
     def fit_from_sparse_event_cooccurrence(
         self,
@@ -23,7 +23,6 @@ class SparseEventPairLabelModel(BaseSparseLabelModel):
         **kwargs: Any
     ) -> None:
         """Train label model from a known list of Event Coocurrences per example.
-
 
         Parameters
         ----------

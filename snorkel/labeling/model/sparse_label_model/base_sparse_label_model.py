@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Sparse Data Helpers
+"""Sparse Data Helpers.
 
 Indexing throughout this module is 0 based, with the assumption that "abstains" are ommited.
 
@@ -49,8 +49,7 @@ class BaseSparseLabelModel(LabelModel):
             self._set_constants(known_dimensions=known_dimensions)
 
     def get_weights(self) -> np.ndarray:
-
-        r"""A ```SparseLabelModel``` doesn't support this method.
+        r"""Not implemented. A ```SparseLabelModel``` doesn't support this method.
 
         We need to calculate coverage from a sparse format which is not implemented.
 
@@ -68,7 +67,7 @@ class BaseSparseLabelModel(LabelModel):
         return_probs: Optional[bool] = False,
         tie_break_policy: str = "abstain",
     ) -> Union[CliqueSetProbs, CliqueSetProbsAndPreds]:
-        r"""Run prediction on a ```CliqueSetList```
+        r"""Run prediction on a ```CliqueSetList```.
 
         A ```LabelModel's``` output is determined by the "Events" that cooccured, which we call a CliqueSet.
         This accepts an iterable of CliqueSets and runs prediction on each. In practice, the number of unique CliqueSets
@@ -106,7 +105,8 @@ class BaseSparseLabelModel(LabelModel):
             return (cliqsets_list, Y_probs)
 
     def predict_proba_from_cliqueset(self, cliquesets: CliqueSetList) -> CliqueSetProbs:
-        """Return label probabilities P(Y | \lambda).
+        r"""Return label probabilities P(Y | \lambda).
+
             This function can make inference many orders of magnitude faster for larger datasets.
 
             In the data representation of L_ind where each row is a document and each column corresponds to an event "
@@ -211,7 +211,7 @@ class BaseSparseLabelModel(LabelModel):
             If you see very large losses and lack of convergence, you may have forgotten to do so.
 
         Raises
-        -----
+        ------
         UnnormalizedObjective
             Raises an exception if the objective has values outside [0,1]
 

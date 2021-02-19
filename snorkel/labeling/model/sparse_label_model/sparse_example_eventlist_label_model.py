@@ -13,7 +13,7 @@ from snorkel.labeling.model.sparse_label_model.sparse_label_model_helpers import
 
 
 class SparseExampleEventListLabelModel(BaseSparseLabelModel):
-    """A  subclass```LabelModel``` that trains on a list of Event Coocurrences per example"""
+    """A  subclass```LabelModel``` that trains on a list of Event Coocurrences per example."""
 
     def fit_from_sparse_example_event_list(
         self,
@@ -24,6 +24,7 @@ class SparseExampleEventListLabelModel(BaseSparseLabelModel):
         **kwargs: Any
     ) -> None:
         """Train label model from a list of Event Coocurrences per example.
+
         Train label model to estimate mu, the parameters used to combine LFs.
 
         Parameters
@@ -66,7 +67,7 @@ class SparseExampleEventListLabelModel(BaseSparseLabelModel):
             mu_eps
                 Restrict the learned conditional probabilities to
                 [mu_eps, 1-mu_eps], default is None
-        
+
         Examples
         --------
             known_dimensions = KnownDimensions(
@@ -87,9 +88,9 @@ class SparseExampleEventListLabelModel(BaseSparseLabelModel):
                     sparse_event_occurence.append(
                         EventCooccurence(a_id, b_id, frequency=freq)
                     )
-    
+
             sparse_model = SparseEventPairLabelModel()
-    
+
             sparse_model.fit_from_sparse_event_cooccurrence(
                 sparse_event_occurence=sparse_event_occurence,
                 known_dimensions=known_dimensions,
@@ -129,11 +130,19 @@ class SparseExampleEventListLabelModel(BaseSparseLabelModel):
         known_dimensions: KnownDimensions,
         return_array: bool = False,
     ) -> Union[csr_matrix, np.ndarray]:
-        """
-        Calculates the L_ind matrix, in a sparse format by default.
-        We separate this out for easier testing.
+        """Calculate the L_ind matrix, in a sparse format by default.
 
-        set return_array to true to get a numpy array isntead of a csr_matrix
+        Set return_array to true to get a numpy array instead of a csr_matrix
+
+        Parameters
+        ----------
+        example_event_list
+            A list of ```ExampleEventListOccurence```
+        known_dimensions
+            The known dimensions of the problem
+        return_array
+            Returns a numpy array instead of a sparse matrix. (Default False)
+
         """
         L_index = csr_matrix(
             (known_dimensions.num_examples, known_dimensions.num_events)

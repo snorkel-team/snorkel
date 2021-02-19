@@ -30,15 +30,13 @@ from snorkel.labeling.model.sparse_label_model.sparse_label_model_helpers import
     CliqueSetProbs,
     CliqueSetProbsAndPreds,
     KnownDimensions,
-    UnnormalizedObjective,
+    UnnormalizedObjectiveException,
 )
 from snorkel.utils import probs_to_preds
 
 
 class BaseSparseLabelModel(LabelModel):
-    """A ```LabelModel``` that accepts sparse formatted inputs for training and prediction.
-
-    """
+    """A ```LabelModel``` that accepts sparse formatted inputs for training and prediction."""
 
     def __init__(self, known_dimensions: Optional[KnownDimensions] = None):
         super().__init__()
@@ -46,7 +44,9 @@ class BaseSparseLabelModel(LabelModel):
             self._set_constants(known_dimensions=known_dimensions)
 
     def get_weights(self) -> np.ndarray:
-        r""" SparseLabelModel doesn't support this method.
+
+        r"""A ```SparseLabelModel``` doesn't support this method.
+
         We need to calucalte coverage from a sparse format which is not implemented.
 
         Raises
@@ -63,7 +63,7 @@ class BaseSparseLabelModel(LabelModel):
         return_probs: Optional[bool] = False,
         tie_break_policy: str = "abstain",
     ) -> Union[CliqueSetProbs, CliqueSetProbsAndPreds]:
-        r"""Runs prediction on a ```CliqueSetList```
+        r"""Run prediction on a ```CliqueSetList```
 
         A ```LabelModels``` output is determined by the "Events" that cooccured, which we call a CliqueSet.
         This accepts an iterable of CliqueSets and runs prediction on each. In practice, the number of unique CliqueSets
@@ -174,7 +174,7 @@ class BaseSparseLabelModel(LabelModel):
         class_balance: Optional[List[float]] = None,
         **kwargs: Any
     ) -> None:
-        """Fits the LabelModel to a given Objective matrix
+        """Fits the LabelModel to a given Objective matrix.
 
         Parameters
         ----------
@@ -212,12 +212,12 @@ class BaseSparseLabelModel(LabelModel):
 
         """
         if not np.all((objective <= 1) & (objective >= 0)):
-            raise UnnormalizedObjective(
+            raise UnnormalizedObjectiveException(
                 "The objective function you passed in has values outside [0,1]. Did you forget to normalize by num_examples ? "
             )
         self._set_constants(known_dimensions=known_dimensions)
         self.O = torch.from_numpy(objective)
-        self._common_training_preamble(
+        self._training_preamble(
             Y_dev=Y_dev, class_balance=class_balance, **kwargs
         )
-        self._common_training_loop()
+        self._training_loop()

@@ -27,11 +27,8 @@ CliqueSetProbsAndPreds = Tuple[CliqueSetList, np.ndarray, np.ndarray]
 """
 
 
-class UnnormalizedObjective(Exception):
-    """Raised when an Objective matrix has values outside of [0,1]
-
-    """
-
+class UnnormalizedObjectiveException(Exception):
+    """Raised when an Objective matrix has values outside of [0,1]."""
     pass
 
 
@@ -54,16 +51,32 @@ class KnownDimensions(NamedTuple):
 
     @property
     def num_events(self) -> int:
-        """How many indicator random variables do we have (1 per event)
-        """
+        """How many indicator random variables do we have (1 per event)."""
         return self.num_functions * self.num_classes
 
 
 class ExampleEventListOccurence(NamedTuple):
+    r"""Represents a list of event_ids that occourred together in a single example
+    Parameters
+    ----------
+    event_ids
+        An iterable of event_ids that occoured in the example
+
+    """
     event_ids: Iterable[int]
 
 
 class EventCooccurence(NamedTuple):
+    r"""Represents an entry in the unnormalized objective matrix
+    Parameters
+    ----------
+    event_a
+        The id of one event in the pair
+    event_b
+        The id of the other event in the pair
+    frequency
+        The cooccurrence count of the two events
+    """
     event_a: int
     event_b: int
     frequency: int

@@ -260,9 +260,7 @@ class LabelModel(nn.Module, BaseLabeler):
         self._generate_O_from_L_aug(L_aug)
 
     def _generate_O_from_L_aug(self, L_aug: np.ndarray) -> None:
-        """ Generates O from L_aug. Extracted to a seperate method for the sake of testing
-
-        """
+        """ Generate O from L_aug. Extracted to a seperate method for the sake of testing."""
         self.O = (
             torch.from_numpy(L_aug.T @ L_aug / self.n).float().to(self.config.device)
         )
@@ -904,7 +902,7 @@ class LabelModel(nn.Module, BaseLabeler):
             )
 
         self._set_constants(L_shift)
-        self._common_training_preamble(
+        self._training_preamble(
             class_balance=class_balance, Y_dev=Y_dev, **kwargs
         )
         lf_analysis = LFAnalysis(L_train)
@@ -914,17 +912,15 @@ class LabelModel(nn.Module, BaseLabeler):
         if self.config.verbose:  # pragma: no cover
             logging.info("Computing O...")
         self._generate_O(L_shift)
-        self._common_training_loop()
+        self._training_loop()
 
-    def _common_training_preamble(
+    def _training_preamble(
         self,
         Y_dev: Optional[np.ndarray] = None,
         class_balance: Optional[List[float]] = None,
         **kwargs: Any
     ) -> None:
-        """
-            Performs the training preamble, regardless of user input
-        """
+        """Perform the training preamble, regardless of user input."""
         self.train_config: TrainConfig = merge_config(  # type:ignore
             TrainConfig(), kwargs  # type:ignore
         )
@@ -935,10 +931,8 @@ class LabelModel(nn.Module, BaseLabeler):
         self._set_class_balance(class_balance, Y_dev)
         self._create_tree()
 
-    def _common_training_loop(self) -> None:
-        """
-            Training Logic that is shared across different fit methods, irrespective of the user input format
-        """
+    def _training_loop(self) -> None:
+        """ Perform training logic that is shared across different fit methods, irrespective of the user input format."""
         self._init_params()
 
         # Estimate \mu

@@ -12,6 +12,7 @@ from snorkel.labeling.model.sparse_label_model.sparse_label_model_helpers import
 
 
 class SparseEventPairLabelModel(BaseSparseLabelModel):
+    """A  subclass```LabelModel``` that trains on a list of Event Concurrences"""
     def fit_from_sparse_event_cooccurrence(
         self,
         sparse_event_occurence: List[EventCooccurence],
@@ -20,18 +21,15 @@ class SparseEventPairLabelModel(BaseSparseLabelModel):
         class_balance: Optional[List[float]] = None,
         **kwargs: Any
     ) -> None:
-        '''
-        """Train label model on a list of EventCooccurence.
-
-        If you have data in the form event_a,event_b,frequency then use this class (on large datasets). It skips
-        calculating L_ind and the serialization cost of moving a lot of data.
-
+        """Train label model from a known list of Event Coocurrences per example.
 
 
         Parameters
         ----------
         sparse_event_occurence
-            A list of 3-tuples such that t[0] = event_a t[1]=event_b and t[2] is how many times they co-occured.
+            A list of ```EventCooccurence```
+        known_dimensions
+            The known dimensions of the problem
         Y_dev
             Gold labels for dev set for estimating class_balance, by default None
         class_balance
@@ -66,24 +64,12 @@ class SparseEventPairLabelModel(BaseSparseLabelModel):
             mu_eps
                 Restrict the learned conditional probabilities to
                 [mu_eps, 1-mu_eps], default is None
-
-        Raises
-        ------
-        Exception
-            If loss in NaN
-
         Notes
         -----
-        This is a useful class when you can get the data in a structure that that g. A pseudo-sql example
+        If you can calculate these ahead of times, this is the fastest way to use Snorkel
+           as it minimizes serialization and parsing time. Worth the effort at millions of examples.
+        """
 
-        with doc_events as (
-            select doc_id, function_id * num_labels + class_id as event_id
-            from prediction
-        )
-        select a.event_id,b.event_id,count(*) freq from doc_events a inner join doc_events b
-        on a.doc_id = b.doc_id and a.doc_id >=b.doc_id
-        group by a.doc_id,b.doc_id
-        '''
 
     @staticmethod
     def _prepare_objective_from_sparse_event_cooccurence(

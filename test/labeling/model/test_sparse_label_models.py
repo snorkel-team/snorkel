@@ -18,7 +18,7 @@ from snorkel.labeling.model.sparse_label_model.sparse_label_model_helpers import
     EventCooccurence,
     ExampleEventListOccurence,
     KnownDimensions,
-    UnnormalizedObjective,
+    UnnormalizedObjectiveException,
 )
 from snorkel.synthetic.synthetic_data import generate_simple_label_matrix
 
@@ -61,7 +61,7 @@ class BaseSparseLabelModelTest(SparseModelTestCase):
             5,
             size=[self.known_dimensions.num_events, self.known_dimensions.num_events],
         )
-        with self.assertRaises(UnnormalizedObjective):
+        with self.assertRaises(UnnormalizedObjectiveException):
             sparse_model = BaseSparseLabelModel()
             sparse_model.fit_from_objective(
                 objective=bad_objective, known_dimensions=self.known_dimensions

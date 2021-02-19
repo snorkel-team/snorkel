@@ -13,6 +13,7 @@ from snorkel.labeling.model.sparse_label_model.sparse_label_model_helpers import
 
 
 class SparseExampleEventListLabelModel(BaseSparseLabelModel):
+    """A  subclass```LabelModel``` that trains on a list of Event Coocurrences per example"""
     def fit_from_sparse_example_event_list(
         self,
         example_event_list: List[ExampleEventListOccurence],
@@ -21,18 +22,15 @@ class SparseExampleEventListLabelModel(BaseSparseLabelModel):
         class_balance: Optional[List[float]] = None,
         **kwargs: Any
     ) -> None:
-        '''
-        """Train label model on a list of ExampleEventOccourrences
-
-        """Train label model.
-
+        """Train label model from a list of Event Coocurrences per example.
         Train label model to estimate mu, the parameters used to combine LFs.
 
         Parameters
         ----------
         example_event_list
-            A list of n examples as NamedTuples, with each named tuple containing a list of the event ids that
-            occoured for that example
+            A list of ```ExampleEventListOccurence```
+        known_dimensions
+            The known dimensions of the problem
         Y_dev
             Gold labels for dev set for estimating class_balance, by default None
         class_balance
@@ -67,47 +65,40 @@ class SparseExampleEventListLabelModel(BaseSparseLabelModel):
             mu_eps
                 Restrict the learned conditional probabilities to
                 [mu_eps, 1-mu_eps], default is None
-
-        Raises
-        ------
-        Exception
-            If loss in NaN
-
-        Notes
-        -----
-        This is a useful class when you can get the data in a structure that maps docs to event_ids. A pseudo-sql example
-
-            select doc_id,array_agg(function_id*num_labels+class_id) as event_ids
-            from prediction
-            group by doc_id
-
+        
         Examples
         --------
-        """
-            The following example demonstrates converting a standard LabelModel format into the data format this
-            class expects, and then training it.
+            known_dimensions = KnownDimensions(
+                num_classes=7, num_examples=1000, num_functions=10
+            )
+            np.random.seed(123)
+            P, Y, L = generate_simple_label_matrix(
+                known_dimensions.num_examples,
+                known_dimensions.num_functions,
+                known_dimensions.num_classes,
+            )
+            sparse_event_occurence: List[EventCooccurence] = []
+            L_shift = L + 1
+            label_model_lind = label_model._create_L_ind(L_shift)
+            co_oc_matrix = label_model_lind.T @ label_model_lind
+            for a_id, cols in enumerate(co_oc_matrix):
+                for b_id, freq in enumerate(cols):
+                    sparse_event_occurence.append(
+                        EventCooccurence(a_id, b_id, frequency=freq)
+                    )
+    
+            sparse_model = SparseEventPairLabelModel()
+    
+            sparse_model.fit_from_sparse_event_cooccurrence(
+                sparse_event_occurence=sparse_event_occurence,
+                known_dimensions=known_dimensions,
+                n_epochs=200,
+                lr=0.01,
+                seed=123,
+            )
+
 
         """
-        L # Is our label matrix, what you'd typically pass to label_model.fit(L)
-
-        example_event_lists: List[ExampleEventListOccurence] = []
-
-        for example_num,example in enumerate(L):
-                event_list =[]
-                for func_id,cls_id in enumerate(example):
-                    if(cls_id)>-1:
-                        event_id = func_id*self.known_dimensions.num_classes+cls_id
-                        event_list.append(event_id)
-                example_event_lists.append((ExampleEventListOccurence(event_list)))
-
-        sparse_model = SparseExampleEventListLabelModel()
-        sparse_model.fit_from_sparse_example_event_list(example_event_list=example_event_lists,
-                                                 known_dimensions=self.known_dimensions,
-                                                 n_epochs=200, lr=0.01, seed=123
-                                                 )
-
-
-        '''
         objective = self._prepare_objective_from_sparse_example_eventlist(
             example_events_list=example_event_list, known_dimensions=known_dimensions
         )
@@ -123,7 +114,7 @@ class SparseExampleEventListLabelModel(BaseSparseLabelModel):
     def _prepare_objective_from_sparse_example_eventlist(
         known_dimensions: KnownDimensions,
         example_events_list: List[ExampleEventListOccurence],
-    ) -> None:
+    ) -> np.ndarray:
 
         L_index = SparseExampleEventListLabelModel.get_l_ind(
             example_events_list, known_dimensions

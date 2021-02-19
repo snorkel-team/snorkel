@@ -6,16 +6,21 @@ Indexing throughout this module is 0 based, with the assumption that "abstains" 
 When working with larger datasets, it can be convenient to load the data in sparse format. This module
 provides utilities to do so. We provide functions for a number of cases.
 
-The user has the AugmentedMatrix (L_ind) in tuple form. AugmentedMatrix is of shape (num_examples,numfuncs*num_classes)
-and the user has a list of tuples (i,j) that indicate that event j occoured for example i.
+Case 1:
+    The user has the AugmentedMatrix (L_ind) in tuple form. AugmentedMatrix is of shape
+    (num_examples,numfuncs*num_classes)
+    and the user has a list of tuples (i,j) that indicate that event j occoured for example i.
 
-The user has a list of 3-tuples(i,j,k) such that for document i, labeling function j predicted class k.
+Case 2:
+    The user has a list of 3-tuples(i,j,k) such that for document i, labeling function j predicted class k.
 
-The user has a list of 3-tuples (i,j,c) where i and j range over [0,num_funcs*num_classes] such that
-the events  i and j were observed to have co-occur c times.
+The Case 3:
+    user has a list of 3-tuples (i,j,c) where i and j range over [0,num_funcs*num_classes] such that
+    the events  i and j were observed to have co-occur c times.
 
-The user has a list of 3-tuples (i,j,f) where i and j range over [0,num_funcs*num_classes] such that
-the events  i and j co-occur with frequency f where f is in (0,1]
+Case 5:
+    The user has a list of 3-tuples (i,j,f) where i and j range over [0,num_funcs*num_classes] such that
+    the events  i and j co-occur with frequency f where f is in (0,1]
 
 """
 from typing import Any, List, Optional, Union
@@ -47,7 +52,7 @@ class BaseSparseLabelModel(LabelModel):
 
         r"""A ```SparseLabelModel``` doesn't support this method.
 
-        We need to calucalte coverage from a sparse format which is not implemented.
+        We need to calculate coverage from a sparse format which is not implemented.
 
         Raises
         ------
@@ -65,7 +70,7 @@ class BaseSparseLabelModel(LabelModel):
     ) -> Union[CliqueSetProbs, CliqueSetProbsAndPreds]:
         r"""Run prediction on a ```CliqueSetList```
 
-        A ```LabelModels``` output is determined by the "Events" that cooccured, which we call a CliqueSet.
+        A ```LabelModel's``` output is determined by the "Events" that cooccured, which we call a CliqueSet.
         This accepts an iterable of CliqueSets and runs prediction on each. In practice, the number of unique CliqueSets
         present in the data set is order of magnitude smaller than the total number of CliqueSets as well the number of
         distinct examples. Hence, this method runs inference once per inputed CliqueSet and returns the CliqueSets as well
@@ -92,7 +97,7 @@ class BaseSparseLabelModel(LabelModel):
             and ar_2[i] is the predicted class for that cliqueset.
 
         """
-        # the users cliqueset might be an unordered iterable (set) so we take the ordered list
+        # The users cliqueset might be an unordered iterable (set) so we take the ordered list
         cliqsets_list, Y_probs = self.predict_proba_from_cliqueset(cliquesets)
         if return_probs:
             Y_p = probs_to_preds(Y_probs, tie_break_policy)

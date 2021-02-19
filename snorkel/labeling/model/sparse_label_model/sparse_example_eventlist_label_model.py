@@ -14,6 +14,7 @@ from snorkel.labeling.model.sparse_label_model.sparse_label_model_helpers import
 
 class SparseExampleEventListLabelModel(BaseSparseLabelModel):
     """A  subclass```LabelModel``` that trains on a list of Event Coocurrences per example"""
+
     def fit_from_sparse_example_event_list(
         self,
         example_event_list: List[ExampleEventListOccurence],

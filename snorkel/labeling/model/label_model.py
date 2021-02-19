@@ -894,6 +894,7 @@ class LabelModel(nn.Module, BaseLabeler):
         >>> label_model.fit(L, class_balance=[0.7, 0.3], n_epochs=200, l2=0.4)
         """
         # Set random seed
+        self._set_config_and_seed(**kwargs)
 
         L_shift = L_train + 1  # convert to {0, 1, ..., k}
         if L_shift.max() > self.cardinality:
@@ -902,9 +903,7 @@ class LabelModel(nn.Module, BaseLabeler):
             )
 
         self._set_constants(L_shift)
-        self._training_preamble(
-            class_balance=class_balance, Y_dev=Y_dev, **kwargs
-        )
+        self._training_preamble(class_balance=class_balance, Y_dev=Y_dev, **kwargs)
         lf_analysis = LFAnalysis(L_train)
         self.coverage = lf_analysis.lf_coverages()
 
@@ -921,15 +920,17 @@ class LabelModel(nn.Module, BaseLabeler):
         **kwargs: Any
     ) -> None:
         """Perform the training preamble, regardless of user input."""
+        np.random.seed(self.train_config.seed)
+        torch.manual_seed(self.train_config.seed)
+        self._set_class_balance(class_balance, Y_dev)
+        self._create_tree()
+
+    def _set_config_and_seed(self, **kwargs):
         self.train_config: TrainConfig = merge_config(  # type:ignore
             TrainConfig(), kwargs  # type:ignore
         )
         # Update base config so that it includes all parameters
         random.seed(self.train_config.seed)
-        np.random.seed(self.train_config.seed)
-        torch.manual_seed(self.train_config.seed)
-        self._set_class_balance(class_balance, Y_dev)
-        self._create_tree()
 
     def _training_loop(self) -> None:
         """ Perform training logic that is shared across different fit methods, irrespective of the user input format."""

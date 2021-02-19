@@ -215,9 +215,8 @@ class BaseSparseLabelModel(LabelModel):
             raise UnnormalizedObjectiveException(
                 "The objective function you passed in has values outside [0,1]. Did you forget to normalize by num_examples ? "
             )
+        self._set_config_and_seed(**kwargs)
         self._set_constants(known_dimensions=known_dimensions)
         self.O = torch.from_numpy(objective)
-        self._training_preamble(
-            Y_dev=Y_dev, class_balance=class_balance, **kwargs
-        )
+        self._training_preamble(Y_dev=Y_dev, class_balance=class_balance, **kwargs)
         self._training_loop()

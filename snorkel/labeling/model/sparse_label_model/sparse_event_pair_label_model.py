@@ -13,6 +13,7 @@ from snorkel.labeling.model.sparse_label_model.sparse_label_model_helpers import
 
 class SparseEventPairLabelModel(BaseSparseLabelModel):
     """A  subclass```LabelModel``` that trains on a list of Event Concurrences"""
+
     def fit_from_sparse_event_cooccurrence(
         self,
         sparse_event_occurence: List[EventCooccurence],
@@ -69,7 +70,6 @@ class SparseEventPairLabelModel(BaseSparseLabelModel):
         If you can calculate these ahead of times, this is the fastest way to use Snorkel
            as it minimizes serialization and parsing time. Worth the effort at millions of examples.
         """
-
 
     @staticmethod
     def _prepare_objective_from_sparse_event_cooccurence(

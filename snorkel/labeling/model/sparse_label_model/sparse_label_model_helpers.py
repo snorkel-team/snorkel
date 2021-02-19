@@ -29,6 +29,7 @@ CliqueSetProbsAndPreds = Tuple[CliqueSetList, np.ndarray, np.ndarray]
 
 class UnnormalizedObjectiveException(Exception):
     """Raised when an Objective matrix has values outside of [0,1]."""
+
     pass
 
 

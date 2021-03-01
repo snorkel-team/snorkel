@@ -59,6 +59,55 @@ class LabelModelTest(unittest.TestCase):
             label_model.predict(L), np.array([1, 1, 1])
         )
 
+    def test_prec_init(self):
+        label_model = LabelModel(cardinality=2, verbose=False)
+        L = np.array([[-1, -1, 1], [-1, 1, -1], [0, -1, -1]])
+
+        # test without prec_init
+        label_model.fit(L_train=L, n_epochs=1000, seed=123)
+
+        # test with prec_init as float
+        prec_init = 0.6
+        label_model.fit(L_train=L, prec_init=prec_init, n_epochs=1000, seed=123)
+        label_model.predict(L)
+
+        # test with prec_init as int
+        prec_init = 1
+        label_model.fit(L_train=L, prec_init=prec_init, n_epochs=1000, seed=123)
+        label_model.predict(L)
+
+        # test with prec_init as list
+        prec_init = [0.1, 0.2, 0.3]
+        label_model.fit(L_train=L, prec_init=prec_init, n_epochs=1000, seed=123)
+        label_model.predict(L)
+
+        # test with prec_init as np.array
+        prec_init = np.array([0.1, 0.2, 0.3])
+        label_model.fit(L_train=L, prec_init=prec_init, n_epochs=1000, seed=123)
+        label_model.predict(L)
+
+        with self.assertRaisesRegex(
+            TypeError,
+            "prec_init is of type <class 'str'> which is not supported currently.",
+        ):
+            # test with unsupported type (string)
+            prec_init = "skibidi bop mm dada"
+            label_model.fit(L_train=L, prec_init=prec_init, n_epochs=1000, seed=123)
+
+        with self.assertRaisesRegex(
+            ValueError, f"prec_init must have shape {L.shape[1]}."
+        ):
+            # test with prec_init as list of wrong length (bigger)
+            prec_init = np.array([0.1, 0.2, 0.3, 0.4])
+            label_model.fit(L_train=L, prec_init=prec_init, n_epochs=1000, seed=123)
+
+        with self.assertRaisesRegex(
+            ValueError, f"prec_init must have shape {L.shape[1]}."
+        ):
+            # test with prec_init as list of wrong length (smaller)
+            prec_init = np.array([0.1, 0.2])
+            label_model.fit(L_train=L, prec_init=prec_init, n_epochs=1000, seed=123)
+
     def test_class_balance(self):
         label_model = LabelModel(cardinality=2, verbose=False)
         # Test class balance

@@ -559,7 +559,10 @@ class TestLabelModelAdvanced(unittest.TestCase):
 
         # Test estimated LF conditional probabilities
         P_lm = label_model.get_conditional_probs()
-        np.testing.assert_array_almost_equal(P, P_lm, decimal=2)
+        conditional_probs_err = (
+            np.linalg.norm(P.flatten() - P_lm.flatten(), ord=1) / P.size
+        )
+        self.assertLessEqual(conditional_probs_err, 0.01)
 
         # Test predicted labels
         score = label_model.score(L, Y)
@@ -583,7 +586,10 @@ class TestLabelModelAdvanced(unittest.TestCase):
 
         # Test estimated LF conditional probabilities
         P_lm = label_model.get_conditional_probs()
-        np.testing.assert_array_almost_equal(P, P_lm, decimal=2)
+        conditional_probs_err = (
+            np.linalg.norm(P.flatten() - P_lm.flatten(), ord=1) / P.size
+        )
+        self.assertLessEqual(conditional_probs_err, 0.01)
 
         # Test predicted labels *only on non-abstained data points*
         Y_pred = label_model.predict(L, tie_break_policy="abstain")

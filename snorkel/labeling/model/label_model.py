@@ -3,13 +3,13 @@ import random
 from collections import Counter, defaultdict
 from itertools import chain
 from typing import Any, DefaultDict, Dict, List, NamedTuple, Optional, Set, Tuple, Union
-from tqdm import tqdm
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from munkres import Munkres  # type: ignore
+from tqdm import tqdm
 
 from snorkel.labeling.analysis import LFAnalysis
 from snorkel.labeling.model.base_labeler import BaseLabeler

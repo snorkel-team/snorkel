@@ -920,7 +920,9 @@ class LabelModel(nn.Module, BaseLabeler):
         # Train the model
         metrics_hist = {}  # The most recently seen value for all metrics
 
-        with tqdm(range(start_iteration, self.train_config.n_epochs), unit="epoch") as tepoch:
+        with tqdm(
+            range(start_iteration, self.train_config.n_epochs), unit="epoch"
+        ) as tepoch:
             for epoch in tepoch:
                 self.running_loss = 0.0
                 self.running_examples = 0

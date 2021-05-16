@@ -3,6 +3,7 @@ import random
 from collections import Counter, defaultdict
 from itertools import chain
 from typing import Any, DefaultDict, Dict, List, NamedTuple, Optional, Set, Tuple, Union
+from tqdm import tqdm
 
 import numpy as np
 import torch
@@ -918,32 +919,34 @@ class LabelModel(nn.Module, BaseLabeler):
 
         # Train the model
         metrics_hist = {}  # The most recently seen value for all metrics
-        for epoch in range(start_iteration, self.train_config.n_epochs):
-            self.running_loss = 0.0
-            self.running_examples = 0
 
-            # Zero the parameter gradients
-            self.optimizer.zero_grad()
+        with tqdm(range(start_iteration, self.train_config.n_epochs), unit="epoch") as tepoch:
+            for epoch in tepoch:
+                self.running_loss = 0.0
+                self.running_examples = 0
 
-            # Forward pass to calculate the average loss per example
-            loss = self._loss_mu(l2=self.train_config.l2)
-            if torch.isnan(loss):
-                msg = "Loss is NaN. Consider reducing learning rate."
-                raise Exception(msg)
+                # Zero the parameter gradients
+                self.optimizer.zero_grad()
 
-            # Backward pass to calculate gradients
-            # Loss is an average loss per example
-            loss.backward()
+                # Forward pass to calculate the average loss per example
+                loss = self._loss_mu(l2=self.train_config.l2)
+                if torch.isnan(loss):
+                    msg = "Loss is NaN. Consider reducing learning rate."
+                    raise Exception(msg)
 
-            # Perform optimizer step
-            self.optimizer.step()
+                # Backward pass to calculate gradients
+                # Loss is an average loss per example
+                loss.backward()
 
-            # Calculate metrics, log, and checkpoint as necessary
-            metrics_dict = self._execute_logging(loss)
-            metrics_hist.update(metrics_dict)
+                # Perform optimizer step
+                self.optimizer.step()
 
-            # Update learning rate
-            self._update_lr_scheduler(epoch)
+                # Calculate metrics, log, and checkpoint as necessary
+                metrics_dict = self._execute_logging(loss)
+                metrics_hist.update(metrics_dict)
+
+                # Update learning rate
+                self._update_lr_scheduler(epoch)
 
         # Post-processing operations on mu
         self._clamp_params()

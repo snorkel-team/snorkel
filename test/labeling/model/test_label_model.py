@@ -341,6 +341,19 @@ class LabelModelTest(unittest.TestCase):
         results_expected = dict(accuracy=0.5, f1=2 / 3)
         self.assertEqual(results, results_expected)
 
+    def test_progress_bar(self):
+        L = np.array([[1, 1, 0], [-1, -1, -1], [1, 0, 1]])
+        Y = np.array([1, 0, 1])
+        label_model = LabelModel(cardinality=2, verbose=False)
+        label_model.fit(L, n_epochs=100, progress_bar=False)
+        results = label_model.score(L, Y, metrics=["accuracy", "coverage"])
+        np.testing.assert_array_almost_equal(
+            label_model.predict(L), np.array([1, -1, 1])
+        )
+
+        results_expected = dict(accuracy=1.0, coverage=2 / 3)
+        self.assertEqual(results, results_expected)
+
     def test_loss(self):
         L = np.array([[0, -1, 0], [0, 1, -1]])
         label_model = LabelModel(cardinality=2, verbose=False)

@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from munkres import Munkres  # type: ignore
+from tqdm import trange
 
 from snorkel.labeling.analysis import LFAnalysis
 from snorkel.labeling.model.base_labeler import BaseLabeler
@@ -809,6 +810,7 @@ class LabelModel(nn.Module, BaseLabeler):
         L_train: np.ndarray,
         Y_dev: Optional[np.ndarray] = None,
         class_balance: Optional[List[float]] = None,
+        progress_bar: bool = True,
         **kwargs: Any,
     ) -> None:
         """Train label model.
@@ -823,6 +825,8 @@ class LabelModel(nn.Module, BaseLabeler):
             Gold labels for dev set for estimating class_balance, by default None
         class_balance
             Each class's percentage of the population, by default None
+        progress_bar
+            To display a progress bar, by default True
         **kwargs
             Arguments for changing train config defaults.
 
@@ -918,7 +922,13 @@ class LabelModel(nn.Module, BaseLabeler):
 
         # Train the model
         metrics_hist = {}  # The most recently seen value for all metrics
-        for epoch in range(start_iteration, self.train_config.n_epochs):
+
+        if progress_bar:
+            epochs = trange(start_iteration, self.train_config.n_epochs, unit="epoch")
+        else:
+            epochs = range(start_iteration, self.train_config.n_epochs)
+
+        for epoch in epochs:
             self.running_loss = 0.0
             self.running_examples = 0
 
@@ -944,6 +954,10 @@ class LabelModel(nn.Module, BaseLabeler):
 
             # Update learning rate
             self._update_lr_scheduler(epoch)
+
+        # Cleanup progress bar if enabled
+        if progress_bar:
+            epochs.close()
 
         # Post-processing operations on mu
         self._clamp_params()

@@ -197,15 +197,13 @@ class LabelModelTest(unittest.TestCase):
                     self.assertEqual(L_aug[i, j * k + L_shift[i, j] - 1], 1)
 
         # Finally, check the clique entries
-        # Singleton clique 1
-        self.assertEqual(len(lm.c_tree.node[1]["members"]), 1)
-        j = lm.c_tree.node[1]["start_index"]
-        self.assertEqual(L_aug[0, j], 1)
-
-        # Singleton clique 2
-        self.assertEqual(len(lm.c_tree.node[2]["members"]), 1)
-        j = lm.c_tree.node[2]["start_index"]
-        self.assertEqual(L_aug[0, j + 1], 0)
+        for j in range(m):
+            node = lm.c_tree.nodes[i]
+            self.assertEqual(len(node["members"]), 1)
+            if 1 in node["members"]:
+                self.assertEqual(L_aug[0, node["start_index"]], 1)
+            if 2 in node["members"]:
+                self.assertEqual(L_aug[0, 1 + node["start_index"]], 0)
 
     def test_conditional_probs(self):
         L = np.array([[0, 1, 0], [0, 1, 0]])

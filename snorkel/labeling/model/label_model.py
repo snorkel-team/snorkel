@@ -198,7 +198,7 @@ class LabelModel(nn.Module, BaseLabeler):
                     [
                         j
                         for j in self.c_tree.nodes()
-                        if i in self.c_tree.node[j]["members"]
+                        if i in self.c_tree.nodes[j]["members"]
                     ]
                 ),
             )
@@ -212,7 +212,7 @@ class LabelModel(nn.Module, BaseLabeler):
             L_aug = np.copy(L_ind)
             for item in chain(self.c_tree.nodes(), self.c_tree.edges()):
                 if isinstance(item, int):
-                    C = self.c_tree.node[item]
+                    C = self.c_tree.nodes[item]
                 elif isinstance(item, tuple):
                     C = self.c_tree[item[0]][item[1]]
                 else:

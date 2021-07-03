@@ -883,7 +883,7 @@ class LabelModel(nn.Module, BaseLabeler):
         np.random.seed(self.train_config.seed)
         torch.manual_seed(self.train_config.seed)
 
-        # Set Logger
+        # Set Logger 
         self._set_logger()
 
         L_shift = L_train + 1  # convert to {0, 1, ..., k}

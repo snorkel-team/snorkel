@@ -13,7 +13,7 @@
 
 ## Announcement
 
-**The Snorkel team is now focusing their efforts on Snorkel Flow, an end-to-end AI application development platform based on the core ideas behind Snorkel—check it out [here](https://snorkel.ai).**
+**The Snorkel team is now focusing their efforts on Snorkel Flow, an end-to-end AI application development platform based on the core ideas behind Snorkel—you can check it out [here](https://snorkel.ai) or [join us](www.snorkel.ai/careers) in building it!**
 
 The Snorkel project started at Stanford in 2016 with a simple technical bet: that it would increasingly be the **training data**, not the models, algorithms, or infrastructure, that decided whether a machine learning project succeeded or failed. Given this premise, we set out to explore the radical idea that you could bring mathematical and systems structure to the messy and often entirely manual process of training data creation and management, starting by empowering users to **programmatically label, build, and manage** training data.
 

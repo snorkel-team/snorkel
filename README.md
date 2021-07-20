@@ -32,7 +32,7 @@ Moving forward, we will be focusing our efforts on Snorkel Flow. We are extremel
 * [Snorkel documentation](https://snorkel.readthedocs.io/)
 * [Snorkel community forum](https://spectrum.chat/snorkel)
 * [Snorkel mailing list](https://groups.google.com/forum/#!forum/snorkel-ml)
-* [Snorkel Twitter](https://twitter.com/SnorkelML)
+* [Snorkel Twitter](https://twitter.com/SnorkelAI)
 
 # Getting Started
 The quickest way to familiarize yourself with the Snorkel library is to walk through the [Get Started](https://snorkel.org/get-started/) page on the Snorkel website, followed by the full-length tutorials in the [Snorkel tutorials](https://github.com/snorkel-team/snorkel-tutorials) repository.
@@ -115,4 +115,4 @@ We hope this will be a venue for you to interact with other Snorkel users — pl
 To stay up-to-date on Snorkel-related announcements (e.g. version releases, upcoming workshops), subscribe to the [Snorkel mailing list](https://groups.google.com/forum/#!forum/snorkel-ml). We promise to respect your inboxes — communication will be sparse!
 
 ## Twitter
-Follow us on Twitter [@SnorkelML](https://twitter.com/SnorkelML).
+Follow us on Twitter [@SnorkelAI](https://twitter.com/SnorkelAI).

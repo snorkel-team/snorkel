@@ -622,6 +622,8 @@ class LabelModel(nn.Module, BaseLabeler):
 
     def _set_logger(self) -> None:
         self.logger = Logger(self.train_config.log_freq)
+        if self.config.verbose:
+            logging.basicConfig(level=logging.INFO)
 
     def _set_optimizer(self) -> None:
         parameters = filter(lambda p: p.requires_grad, self.parameters())
@@ -881,6 +883,9 @@ class LabelModel(nn.Module, BaseLabeler):
         np.random.seed(self.train_config.seed)
         torch.manual_seed(self.train_config.seed)
 
+        # Set Logger
+        self._set_logger()
+
         L_shift = L_train + 1  # convert to {0, 1, ..., k}
         if L_shift.max() > self.cardinality:
             raise ValueError(
@@ -913,7 +918,6 @@ class LabelModel(nn.Module, BaseLabeler):
         self.to(self.config.device)
 
         # Set training components
-        self._set_logger()
         self._set_optimizer()
         self._set_lr_scheduler()
 

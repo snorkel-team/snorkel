@@ -42,3 +42,14 @@ class LRSchedulerConfig(Config):
     min_lr: float = 0.0  # minimum learning rate
     exponential_config: ExponentialLRSchedulerConfig = ExponentialLRSchedulerConfig()  # type:ignore
     step_config: StepLRSchedulerConfig = StepLRSchedulerConfig()  # type:ignore
+
+
+class LRPolicy(object):
+    def __init__(self, warmup_steps, total_steps):
+        self.warmup_steps = warmup_steps
+        self.total_steps = total_steps
+
+    def __call__(self, epoch):
+        return (self.total_steps - self.warmup_steps - epoch) / (
+            self.total_steps - self.warmup_steps
+        )

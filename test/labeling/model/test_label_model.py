@@ -3,6 +3,7 @@ import tempfile
 import unittest
 from typing import List
 
+import os
 import numpy as np
 import pytest
 import torch
@@ -547,6 +548,23 @@ class LabelModelTest(unittest.TestCase):
         label_model._break_col_permutation_symmetry()
         self.assertEqual(label_model.mu.data[0, 0], 0.15)
         self.assertEqual(label_model.mu.data[1, 1], 0.3)
+
+    def test_lambda_lr_save(self):
+        label_model = LabelModel(cardinality=2)
+        L_train = np.array(
+            [[1, 0, 1], [1, 1, 1], [1, 0, 1], [1, 1, 0], [0, 0, 0], [1, 1, 1]]
+        )
+        label_model.fit(
+            L_train=L_train,
+            n_epochs=500,
+            lr=0.001,
+            lr_scheduler="linear",
+            optimizer="adam",
+            log_freq=100,
+            seed=123,
+        )
+        label_model.save("./test_save.pickle")
+        os.remove("./test_save.pickle")
 
 
 @pytest.mark.complex

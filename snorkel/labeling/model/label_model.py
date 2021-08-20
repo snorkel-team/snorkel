@@ -17,7 +17,7 @@ from snorkel.labeling.model.graph_utils import get_clique_tree
 from snorkel.labeling.model.logger import Logger
 from snorkel.types import Config
 from snorkel.utils.config_utils import merge_config
-from snorkel.utils.lr_schedulers import LRSchedulerConfig
+from snorkel.utils.lr_schedulers import LRPolicy, LRSchedulerConfig
 from snorkel.utils.optimizers import OptimizerConfig
 
 Metrics = Dict[str, float]
@@ -675,7 +675,7 @@ class LabelModel(nn.Module, BaseLabeler):
                 total_steps - self.warmup_steps
             )
             lr_scheduler = optim.lr_scheduler.LambdaLR(  # type: ignore
-                self.optimizer, linear_decay_func
+                self.optimizer, lr_lambda=LRPolicy(self.warmup_steps, total_steps)
             )
         elif lr_scheduler_name == "exponential":
             lr_scheduler = optim.lr_scheduler.ExponentialLR(

@@ -906,7 +906,7 @@ class LabelModel(nn.Module, BaseLabeler):
 
         # Estimate \mu
         if self.config.verbose:  # pragma: no cover
-            logging.info("Estimating \mu...")
+            logging.info(r"Estimating \mu...")
 
         # Set model to train mode
         self.train()

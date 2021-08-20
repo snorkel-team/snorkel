@@ -32,7 +32,7 @@ setup(
         "Bug Reports": "https://github.com/snorkel-team/snorkel/issues",
         "Citation": "https://doi.org/10.14778/3157794.3157797",
     },
-    packages=find_packages(),
+    packages=find_packages(exclude=("test*",)),
     include_package_data=True,
     install_requires=[
         "munkres>=1.0.6",

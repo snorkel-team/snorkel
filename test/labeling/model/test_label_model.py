@@ -1,9 +1,9 @@
+import os
 import shutil
 import tempfile
 import unittest
 from typing import List
 
-import os
 import numpy as np
 import pytest
 import torch

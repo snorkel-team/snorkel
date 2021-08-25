@@ -25,7 +25,7 @@ munkres>=1.0.6
 networkx>=2.2,<2.6
 
 # Model introspection tools
-tensorboard>=1.14.0,<2.0.0
+tensorboard>=2.0.0,<=2.6.0
 
 #### EXTRA/TEST LIBRARIES
 

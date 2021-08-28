@@ -17,7 +17,7 @@ To test on AWS EMR:
     3. Run
         ```
         sudo sed -i -e \
-            '$a\export PYSPARK_PYTHON=/usr/bin/python3' \
+            '$a\\export PYSPARK_PYTHON=/usr/bin/python3' \
             /etc/spark/conf/spark-env.sh
         ```
     4. Run

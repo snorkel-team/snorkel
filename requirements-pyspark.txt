@@ -1,3 +1,3 @@
 # Note: we don't include PySpark in the normal required installs.
 # Installing a new version may overwrite your existing system install.
-pyspark==2.4.3
+pyspark==3.1.2

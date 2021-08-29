@@ -26,9 +26,9 @@ class ClassifierConvergenceTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Ensure deterministic runs
-        random.seed(123)
-        np.random.seed(123)
-        torch.manual_seed(123)
+        #random.seed(123)
+        #np.random.seed(123)
+        #torch.manual_seed(123)
 
     @pytest.mark.complex
     def test_convergence(self):
@@ -51,7 +51,7 @@ class ClassifierConvergenceTest(unittest.TestCase):
         model = MultitaskClassifier(tasks=[task1, task2])
 
         # Train
-        trainer = Trainer(lr=0.001, n_epochs=10, progress_bar=False)
+        trainer = Trainer(lr=0.001, n_epochs=20, progress_bar=False)
         trainer.fit(model, dataloaders)
         scores = model.score(dataloaders)
 

@@ -88,7 +88,7 @@ class LabelingConvergenceTest(unittest.TestCase):
         Y_lm = label_model.predict_proba(L_train).argmax(axis=1)
         Y = self.df_train.y
         err = np.where(Y != Y_lm, 1, 0).sum() / self.N_TRAIN
-        self.assertLess(err, 0.05)
+        self.assertLess(err, 0.06)
 
 
 if __name__ == "__main__":

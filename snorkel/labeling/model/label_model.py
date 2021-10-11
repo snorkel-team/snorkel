@@ -386,7 +386,7 @@ class LabelModel(nn.Module, BaseLabeler):
             accs[i] = np.diag(cprobs[i, 1:, :] @ self.P.cpu().detach().numpy()).sum()
         return np.clip(accs / self.coverage, 1e-6, 1.0)
 
-    def predict_proba(self, L: np.ndarray, high_precision=False) -> np.ndarray:
+    def predict_proba(self, L: np.ndarray, high_precision: bool = False) -> np.ndarray:
         r"""Return label probabilities P(Y | \lambda).
 
         Parameters

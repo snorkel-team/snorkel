@@ -292,6 +292,35 @@ class LabelModelTest(unittest.TestCase):
         true_probs = np.array([[0.99, 0.01], [0.99, 0.01]])
         np.testing.assert_array_almost_equal(probs, true_probs)
 
+    def test_predict_proba_high_accuracy(self):
+        # The test code is mostly taken from the link below
+        # https://github.com/snorkel-team/snorkel/issues/1640
+        n_lfs = 500
+
+        # define lf-to-class mapping, i.e. with what class does an LF label instances
+        # shape (1 x number_of_LFs), values from [0,1] for binary task
+        np.random.seed(1234)
+        lf_assignments = np.random.binomial(n=1, p=1, size=(1, n_lfs))
+
+        # create 100 dense instances where all LFs match for every instance
+        dense = np.tile(A=lf_assignments, reps=(100, 1))
+
+        # create sparse instances with a single LF match for every LF
+        sparse = np.ones((n_lfs, n_lfs)) * -1
+        np.fill_diagonal(sparse, lf_assignments)
+
+        # create LabelModel input from two blocks
+        L = np.concatenate([dense, sparse])
+
+        model = LabelModel()
+        model.fit(L, n_epochs=10, lr=0.0001, log_freq=5, seed=1234)
+
+        with self.assertWarns(Warning):
+            label_probs = model.predict_proba(L)
+            self.assertTrue(np.isnan(label_probs).any())
+        label_probs = model.predict_proba(L, high_precision=True)
+        self.assertFalse(np.isnan(label_probs).any())
+
     def test_predict(self):
         # 3 LFs that always disagree/abstain leads to all abstains
         L = np.array([[-1, 1, 0], [0, -1, 1], [1, 0, -1]])

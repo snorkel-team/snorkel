@@ -386,13 +386,16 @@ class LabelModel(nn.Module, BaseLabeler):
             accs[i] = np.diag(cprobs[i, 1:, :] @ self.P.cpu().detach().numpy()).sum()
         return np.clip(accs / self.coverage, 1e-6, 1.0)
 
-    def predict_proba(self, L: np.ndarray) -> np.ndarray:
+    def predict_proba(self, L: np.ndarray, high_precision=False) -> np.ndarray:
         r"""Return label probabilities P(Y | \lambda).
 
         Parameters
         ----------
         L
             An [n,m] matrix with values in {-1,0,1,...,k-1}f
+        high_precision
+            Whether to use high precision floating numbers to calculate label probabilities.
+            This can help avoid NaNs in the result matrix.
 
         Returns
         -------
@@ -412,6 +415,8 @@ class LabelModel(nn.Module, BaseLabeler):
         L_shift = L + 1  # convert to {0, 1, ..., k}
         self._set_constants(L_shift)
         L_aug = self._get_augmented_label_matrix(L_shift)
+        if high_precision:
+            L_aug = L_aug.astype(np.longdouble)
         mu = self.mu.cpu().detach().numpy()
         jtm = np.ones(L_aug.shape[1])
 

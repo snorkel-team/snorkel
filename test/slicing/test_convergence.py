@@ -103,9 +103,9 @@ class SlicingConvergenceTest(unittest.TestCase):
         scores = model.score(dataloaders)
 
         # Confirm near perfect scores
-        self.assertGreater(scores["task/TestData/valid/accuracy"], 0.95)
-        self.assertGreater(scores["task_slice:h_pred/TestData/valid/accuracy"], 0.95)
-        self.assertGreater(scores["task_slice:h_ind/TestData/valid/f1"], 0.95)
+        self.assertGreater(scores["task/TestData/valid/accuracy"], 0.94)
+        self.assertGreater(scores["task_slice:h_pred/TestData/valid/accuracy"], 0.94)
+        self.assertGreater(scores["task_slice:h_ind/TestData/valid/f1"], 0.94)
 
         # Calculate/check train/val loss
         train_dataset = dataloaders[0].dataset

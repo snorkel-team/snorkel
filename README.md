@@ -13,9 +13,9 @@
 
 ## Announcement
 
-**The Snorkel team is now focusing their efforts on Snorkel Flow, an end-to-end AI application development platform based on the core ideas behind Snorkel—check it out [here](https://snorkel.ai).**
+**The Snorkel team is now focusing their efforts on Snorkel Flow, an end-to-end AI application development platform based on the core ideas behind Snorkel—you can check it out [here](https://snorkel.ai) or [join us](www.snorkel.ai/careers) in building it!**
 
-The Snorkel project started at Stanford in 2016 with a simple technical bet: that it would increasingly be the **training data**, not the models, algorithms, or infrastructure, that decided whether a machine learning project succeeded or failed. Given this premise, we set out to explore the radical idea that you could bring mathematical and systems structure to the messy and often entirely manual process of training data creation and management, starting by empowering users to **programmatically label, build, and manage** training data.
+The [Snorkel project](https://snorkel.ai/how-to-use-snorkel-to-build-ai-applications/) started at Stanford in 2015 with a simple technical bet: that it would increasingly be the **training data**, not the models, algorithms, or infrastructure, that decided whether a machine learning project succeeded or failed. Given this premise, we set out to explore the radical idea that you could bring mathematical and systems structure to the messy and often entirely manual process of training data creation and management, starting by empowering users to **programmatically label, build, and manage** training data.
 
 To say that the Snorkel project succeeded and expanded beyond what we had ever expected would be an understatement. The basic goals of a research repo like Snorkel are to provide a minimum viable framework for testing and validating hypotheses. Four years later, we’ve been fortunate to do not just this, but to develop and deploy early versions of Snorkel in partnership with some of the world’s leading organizations like [Google](https://ai.googleblog.com/2019/03/harnessing-organizational-knowledge-for.html), [Intel](https://dl.acm.org/doi/abs/10.1145/3329486.3329492), [Stanford Medicine](https://www.cell.com/patterns/fulltext/S2666-3899(20)30019-2), and many more; author over [thirty-six peer-reviewed publications](https://snorkel.ai/technology.html) on our findings around Snorkel and related innovations in weak supervision modeling, data augmentation, multi-task learning, and more; be included in courses at top-tier universities; support production deployments in systems that you’ve likely used in the last few hours; and work with an amazing community of researchers and practitioners from industry, medicine, government, academia, and beyond.
 
@@ -32,7 +32,7 @@ Moving forward, we will be focusing our efforts on Snorkel Flow. We are extremel
 * [Snorkel documentation](https://snorkel.readthedocs.io/)
 * [Snorkel community forum](https://spectrum.chat/snorkel)
 * [Snorkel mailing list](https://groups.google.com/forum/#!forum/snorkel-ml)
-* [Snorkel Twitter](https://twitter.com/SnorkelML)
+* [Snorkel Twitter](https://twitter.com/SnorkelAI)
 
 # Getting Started
 The quickest way to familiarize yourself with the Snorkel library is to walk through the [Get Started](https://snorkel.org/get-started/) page on the Snorkel website, followed by the full-length tutorials in the [Snorkel tutorials](https://github.com/snorkel-team/snorkel-tutorials) repository.
@@ -115,4 +115,4 @@ We hope this will be a venue for you to interact with other Snorkel users — pl
 To stay up-to-date on Snorkel-related announcements (e.g. version releases, upcoming workshops), subscribe to the [Snorkel mailing list](https://groups.google.com/forum/#!forum/snorkel-ml). We promise to respect your inboxes — communication will be sparse!
 
 ## Twitter
-Follow us on Twitter [@SnorkelML](https://twitter.com/SnorkelML).
+Follow us on Twitter [@SnorkelAI](https://twitter.com/SnorkelAI).

@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from munkres import Munkres  # type: ignore
+from tqdm import trange
 
 from snorkel.labeling.analysis import LFAnalysis
 from snorkel.labeling.model.base_labeler import BaseLabeler
@@ -58,7 +59,7 @@ class TrainConfig(Config):
     optimizer_config: OptimizerConfig = OptimizerConfig()  # type: ignore
     lr_scheduler: str = "constant"
     lr_scheduler_config: LRSchedulerConfig = LRSchedulerConfig()  # type: ignore
-    prec_init: float = 0.7
+    prec_init: Union[float, List[float], np.ndarray, torch.Tensor] = 0.7
     seed: int = np.random.randint(1e6)
     log_freq: int = 10
     mu_eps: Optional[float] = None
@@ -197,7 +198,7 @@ class LabelModel(nn.Module, BaseLabeler):
                     [
                         j
                         for j in self.c_tree.nodes()
-                        if i in self.c_tree.node[j]["members"]
+                        if i in self.c_tree.nodes[j]["members"]
                     ]
                 ),
             )
@@ -211,7 +212,7 @@ class LabelModel(nn.Module, BaseLabeler):
             L_aug = np.copy(L_ind)
             for item in chain(self.c_tree.nodes(), self.c_tree.edges()):
                 if isinstance(item, int):
-                    C = self.c_tree.node[item]
+                    C = self.c_tree.nodes[item]
                 elif isinstance(item, tuple):
                     C = self.c_tree[item[0]][item[1]]
                 else:
@@ -280,6 +281,14 @@ class LabelModel(nn.Module, BaseLabeler):
         # Handle single values
         if isinstance(self.train_config.prec_init, (int, float)):
             self._prec_init = self.train_config.prec_init * torch.ones(self.m)
+        elif isinstance(self.train_config.prec_init, np.ndarray):
+            self._prec_init = torch.Tensor(self.train_config.prec_init)
+        elif isinstance(self.train_config.prec_init, list):
+            self._prec_init = torch.Tensor(self.train_config.prec_init)
+        elif not isinstance(self.train_config.prec_init, torch.Tensor):
+            raise TypeError(
+                f"prec_init is of type {type(self.train_config.prec_init)} which is not supported currently."
+            )
         if self._prec_init.shape[0] != self.m:
             raise ValueError(f"prec_init must have shape {self.m}.")
 
@@ -613,6 +622,8 @@ class LabelModel(nn.Module, BaseLabeler):
 
     def _set_logger(self) -> None:
         self.logger = Logger(self.train_config.log_freq)
+        if self.config.verbose:
+            logging.basicConfig(level=logging.INFO)
 
     def _set_optimizer(self) -> None:
         parameters = filter(lambda p: p.requires_grad, self.parameters())
@@ -801,6 +812,7 @@ class LabelModel(nn.Module, BaseLabeler):
         L_train: np.ndarray,
         Y_dev: Optional[np.ndarray] = None,
         class_balance: Optional[List[float]] = None,
+        progress_bar: bool = True,
         **kwargs: Any,
     ) -> None:
         """Train label model.
@@ -815,6 +827,8 @@ class LabelModel(nn.Module, BaseLabeler):
             Gold labels for dev set for estimating class_balance, by default None
         class_balance
             Each class's percentage of the population, by default None
+        progress_bar
+            To display a progress bar, by default True
         **kwargs
             Arguments for changing train config defaults.
 
@@ -869,6 +883,9 @@ class LabelModel(nn.Module, BaseLabeler):
         np.random.seed(self.train_config.seed)
         torch.manual_seed(self.train_config.seed)
 
+        # Set Logger
+        self._set_logger()
+
         L_shift = L_train + 1  # convert to {0, 1, ..., k}
         if L_shift.max() > self.cardinality:
             raise ValueError(
@@ -889,7 +906,7 @@ class LabelModel(nn.Module, BaseLabeler):
 
         # Estimate \mu
         if self.config.verbose:  # pragma: no cover
-            logging.info("Estimating \mu...")
+            logging.info(r"Estimating \mu...")
 
         # Set model to train mode
         self.train()
@@ -901,7 +918,6 @@ class LabelModel(nn.Module, BaseLabeler):
         self.to(self.config.device)
 
         # Set training components
-        self._set_logger()
         self._set_optimizer()
         self._set_lr_scheduler()
 
@@ -910,7 +926,13 @@ class LabelModel(nn.Module, BaseLabeler):
 
         # Train the model
         metrics_hist = {}  # The most recently seen value for all metrics
-        for epoch in range(start_iteration, self.train_config.n_epochs):
+
+        if progress_bar:
+            epochs = trange(start_iteration, self.train_config.n_epochs, unit="epoch")
+        else:
+            epochs = range(start_iteration, self.train_config.n_epochs)
+
+        for epoch in epochs:
             self.running_loss = 0.0
             self.running_examples = 0
 
@@ -936,6 +958,10 @@ class LabelModel(nn.Module, BaseLabeler):
 
             # Update learning rate
             self._update_lr_scheduler(epoch)
+
+        # Cleanup progress bar if enabled
+        if progress_bar:
+            epochs.close()
 
         # Post-processing operations on mu
         self._clamp_params()

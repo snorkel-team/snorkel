@@ -4,13 +4,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-## [0.9.7]
-### [Breaking Changes]
+## [0.9.8] - 2021-09-23
 ### [Added]
+
+* PR #1649: Add progress bar for label model training
+
 ### [Changed]
-### [Deprecated]
-### [Removed]
+
+* PR #1645: Upgrade networkx requirement to support networkx>=2.5
+* PR #1663: Upgrade tensorboard requirement to support tensorboard>=2.0
+* PR #1652: Fix issue with logging display during label model training
+
+### [Contributors]
+
+Thanks to @anerirana, @thatch, @sfilipi, @hardianlawi, and @asottile for contributions!
+
+## [0.9.7] - 2021-03-03
+### [Breaking Changes]
+
+* PR #1633, #1628: Update requirements for `numpy` (>=1.16.5,<1.20.0), `pandas` (>=1.0.0,<2.0.0), and `scikit-learn` (>=0.20.2,<0.25.0)
+
+### [Added]
+
+* PR #1628: Add unit test coverage for Python 3.8
+* PR #1616: Accept prec_init as array or list in `LabelModel`
+* PR #1602: Add get_label_instances to analysis module
+
+### [Contributors]
+
+Thanks to @DavidKoleczek and @antonis19 for contributions!
 
 ## [0.9.6] - 2020-08-08
 ### [Added]

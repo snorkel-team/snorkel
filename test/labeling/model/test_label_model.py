@@ -59,6 +59,55 @@ class LabelModelTest(unittest.TestCase):
             label_model.predict(L), np.array([1, 1, 1])
         )
 
+    def test_prec_init(self):
+        label_model = LabelModel(cardinality=2, verbose=False)
+        L = np.array([[-1, -1, 1], [-1, 1, -1], [0, -1, -1]])
+
+        # test without prec_init
+        label_model.fit(L_train=L, n_epochs=1000, seed=123)
+
+        # test with prec_init as float
+        prec_init = 0.6
+        label_model.fit(L_train=L, prec_init=prec_init, n_epochs=1000, seed=123)
+        label_model.predict(L)
+
+        # test with prec_init as int
+        prec_init = 1
+        label_model.fit(L_train=L, prec_init=prec_init, n_epochs=1000, seed=123)
+        label_model.predict(L)
+
+        # test with prec_init as list
+        prec_init = [0.1, 0.2, 0.3]
+        label_model.fit(L_train=L, prec_init=prec_init, n_epochs=1000, seed=123)
+        label_model.predict(L)
+
+        # test with prec_init as np.array
+        prec_init = np.array([0.1, 0.2, 0.3])
+        label_model.fit(L_train=L, prec_init=prec_init, n_epochs=1000, seed=123)
+        label_model.predict(L)
+
+        with self.assertRaisesRegex(
+            TypeError,
+            "prec_init is of type <class 'str'> which is not supported currently.",
+        ):
+            # test with unsupported type (string)
+            prec_init = "skibidi bop mm dada"
+            label_model.fit(L_train=L, prec_init=prec_init, n_epochs=1000, seed=123)
+
+        with self.assertRaisesRegex(
+            ValueError, f"prec_init must have shape {L.shape[1]}."
+        ):
+            # test with prec_init as list of wrong length (bigger)
+            prec_init = np.array([0.1, 0.2, 0.3, 0.4])
+            label_model.fit(L_train=L, prec_init=prec_init, n_epochs=1000, seed=123)
+
+        with self.assertRaisesRegex(
+            ValueError, f"prec_init must have shape {L.shape[1]}."
+        ):
+            # test with prec_init as list of wrong length (smaller)
+            prec_init = np.array([0.1, 0.2])
+            label_model.fit(L_train=L, prec_init=prec_init, n_epochs=1000, seed=123)
+
     def test_class_balance(self):
         label_model = LabelModel(cardinality=2, verbose=False)
         # Test class balance
@@ -148,15 +197,13 @@ class LabelModelTest(unittest.TestCase):
                     self.assertEqual(L_aug[i, j * k + L_shift[i, j] - 1], 1)
 
         # Finally, check the clique entries
-        # Singleton clique 1
-        self.assertEqual(len(lm.c_tree.node[1]["members"]), 1)
-        j = lm.c_tree.node[1]["start_index"]
-        self.assertEqual(L_aug[0, j], 1)
-
-        # Singleton clique 2
-        self.assertEqual(len(lm.c_tree.node[2]["members"]), 1)
-        j = lm.c_tree.node[2]["start_index"]
-        self.assertEqual(L_aug[0, j + 1], 0)
+        for j in range(m):
+            node = lm.c_tree.nodes[i]
+            self.assertEqual(len(node["members"]), 1)
+            if 1 in node["members"]:
+                self.assertEqual(L_aug[0, node["start_index"]], 1)
+            if 2 in node["members"]:
+                self.assertEqual(L_aug[0, 1 + node["start_index"]], 0)
 
     def test_conditional_probs(self):
         L = np.array([[0, 1, 0], [0, 1, 0]])
@@ -290,6 +337,19 @@ class LabelModelTest(unittest.TestCase):
 
         results = label_model.score(L=L, Y=np.array([1, 0]), metrics=["accuracy", "f1"])
         results_expected = dict(accuracy=0.5, f1=2 / 3)
+        self.assertEqual(results, results_expected)
+
+    def test_progress_bar(self):
+        L = np.array([[1, 1, 0], [-1, -1, -1], [1, 0, 1]])
+        Y = np.array([1, 0, 1])
+        label_model = LabelModel(cardinality=2, verbose=False)
+        label_model.fit(L, n_epochs=100, progress_bar=False)
+        results = label_model.score(L, Y, metrics=["accuracy", "coverage"])
+        np.testing.assert_array_almost_equal(
+            label_model.predict(L), np.array([1, -1, 1])
+        )
+
+        results_expected = dict(accuracy=1.0, coverage=2 / 3)
         self.assertEqual(results, results_expected)
 
     def test_loss(self):
@@ -510,7 +570,10 @@ class TestLabelModelAdvanced(unittest.TestCase):
 
         # Test estimated LF conditional probabilities
         P_lm = label_model.get_conditional_probs()
-        np.testing.assert_array_almost_equal(P, P_lm, decimal=2)
+        conditional_probs_err = (
+            np.linalg.norm(P.flatten() - P_lm.flatten(), ord=1) / P.size
+        )
+        self.assertLessEqual(conditional_probs_err, 0.01)
 
         # Test predicted labels
         score = label_model.score(L, Y)
@@ -534,7 +597,10 @@ class TestLabelModelAdvanced(unittest.TestCase):
 
         # Test estimated LF conditional probabilities
         P_lm = label_model.get_conditional_probs()
-        np.testing.assert_array_almost_equal(P, P_lm, decimal=2)
+        conditional_probs_err = (
+            np.linalg.norm(P.flatten() - P_lm.flatten(), ord=1) / P.size
+        )
+        self.assertLessEqual(conditional_probs_err, 0.01)
 
         # Test predicted labels *only on non-abstained data points*
         Y_pred = label_model.predict(L, tie_break_policy="abstain")

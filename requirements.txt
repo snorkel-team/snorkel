@@ -9,33 +9,35 @@
 #### ESSENTIAL LIBRARIES
 
 # General scientific computing
-numpy>=1.16.0,<2.0.0
+numpy>=1.16.5,<1.20.0
 scipy>=1.2.0,<2.0.0
 
 # Data storage and function application
-pandas>=0.25.0,<2.0.0
+pandas>=1.0.0,<2.0.0
 tqdm>=4.33.0,<5.0.0
 
 # Internal models
-scikit-learn>=0.24.0
+scikit-learn>=0.20.2,<0.25.0
 torch>=1.2.0,<2.0.0
 munkres>=1.0.6
 
 # LF dependency learning
-networkx>=2.2,<2.4
+networkx>=2.2,<2.6
 
 # Model introspection tools
-tensorboard>=1.14.0,<2.0.0
+tensorboard>=2.0.0,<2.7.0
 
 #### EXTRA/TEST LIBRARIES
 
-# NLP applications
+# spaCy (NLP)
 spacy>=2.1.0,<3.0.0
+blis>=0.3.0,<0.5.0
 
-# Scale-up/out
-dask[complete]>=2.1.0,<3.0.0
+# Dask (parallelism)
+dask[dataframe]>=2.1.0,<2.31.0
+distributed>=2.1.0,<2.31.0
 
-# Serialization
+# Dill (serialization)
 dill>=0.3.0,<0.4.0
 
 
@@ -44,7 +46,7 @@ dill>=0.3.0,<0.4.0
 black>=19.3b0,<20.0
 flake8>=3.7.0,<4.0.0
 isort>=4.3.0,<5.0.0
-mypy>=0.720,<0.730
+mypy>=0.800,<0.920
 pydocstyle>=4.0.0,<5.0.0
 pytest>=5.0.0,<6.0.0
 pytest-cov>=2.7.0,<3.0.0

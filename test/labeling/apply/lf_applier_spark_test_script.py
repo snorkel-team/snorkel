@@ -17,7 +17,7 @@ To test on AWS EMR:
     3. Run
         ```
         sudo sed -i -e \
-            '$a\export PYSPARK_PYTHON=/usr/bin/python3' \
+            '$a\\export PYSPARK_PYTHON=/usr/bin/python3' \
             /etc/spark/conf/spark-env.sh
         ```
     4. Run
@@ -43,12 +43,12 @@ logging.basicConfig(level=logging.INFO)
 
 @labeling_function()
 def f(x: DataPoint) -> int:
-    return 1 if x.a > 42 else 0
+    return 1 if x > 42 else 0
 
 
 @labeling_function(resources=dict(db=[3, 6, 9]))
 def g(x: DataPoint, db: List[int]) -> int:
-    return 1 if x.a in db else 0
+    return 1 if x in db else 0
 
 
 DATA = [3, 43, 12, 9]

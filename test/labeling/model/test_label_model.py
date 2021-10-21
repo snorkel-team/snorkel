@@ -108,6 +108,23 @@ class LabelModelTest(unittest.TestCase):
             prec_init = np.array([0.1, 0.2])
             label_model.fit(L_train=L, prec_init=prec_init, n_epochs=1000, seed=123)
 
+    def test_lf_weight(self):
+        label_model = LabelModel(cardinality=2, verbose=False)
+        L = np.array([[-1, 1, -1], [-1, 1, -1], [1, -1, -1], [-1, 1, -1]])
+        label_model._set_constants(L)
+        label_model._set_lf_weight(lf_weights=None)
+
+        # Test default weight
+        np.testing.assert_array_almost_equal(
+            label_model.lf_weights_aug, np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+        )
+        # Test customized weight
+        lf_weights = np.array([1.0, 2.0, 3.0])
+        label_model._set_lf_weight(lf_weights=lf_weights)
+        np.testing.assert_array_almost_equal(
+            label_model.lf_weights_aug, np.array([1.0, 1.0, 2.0, 2.0, 3.0, 3.0])
+        )
+
     def test_class_balance(self):
         label_model = LabelModel(cardinality=2, verbose=False)
         # Test class balance

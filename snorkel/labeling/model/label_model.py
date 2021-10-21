@@ -552,9 +552,32 @@ class LabelModel(nn.Module, BaseLabeler):
         torch.Tensor
             Overall mu loss between learned mu and initial mu
         """
-        loss_1 = torch.norm((self.O - self.mu @ self.P @ self.mu.t())[self.mask]) ** 2
-        loss_2 = torch.norm(torch.sum(self.mu @ self.P, 1) - torch.diag(self.O)) ** 2
+        d_cov = self.O - self.mu @ self.P @ self.mu.t()
+        lf_wt_mat = torch.diag(torch.from_numpy(self.lf_weights_aug)).float().to(self.config.device)  # type: ignore
+        loss_1 = torch.norm((lf_wt_mat @ d_cov @ lf_wt_mat)[self.mask]) ** 2
+        loss_2 = (
+            torch.norm(
+                lf_wt_mat @ (torch.sum(self.mu @ self.P, 1) - torch.diag(self.O))
+            )
+            ** 2
+        )
         return loss_1 + loss_2 + self._loss_l2(l2=l2)
+
+    def _set_lf_weight(self, lf_weights: Optional[List[float]]) -> None:
+        """Set a prior weight for labeling functions.
+
+        Default all labeling function has the equal weight
+        """
+        self.lf_weights_aug = np.ones((self.m * self.cardinality))
+        if lf_weights is not None:
+            if len(lf_weights) != self.m:
+                raise ValueError(
+                    f"There are {len(lf_weights)} weights. Does not match the number of labeling functions {self.cardinality}."
+                )
+            for i in range(self.m):
+                self.lf_weights_aug[
+                    i * self.cardinality : (i + 1) * self.cardinality
+                ] = lf_weights[i]
 
     def _set_class_balance(
         self, class_balance: Optional[List[float]], Y_dev: np.ndarray
@@ -811,6 +834,7 @@ class LabelModel(nn.Module, BaseLabeler):
         self,
         L_train: np.ndarray,
         Y_dev: Optional[np.ndarray] = None,
+        lf_weights: Optional[List[float]] = None,
         class_balance: Optional[List[float]] = None,
         progress_bar: bool = True,
         **kwargs: Any,
@@ -893,6 +917,7 @@ class LabelModel(nn.Module, BaseLabeler):
             )
 
         self._set_constants(L_shift)
+        self._set_lf_weight(lf_weights)
         self._set_class_balance(class_balance, Y_dev)
         self._create_tree()
         lf_analysis = LFAnalysis(L_train)

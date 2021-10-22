@@ -566,7 +566,7 @@ class LabelModel(nn.Module, BaseLabeler):
     def _set_lf_weight(self, lf_weights: Optional[List[float]]) -> None:
         """Set a prior weight for labeling functions.
 
-        Default all labeling function has the equal weight
+        Default all labeling function has the equal weight 1
         """
         self.lf_weights_aug = np.ones((self.m * self.cardinality))
         if lf_weights is not None:
@@ -849,6 +849,8 @@ class LabelModel(nn.Module, BaseLabeler):
             An [n,m] matrix with values in {-1,0,1,...,k-1}
         Y_dev
             Gold labels for dev set for estimating class_balance, by default None
+        lf_weights
+            List of floats as weight of each labeling function, by default 1 for each lf
         class_balance
             Each class's percentage of the population, by default None
         progress_bar

@@ -22,7 +22,7 @@ torch>=1.2.0,<2.0.0
 munkres>=1.0.6
 
 # LF dependency learning
-networkx>=2.2,<2.6
+networkx>=2.2,<2.7
 
 # Model introspection tools
 tensorboard>=2.0.0,<2.7.0

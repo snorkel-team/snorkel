@@ -55,8 +55,97 @@ jobs:
           name: "Install Code Cov"
           command: pip install -U codecov
       - run:
-          name: "Install Tox"
+          name: "Run Tox"
           command:  tox
+
+  build-and-test-7: # This is the name of the job, feel free to change it to better match what you're trying to do!
+    # These next lines defines a Docker executors: https://circleci.com/docs/2.0/executor-types/
+    # You can specify an image from Dockerhub or use one of the convenience images from CircleCI's Developer Hub
+    # A list of available CircleCI Docker convenience images are available here: https://circleci.com/developer/images/image/cimg/python
+    # The executor is the environment in which the steps below will be executed - below will use a python 3.8 container
+    # Change the version below to your required version of python
+    docker:
+      - image: cimg/python:3.7
+    environment:
+      TOXENV: coverage,doctest,type,check 
+      TOX_INSTALL_DIR: .env
+      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+    # Checkout the code as the first step. This is a dedicated CircleCI step.
+    # The python orb's install-packages step will install the dependencies from a Pipfile via Pipenv by default.
+    # Here we're making sure we use just use the system-wide pip. By default it uses the project root's requirements.txt.
+    # Then run your tests!
+    # CircleCI will report the results back to your VCS provider.
+    steps:
+      - checkout
+      - run: 
+          name: "Install open JDK"
+          command: sudo add-apt-repository -y ppa:openjdk-r/ppa
+      - run: 
+          name: "Install qq"
+          command: sudo apt-get -qq update
+      - run: 
+          name: "No install recommends for JDK"
+          command: sudo apt-get install -y openjdk-8-jdk --no-install-recommends
+      - run: 
+          name: "Run Java Alternatives install for JDK"
+          command: sudo update-java-alternatives -s java-1.8.0-openjdk-amd64
+      - run:
+          name: "Run pip install setup tools and wheel"
+          command: pip install -U pip setuptools wheel
+      - run:  
+          name: "Install Tox"
+          command: pip install -U tox==3.12.0
+      - run: 
+          name: "Install Code Cov"
+          command: pip install -U codecov
+      - run:
+          name: "Run Tox"
+          command:  tox
+
+  build-and-test-6: # This is the name of the job, feel free to change it to better match what you're trying to do!
+    # These next lines defines a Docker executors: https://circleci.com/docs/2.0/executor-types/
+    # You can specify an image from Dockerhub or use one of the convenience images from CircleCI's Developer Hub
+    # A list of available CircleCI Docker convenience images are available here: https://circleci.com/developer/images/image/cimg/python
+    # The executor is the environment in which the steps below will be executed - below will use a python 3.8 container
+    # Change the version below to your required version of python
+    docker:
+      - image: cimg/python:3.7
+    environment:
+      TOXENV: coverage,doctest,type,check 
+      TOX_INSTALL_DIR: .env
+      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+    # Checkout the code as the first step. This is a dedicated CircleCI step.
+    # The python orb's install-packages step will install the dependencies from a Pipfile via Pipenv by default.
+    # Here we're making sure we use just use the system-wide pip. By default it uses the project root's requirements.txt.
+    # Then run your tests!
+    # CircleCI will report the results back to your VCS provider.
+    steps:
+      - checkout
+      - run: 
+          name: "Install open JDK"
+          command: sudo add-apt-repository -y ppa:openjdk-r/ppa
+      - run: 
+          name: "Install qq"
+          command: sudo apt-get -qq update
+      - run: 
+          name: "No install recommends for JDK"
+          command: sudo apt-get install -y openjdk-8-jdk --no-install-recommends
+      - run: 
+          name: "Run Java Alternatives install for JDK"
+          command: sudo update-java-alternatives -s java-1.8.0-openjdk-amd64
+      - run:
+          name: "Run pip install setup tools and wheel"
+          command: pip install -U pip setuptools wheel
+      - run:  
+          name: "Install Tox"
+          command: pip install -U tox==3.12.0
+      - run: 
+          name: "Install Code Cov"
+          command: pip install -U codecov
+      - run:
+          name: "Run Tox"
+          command:  tox
+
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
@@ -65,3 +154,5 @@ workflows:
     # Inside the workflow, you define the jobs you want to run.
     jobs:
       - build-and-test-8
+      - build-and-test-7
+      - build-and-test-6

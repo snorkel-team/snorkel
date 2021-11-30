@@ -47,7 +47,7 @@ master_only: &master_only
   filters:
     branches:
       only:
-        - master
+        - (main|release-v.*)
 
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
@@ -202,9 +202,14 @@ workflows:
   sample: # This is the name of the workflow, feel free to change it to better match your workflow.
     # Inside the workflow, you define the jobs you want to run.
     jobs:
-      - build-and-test-8:
+      - build-and-test-8-complex:
+        <<: *master_only
+      - build-and-test-7-complex:
+        <<: *master_only
+      - build-and-test-6-complex:
         <<: *master_only
   sample2:
     jobs:
       - build-and-test-7
       - build-and-test-6
+      - build-and-test-8

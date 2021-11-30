@@ -1,0 +1,29 @@
+version: 2.1
+
+workflows:
+    version: 2
+    build:
+      jobs:
+        - one
+        - two
+
+jobs:
+  one:
+    docker:
+      - image: themattrix/tox
+      - image: circleci/python:3.6.11
+    environment:
+      TOXENV: coverage,doctest,type,check 
+      TOX_INSTALL_DIR: .env
+      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+    steps:
+      - checkout
+      - run: sudo add-apt-repository -y ppa:openjdk-r/ppa
+      - run: sudo apt-get -qq update
+      - run: sudo apt-get install -y openjdk-8-jdk --no-install-recommends
+      - run: sudo update-java-alternatives -s java-1.8.0-openjdk-amd64
+      - run: pip install -U pip setuptools wheel
+      - run: pip install -U tox==3.12.0
+      - run: pip install -U codecov
+
+

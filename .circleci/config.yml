@@ -66,6 +66,7 @@ jobs:
     # CircleCI will report the results back to your VCS provider.
     steps:
       - checkout
+      - setup_dependencies
       - run:
           name: "Run Tox"
           command:  tox

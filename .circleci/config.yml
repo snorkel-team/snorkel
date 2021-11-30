@@ -109,7 +109,7 @@ jobs:
     # The executor is the environment in which the steps below will be executed - below will use a python 3.8 container
     # Change the version below to your required version of python
     docker:
-      - image: cimg/python:3.7
+      - image: cimg/python:3.6
     environment:
       TOXENV: coverage,doctest,type,check 
       TOX_INSTALL_DIR: .env

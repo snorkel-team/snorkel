@@ -200,5 +200,7 @@ workflows:
         filters:
             branches:
               only: master
+  sample2:
+    jobs:
       - build-and-test-7
       - build-and-test-6

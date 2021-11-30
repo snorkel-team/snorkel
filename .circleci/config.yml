@@ -42,7 +42,6 @@ commands:
           name: "Install Code Cov"
           command: pip install -U codecov
       - steps: << parameters.after-deps >>
-      - run: make test
 
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
@@ -118,6 +117,77 @@ jobs:
       - run:
           name: "Run Tox"
           command:  tox
+  build-and-test-8-complex: # This is the name of the job, feel free to change it to better match what you're trying to do!
+    # These next lines defines a Docker executors: https://circleci.com/docs/2.0/executor-types/
+    # You can specify an image from Dockerhub or use one of the convenience images from CircleCI's Developer Hub
+    # A list of available CircleCI Docker convenience images are available here: https://circleci.com/developer/images/image/cimg/python
+    # The executor is the environment in which the steps below will be executed - below will use a python 3.8 container
+    # Change the version below to your required version of python
+    docker:
+      - image: cimg/python:3.8
+    environment:
+      TOXENV: complex,type,check
+      TOX_INSTALL_DIR: .env
+      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+    # Checkout the code as the first step. This is a dedicated CircleCI step.
+    # The python orb's install-packages step will install the dependencies from a Pipfile via Pipenv by default.
+    # Here we're making sure we use just use the system-wide pip. By default it uses the project root's requirements.txt.
+    # Then run your tests!
+    # CircleCI will report the results back to your VCS provider.
+    steps:
+      - checkout
+      - setup_dependencies
+      - run:
+          name: "Run Tox"
+          command:  tox
+
+  build-and-test-7-complex: # This is the name of the job, feel free to change it to better match what you're trying to do!
+    # These next lines defines a Docker executors: https://circleci.com/docs/2.0/executor-types/
+    # You can specify an image from Dockerhub or use one of the convenience images from CircleCI's Developer Hub
+    # A list of available CircleCI Docker convenience images are available here: https://circleci.com/developer/images/image/cimg/python
+    # The executor is the environment in which the steps below will be executed - below will use a python 3.8 container
+    # Change the version below to your required version of python
+    docker:
+      - image: cimg/python:3.7
+    environment:
+      TOXENV: complex,spark,type,check
+      TOX_INSTALL_DIR: .env
+      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+    # Checkout the code as the first step. This is a dedicated CircleCI step.
+    # The python orb's install-packages step will install the dependencies from a Pipfile via Pipenv by default.
+    # Here we're making sure we use just use the system-wide pip. By default it uses the project root's requirements.txt.
+    # Then run your tests!
+    # CircleCI will report the results back to your VCS provider.
+    steps:
+      - checkout
+      - setup_dependencies
+      - run:
+          name: "Run Tox"
+          command:  tox
+
+  build-and-test-6-complex: # This is the name of the job, feel free to change it to better match what you're trying to do!
+    # These next lines defines a Docker executors: https://circleci.com/docs/2.0/executor-types/
+    # You can specify an image from Dockerhub or use one of the convenience images from CircleCI's Developer Hub
+    # A list of available CircleCI Docker convenience images are available here: https://circleci.com/developer/images/image/cimg/python
+    # The executor is the environment in which the steps below will be executed - below will use a python 3.8 container
+    # Change the version below to your required version of python
+    docker:
+      - image: cimg/python:3.6
+    environment:
+      TOXENV: coverage,complex,spark,doctest,type,check 
+      TOX_INSTALL_DIR: .env
+      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+    # Checkout the code as the first step. This is a dedicated CircleCI step.
+    # The python orb's install-packages step will install the dependencies from a Pipfile via Pipenv by default.
+    # Here we're making sure we use just use the system-wide pip. By default it uses the project root's requirements.txt.
+    # Then run your tests!
+    # CircleCI will report the results back to your VCS provider.
+    steps:
+      - checkout
+      - setup_dependencies
+      - run:
+          name: "Run Tox"
+          command:  tox
 
 
 # Invoke jobs via workflows
@@ -126,6 +196,9 @@ workflows:
   sample: # This is the name of the workflow, feel free to change it to better match your workflow.
     # Inside the workflow, you define the jobs you want to run.
     jobs:
-      - build-and-test-8
+      - build-and-test-8:
+        filters:
+            branches:
+              only: master
       - build-and-test-7
       - build-and-test-6

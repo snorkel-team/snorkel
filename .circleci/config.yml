@@ -42,6 +42,8 @@ run_complex: &run_complex
     branches:
       only:
         - (master|release-v.*)
+    tags:
+      only: /.*/
 
 jobs:
   Python38-Unit-Tests: 

@@ -55,7 +55,7 @@ run_complex: &run_complex
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  build-and-test-8: # This is the name of the job, feel free to change it to better match what you're trying to do!
+  Python38-Unit-Tests: # This is the name of the job, feel free to change it to better match what you're trying to do!
     # These next lines defines a Docker executors: https://circleci.com/docs/2.0/executor-types/
     # You can specify an image from Dockerhub or use one of the convenience images from CircleCI's Developer Hub
     # A list of available CircleCI Docker convenience images are available here: https://circleci.com/developer/images/image/cimg/python
@@ -79,7 +79,7 @@ jobs:
           name: "Run Tox"
           command:  tox
 
-  build-and-test-7: # This is the name of the job, feel free to change it to better match what you're trying to do!
+  Python37-Unit-Tests: # This is the name of the job, feel free to change it to better match what you're trying to do!
     # These next lines defines a Docker executors: https://circleci.com/docs/2.0/executor-types/
     # You can specify an image from Dockerhub or use one of the convenience images from CircleCI's Developer Hub
     # A list of available CircleCI Docker convenience images are available here: https://circleci.com/developer/images/image/cimg/python
@@ -103,7 +103,7 @@ jobs:
           name: "Run Tox"
           command:  tox
 
-  build-and-test-6: # This is the name of the job, feel free to change it to better match what you're trying to do!
+  Python36-Unit-Tests: # This is the name of the job, feel free to change it to better match what you're trying to do!
     # These next lines defines a Docker executors: https://circleci.com/docs/2.0/executor-types/
     # You can specify an image from Dockerhub or use one of the convenience images from CircleCI's Developer Hub
     # A list of available CircleCI Docker convenience images are available here: https://circleci.com/developer/images/image/cimg/python
@@ -126,7 +126,7 @@ jobs:
       - run:
           name: "Run Tox"
           command:  tox
-  build-and-test-8-complex: # This is the name of the job, feel free to change it to better match what you're trying to do!
+  Python38-Integration-Tests: # This is the name of the job, feel free to change it to better match what you're trying to do!
     # These next lines defines a Docker executors: https://circleci.com/docs/2.0/executor-types/
     # You can specify an image from Dockerhub or use one of the convenience images from CircleCI's Developer Hub
     # A list of available CircleCI Docker convenience images are available here: https://circleci.com/developer/images/image/cimg/python
@@ -150,7 +150,7 @@ jobs:
           name: "Run Tox"
           command:  tox
 
-  build-and-test-7-complex: # This is the name of the job, feel free to change it to better match what you're trying to do!
+  Python37-Integration-Tests: # This is the name of the job, feel free to change it to better match what you're trying to do!
     # These next lines defines a Docker executors: https://circleci.com/docs/2.0/executor-types/
     # You can specify an image from Dockerhub or use one of the convenience images from CircleCI's Developer Hub
     # A list of available CircleCI Docker convenience images are available here: https://circleci.com/developer/images/image/cimg/python
@@ -174,7 +174,7 @@ jobs:
           name: "Run Tox"
           command:  tox
 
-  build-and-test-6-complex: # This is the name of the job, feel free to change it to better match what you're trying to do!
+  Python36-Integration-Tests: # This is the name of the job, feel free to change it to better match what you're trying to do!
     # These next lines defines a Docker executors: https://circleci.com/docs/2.0/executor-types/
     # You can specify an image from Dockerhub or use one of the convenience images from CircleCI's Developer Hub
     # A list of available CircleCI Docker convenience images are available here: https://circleci.com/developer/images/image/cimg/python
@@ -205,14 +205,14 @@ workflows:
   sample: # This is the name of the workflow, feel free to change it to better match your workflow.
     # Inside the workflow, you define the jobs you want to run.
     jobs:
-      - build-and-test-8-complex:
+      - Python38-Integration-Tests:
         <<: *run_complex
-      - build-and-test-7-complex:
+      - Python37-Integration-Tests:
         <<: *run_complex
-      - build-and-test-6-complex:
+      - Python36-Integration-Tests:
         <<: *run_complex
   sample2:
     jobs:
-      - build-and-test-7
-      - build-and-test-6
-      - build-and-test-8
+      - Python37-Unit-Tests
+      - Python36-Unit-Tests
+      - Python38-Unit-Tests

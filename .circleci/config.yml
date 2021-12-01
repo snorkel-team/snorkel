@@ -48,9 +48,7 @@ run_complex: &run_complex
   filters:
     branches:
       only:
-        - (main|release-v.*)
-    tags:
-      only: /.*/
+        - (master|release-v.*)
 
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs

@@ -1,0 +1,154 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine.
+version: 2.1
+
+orbs:
+  python: circleci/python@1.2
+
+commands:
+  setup_dependencies:
+    description: "Install depenencies"
+    parameters:
+      after-deps:
+        description: "Install dependenceis"
+        type: steps
+        default: []
+    steps:
+      - run: 
+          name: "Install open JDK"
+          command: sudo add-apt-repository -y ppa:openjdk-r/ppa
+      - run: 
+          name: "Install qq"
+          command: sudo apt-get -qq update
+      - run: 
+          name: "No install recommends for JDK"
+          command: sudo apt-get install -y openjdk-8-jdk --no-install-recommends
+      - run: 
+          name: "Run Java Alternatives install for JDK"
+          command: sudo update-java-alternatives -s java-1.8.0-openjdk-amd64
+      - run:
+          name: "Run pip install setup tools and wheel"
+          command: pip install -U pip setuptools wheel
+      - run:  
+          name: "Install Tox"
+          command: pip install -U tox==3.12.0
+      - run: 
+          name: "Install Code Cov"
+          command: pip install -U codecov
+      - steps: << parameters.after-deps >>
+
+# We want to make sure we run this only on master branch, release, or when we make tags
+run_complex: &run_complex
+  filters:
+    branches:
+      only:
+        - (master|release-v.*)
+    tags:
+      only: /.*/
+
+jobs:
+  Python38-Unit-Tests: 
+    docker:
+      - image: cimg/python:3.8
+    environment:
+      TOXENV: coverage,doctest,type,check 
+      TOX_INSTALL_DIR: .env
+      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+
+    steps:
+      - checkout
+      - setup_dependencies
+      - run:
+          name: "Run Tox"
+          command:  tox
+
+  Python37-Unit-Tests: 
+    docker:
+      - image: cimg/python:3.7
+    environment:
+      TOXENV: coverage,doctest,type,check 
+      TOX_INSTALL_DIR: .env
+      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+
+    steps:
+      - checkout
+      - setup_dependencies
+      - run:
+          name: "Run Tox"
+          command:  tox
+
+  Python36-Unit-Tests: 
+    docker:
+      - image: cimg/python:3.6
+    environment:
+      TOXENV: coverage,doctest,type,check 
+      TOX_INSTALL_DIR: .env
+      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+
+    steps:
+      - checkout
+      - setup_dependencies
+      - run:
+          name: "Run Tox"
+          command:  tox
+  Python38-Integration-Tests: 
+    docker:
+      - image: cimg/python:3.8
+    environment:
+      TOXENV: complex,type,check
+      TOX_INSTALL_DIR: .env
+      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+
+    steps:
+      - checkout
+      - setup_dependencies
+      - run:
+          name: "Run Tox"
+          command:  tox
+
+  Python37-Integration-Tests: 
+    docker:
+      - image: cimg/python:3.7
+    environment:
+      TOXENV: complex,spark,type,check
+      TOX_INSTALL_DIR: .env
+      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+
+    steps:
+      - checkout
+      - setup_dependencies
+      - run:
+          name: "Run Tox"
+          command:  tox
+
+  Python36-Integration-Tests: 
+    docker:
+      - image: cimg/python:3.6
+    environment:
+      TOXENV: coverage,complex,spark,doctest,type,check 
+      TOX_INSTALL_DIR: .env
+      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+
+    steps:
+      - checkout
+      - setup_dependencies
+      - run:
+          name: "Run Tox"
+          command:  tox
+
+workflows:
+  version: 2
+
+  Interation-Tests: 
+    jobs:
+      - Python38-Integration-Tests:
+          <<: *run_complex
+      - Python37-Integration-Tests:
+         <<: *run_complex
+      - Python36-Integration-Tests:
+          <<: *run_complex
+  Unit-Tests:
+    jobs:
+      - Python37-Unit-Tests
+      - Python36-Unit-Tests
+      - Python38-Unit-Tests
+

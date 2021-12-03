@@ -112,7 +112,7 @@ Any test that runs longer than half a second should be marked with the
 `@pytest.mark.complex` decorator.
 Typically, these will be integration tests or tests that verify complex
 properties like model convergence.
-We exclude long-running tests from the default `tox` and Travis builds
+We exclude long-running tests from the default `tox` and Circle CI builds
 on non-master and non-release branches to keep things moving fast.
 If you're touching areas of the code that could break a long-running test,
 you should include the results of `tox -e complex` in the PR's test plan.
@@ -124,7 +124,7 @@ To see the durations of the 10 longest-running tests, run
 
 PySpark tests are invoked separately from the rest since they require
 installing Java and the large PySpark package.
-They are executed on Travis, but not by default for a local `tox` command.
+They are executed on Circle CI, but not by default for a local `tox` command.
 If you're making changes to Spark-based operators, make sure you have
 Java 8 installed locally and then run `tox -e spark`.
 If you add a test that imports PySpark mark it with the

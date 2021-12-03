@@ -36,12 +36,12 @@ commands:
           command: pip install -U codecov
       - steps: << parameters.after-deps >>
 
-# We want to make sure we run this only on master branch, release, or when we make tags
+# We want to make sure we run this only on main branch, release, or when we make tags
 run_complex: &run_complex
   filters:
     branches:
       only:
-        - (master|release-v.*)
+        - (main|release-v.*)
     tags:
       only: /.*/
 

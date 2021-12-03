@@ -42,7 +42,7 @@ run_complex: &run_complex
     branches:
       only:
         - master
-        - release-v.*
+        - /release-v.*/
     tags:
       only: /.*/
 

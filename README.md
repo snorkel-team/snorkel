@@ -3,9 +3,9 @@
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/snorkel)
 ![PyPI](https://img.shields.io/pypi/v/snorkel)
 ![Conda](https://img.shields.io/conda/v/conda-forge/snorkel)
-[![CircleCI](https://circleci.com/gh/snorkel-team/snorkel/tree/main.svg?style=svg)](https://circleci.com/gh/snorkel-team/snorkel/tree/main)
-[![docs](https://readthedocs.org/projects/snorkel/badge/?version=main)](https://snorkel.readthedocs.io/en/main)
-[![coverage](https://codecov.io/gh/snorkel-team/snorkel/branch/main/graph/badge.svg)](https://codecov.io/gh/snorkel-team/snorkel/branch/main)
+[![CircleCI](https://circleci.com/gh/snorkel-team/snorkel/tree/master.svg?style=svg)](https://circleci.com/gh/snorkel-team/snorkel/tree/master)
+[![docs](https://readthedocs.org/projects/snorkel/badge/?version=master)](https://snorkel.readthedocs.io/en/master)
+[![coverage](https://codecov.io/gh/snorkel-team/snorkel/branch/master/graph/badge.svg)](https://codecov.io/gh/snorkel-team/snorkel/branch/master)
 [![license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/snorkel)
 
@@ -81,7 +81,7 @@ conda install snorkel==0.9.0 -c conda-forge
 
 If you're using Windows, we highly recommend using Docker
 (you can find an example in our
-[tutorials repo](https://github.com/snorkel-team/snorkel-tutorials/blob/main/Dockerfile))
+[tutorials repo](https://github.com/snorkel-team/snorkel-tutorials/blob/master/Dockerfile))
 or the [Linux subsystem](https://docs.microsoft.com/en-us/windows/wsl/faq).
 We've done limited testing on Windows, so if you want to contribute instructions
 or improvements, feel free to open a PR!

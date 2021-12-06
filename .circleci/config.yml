@@ -43,7 +43,6 @@ run_complex: &run_complex
       only:
         - main
         - /release-v.*/
->>>>>>> origin/master
     tags:
       only: /.*/
 

@@ -41,7 +41,9 @@ run_complex: &run_complex
   filters:
     branches:
       only:
-        - (main|release-v.*)
+        - main
+        - /release-v.*/
+>>>>>>> origin/master
     tags:
       only: /.*/
 

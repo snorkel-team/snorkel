@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+## [0.9.9]
+### [Breaking Changes]
+### [Added]
+### [Changed]
+### [Deprecated]
+### [Removed]
+
 ## [0.9.8] - 2021-09-23
 ### [Added]
 
@@ -14,10 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * PR #1645: Upgrade networkx requirement to support networkx>=2.5
 * PR #1663: Upgrade tensorboard requirement to support tensorboard>=2.0
 * PR #1652: Fix issue with logging display during label model training
+* PR #1677: Bump version upper bound of networkx to 2.7
 
 ### [Contributors]
 
-Thanks to @anerirana, @thatch, @sfilipi, @hardianlawi, and @asottile for contributions!
+Thanks to @anerirana, @thatch, @sfilipi, @hardianlawi, @asottile and @marekmodry for contributions!
 
 ## [0.9.7] - 2021-03-03
 ### [Breaking Changes]

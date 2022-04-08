@@ -27,7 +27,7 @@ class SoftCrossEntropyTest(unittest.TestCase):
 
         ce_loss = F.cross_entropy(Y_probs, Y_golds, reduction="mean")
         ces_loss = cross_entropy_with_probs(Y_probs, Y_golds_probs, reduction="mean")
-        np.testing.assert_equal(ce_loss.numpy(), ces_loss.numpy())
+        np.testing.assert_almost_equal(ce_loss.numpy(), ces_loss.numpy())
 
     def test_perfect_predictions(self):
         # Does soft ce loss achieve approx. 0 loss with perfect predictions?

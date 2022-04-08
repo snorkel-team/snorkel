@@ -10,6 +10,7 @@ from snorkel.utils import preds_to_probs
 
 class SoftCrossEntropyTest(unittest.TestCase):
     def test_sce_equals_ce(self):
+        DECIMAL = 6
         # Does soft ce loss match classic ce loss when labels are one-hot?
         Y_golds = torch.LongTensor([0, 1, 2])
         Y_golds_probs = torch.Tensor(preds_to_probs(Y_golds.numpy(), num_classes=4))
@@ -19,15 +20,21 @@ class SoftCrossEntropyTest(unittest.TestCase):
 
         ce_loss = F.cross_entropy(Y_probs, Y_golds, reduction="none")
         ces_loss = cross_entropy_with_probs(Y_probs, Y_golds_probs, reduction="none")
-        np.testing.assert_equal(ce_loss.numpy(), ces_loss.numpy())
+        np.testing.assert_almost_equal(
+            ce_loss.numpy(), ces_loss.numpy(), decimal=DECIMAL
+        )
 
         ce_loss = F.cross_entropy(Y_probs, Y_golds, reduction="sum")
         ces_loss = cross_entropy_with_probs(Y_probs, Y_golds_probs, reduction="sum")
-        np.testing.assert_equal(ce_loss.numpy(), ces_loss.numpy())
+        np.testing.assert_almost_equal(
+            ce_loss.numpy(), ces_loss.numpy(), decimal=DECIMAL
+        )
 
         ce_loss = F.cross_entropy(Y_probs, Y_golds, reduction="mean")
         ces_loss = cross_entropy_with_probs(Y_probs, Y_golds_probs, reduction="mean")
-        np.testing.assert_almost_equal(ce_loss.numpy(), ces_loss.numpy())
+        np.testing.assert_almost_equal(
+            ce_loss.numpy(), ces_loss.numpy(), decimal=DECIMAL
+        )
 
     def test_perfect_predictions(self):
         # Does soft ce loss achieve approx. 0 loss with perfect predictions?

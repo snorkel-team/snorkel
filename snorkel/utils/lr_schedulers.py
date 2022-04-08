@@ -40,5 +40,7 @@ class LRSchedulerConfig(Config):
     warmup_unit: str = "batches"  # [epochs, batches]
     warmup_percentage: float = 0.0  # warm up percentage
     min_lr: float = 0.0  # minimum learning rate
-    exponential_config: ExponentialLRSchedulerConfig = ExponentialLRSchedulerConfig()  # type:ignore
+    exponential_config: ExponentialLRSchedulerConfig = (
+        ExponentialLRSchedulerConfig()
+    )  # type:ignore
     step_config: StepLRSchedulerConfig = StepLRSchedulerConfig()  # type:ignore

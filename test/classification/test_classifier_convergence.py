@@ -32,7 +32,7 @@ class ClassifierConvergenceTest(unittest.TestCase):
 
     @pytest.mark.complex
     def test_convergence(self):
-        """ Test multitask classifier convergence with two tasks."""
+        """Test multitask classifier convergence with two tasks."""
 
         dataloaders = []
 

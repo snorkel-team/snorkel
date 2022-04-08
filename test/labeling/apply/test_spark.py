@@ -15,7 +15,7 @@ from snorkel.types import DataPoint
 
 @preprocessor()
 def square(x: Row) -> Row:
-    return Row(num=x.num, num_squared=x.num ** 2)
+    return Row(num=x.num, num_squared=x.num**2)
 
 
 @labeling_function()
@@ -91,7 +91,7 @@ class TestSparkApplier(unittest.TestCase):
 
         @preprocessor(memoize=True)
         def square_memoize(x: DataPoint) -> DataPoint:
-            return Row(num=x.num, num_squared=x.num ** 2)
+            return Row(num=x.num, num_squared=x.num**2)
 
         @labeling_function(pre=[square_memoize])
         def fp_memoized(x: DataPoint) -> int:

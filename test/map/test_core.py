@@ -59,12 +59,12 @@ class SquareHitTracker:
 
     def __call__(self, x: float) -> float:
         self.n_hits += 1
-        return x ** 2
+        return x**2
 
 
 @lambda_mapper()
 def square(x: DataPoint) -> DataPoint:
-    x.num_squared = x.num ** 2
+    x.num_squared = x.num**2
     return x
 
 
@@ -356,7 +356,7 @@ class TestMapperCore(unittest.TestCase):
 
             @lambda_mapper
             def square(x: DataPoint) -> DataPoint:
-                x.num_squared = x.num ** 2
+                x.num_squared = x.num**2
                 return x
 
     def test_mapper_with_args_kwargs(self) -> None:

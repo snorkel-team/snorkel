@@ -22,7 +22,7 @@ torch>=1.2.0,<2.0.0
 munkres>=1.0.6
 
 # LF dependency learning
-networkx>=2.2,<2.6
+networkx>=2.2,<2.7
 
 # Model introspection tools
 tensorboard>=2.0.0,<2.7.0
@@ -46,7 +46,7 @@ dill>=0.3.0,<0.4.0
 black>=19.3b0,<20.0
 flake8>=3.7.0,<4.0.0
 isort>=4.3.0,<5.0.0
-mypy>=0.800,<0.920
+mypy==0.720
 pydocstyle>=4.0.0,<5.0.0
 pytest>=5.0.0,<6.0.0
 pytest-cov>=2.7.0,<3.0.0

@@ -3,7 +3,7 @@
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/snorkel)
 ![PyPI](https://img.shields.io/pypi/v/snorkel)
 ![Conda](https://img.shields.io/conda/v/conda-forge/snorkel)
-[![build](https://travis-ci.com/snorkel-team/snorkel.svg?branch=master)](https://travis-ci.com/snorkel-team/snorkel?branch=master)
+[![CircleCI](https://circleci.com/gh/snorkel-team/snorkel/tree/master.svg?style=svg)](https://circleci.com/gh/snorkel-team/snorkel/tree/master)
 [![docs](https://readthedocs.org/projects/snorkel/badge/?version=master)](https://snorkel.readthedocs.io/en/master)
 [![coverage](https://codecov.io/gh/snorkel-team/snorkel/branch/master/graph/badge.svg)](https://codecov.io/gh/snorkel-team/snorkel/branch/master)
 [![license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)

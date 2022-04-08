@@ -43,7 +43,7 @@ setup(
         "scikit-learn>=0.20.2,<0.25.0",
         "torch>=1.2.0,<2.0.0",
         "tensorboard>=2.0.0,<2.7.0",
-        "networkx>=2.2,<2.6",
+        "networkx>=2.2,<2.7",
     ],
     python_requires=">=3.6",
     keywords="machine-learning ai weak-supervision",

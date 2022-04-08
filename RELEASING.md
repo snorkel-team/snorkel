@@ -91,7 +91,7 @@ Then run `chmod 600 ./.pypirc` so only you can read/write.
        git checkout -b bump-v0.9.1+dev
        git add . -u
        git commit -m "[BUMP]: v0.9.1+dev"
-       git push --set-upstream origin release-v0.9.1+dev
+       git push --set-upstream origin bump-v0.9.1+dev
 
        
 1. Add the new tag to [the Snorkel project on ReadTheDocs](https://readthedocs.org/projects/snorkel),

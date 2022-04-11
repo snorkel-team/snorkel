@@ -1,5 +1,5 @@
 import hashlib
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import numpy as np
 
@@ -69,7 +69,7 @@ def probs_to_preds(
             raise ValueError(
                 f"tie_break_policy={tie_break_policy} policy not recognized."
             )
-    return Y_pred.astype(np.int)
+    return Y_pred.astype(np.int_)
 
 
 def preds_to_probs(preds: np.ndarray, num_classes: int) -> np.ndarray:
@@ -129,7 +129,7 @@ def to_int_label_array(X: np.ndarray, flatten_vector: bool = True) -> np.ndarray
 
 
 def filter_labels(
-    label_dict: Dict[str, np.ndarray], filter_dict: Dict[str, List[int]]
+    label_dict: Dict[str, Optional[np.ndarray]], filter_dict: Dict[str, List[int]]
 ) -> Dict[str, np.ndarray]:
     """Filter out examples from arrays based on specified labels to filter.
 
@@ -195,7 +195,7 @@ def _get_mask(label_array: np.ndarray, filter_values: List[int]) -> np.ndarray:
     np.ndarray
         A boolean mask indicating whether to keep (1) or filter (0) each example
     """
-    mask = np.ones_like(label_array).astype(bool)
+    mask: np.ndarray = np.ones_like(label_array).astype(bool)
     for value in filter_values:
         mask *= np.where(label_array != value, 1, 0).astype(bool)
     return mask

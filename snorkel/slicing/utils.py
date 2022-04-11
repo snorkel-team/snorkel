@@ -36,7 +36,7 @@ def add_slice_labels(
 
     slice_names = S.dtype.names
 
-    Y_dict: Dict[str, np.ndarray] = dataloader.dataset.Y_dict  # type: ignore
+    Y_dict: Dict[str, torch.Tensor] = dataloader.dataset.Y_dict  # type: ignore
     labels = Y_dict[base_task.name]
 
     for slice_name in slice_names:

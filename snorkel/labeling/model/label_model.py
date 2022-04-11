@@ -60,7 +60,7 @@ class TrainConfig(Config):
     lr_scheduler: str = "constant"
     lr_scheduler_config: LRSchedulerConfig = LRSchedulerConfig()  # type: ignore
     prec_init: Union[float, List[float], np.ndarray, torch.Tensor] = 0.7
-    seed: int = np.random.randint(1e6)
+    seed: int = np.random.randint(1e6)  # type: ignore 
     log_freq: int = 10
     mu_eps: Optional[float] = None
 
@@ -557,7 +557,7 @@ class LabelModel(nn.Module, BaseLabeler):
         return loss_1 + loss_2 + self._loss_l2(l2=l2)
 
     def _set_class_balance(
-        self, class_balance: Optional[List[float]], Y_dev: np.ndarray
+        self, class_balance: Optional[List[float]], Y_dev: Optional[np.ndarray] = None,
     ) -> None:
         """Set a prior for the class balance.
 

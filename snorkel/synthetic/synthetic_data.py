@@ -52,7 +52,7 @@ def generate_simple_label_matrix(
     Y = np.random.choice(cardinality, n)
 
     # Generate the label matrix L
-    L = np.empty((n, m), dtype=int)
+    L: np.ndarray = np.empty((n, m), dtype=int)
     for i in range(n):
         for j in range(m):
             L[i, j] = np.random.choice(cardinality + 1, p=P[j, :, Y[i]]) - 1

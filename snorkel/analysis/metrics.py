@@ -68,8 +68,9 @@ def metric_score(
             raise ValueError(
                 "filter_dict must only include keys in ['golds', 'preds', 'probs']"
             )
-
-        label_dict = filter_labels(label_dict, filter_dict)
+        # label_dict is overwritten from type Dict[str, Optional[np.ndarray]]
+        # to Dict[str, np.ndarray]
+        label_dict = filter_labels(label_dict, filter_dict)  # type: ignore
 
     # Confirm that required label sets are available
     func, label_names = METRICS[metric]

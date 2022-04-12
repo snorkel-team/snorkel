@@ -74,16 +74,11 @@ def metric_score(
 
     # Confirm that required label sets are available
     func, label_names = METRICS[metric]
-    label_sets: List[np.ndarray] = []
     for label_name in label_names:
         if label_dict[label_name] is None:
             raise ValueError(f"Metric {metric} requires access to {label_name}.")
 
-        label_set: Optional[np.ndarray] = label_dict[label_name]
-        assert label_set is not None  # mypy
-
-        label_sets.append(label_set)
-
+    label_sets = [label_dict[label_name] for label_name in label_names]
     return func(*label_sets, **kwargs)
 
 

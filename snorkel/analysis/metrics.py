@@ -58,21 +58,23 @@ def metric_score(
     preds = to_int_label_array(preds) if preds is not None else None
 
     # Optionally filter out examples (e.g., abstain predictions or unknown labels)
-    label_dict = {"golds": golds, "preds": preds, "probs": probs}
+    label_dict: Dict[str, Optional[np.ndarray]] = {"golds": golds, "preds": preds, "probs": probs}
     if filter_dict:
         if set(filter_dict.keys()).difference(set(label_dict.keys())):
             raise ValueError(
                 "filter_dict must only include keys in ['golds', 'preds', 'probs']"
             )
-        label_dict = filter_labels(label_dict, filter_dict)
+        # Reassign filtered label_dict to a new variable to avoid
+        # mypy error regarding change variable of invariant type
+        label_dict_filtered: Dict[str, np.ndarray] = filter_labels(label_dict, filter_dict)
 
     # Confirm that required label sets are available
     func, label_names = METRICS[metric]
     for label_name in label_names:
-        if label_dict[label_name] is None:
+        if label_dict_filtered[label_name] is None:
             raise ValueError(f"Metric {metric} requires access to {label_name}.")
 
-    label_sets = [label_dict[label_name] for label_name in label_names]
+    label_sets = [label_dict_filtered[label_name] for label_name in label_names]
     return func(*label_sets, **kwargs)
 
 

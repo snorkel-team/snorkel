@@ -368,7 +368,7 @@ class MultitaskClassifier(nn.Module):
             prob_dict[task_name] = torch.Tensor(np.array(prob_dict_list[task_name]))
 
         if return_preds:
-            pred_dict: Dict[str, torch.Tensor] = defaultdict(np.ndarray)
+            pred_dict: Dict[str, torch.Tensor] = defaultdict(torch.Tensor)
             for task_name, probs in prob_dict.items():
                 pred_dict[task_name] = torch.Tensor(probs_to_preds(probs.numpy()))
 

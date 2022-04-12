@@ -68,19 +68,21 @@ def metric_score(
             raise ValueError(
                 "filter_dict must only include keys in ['golds', 'preds', 'probs']"
             )
-        # Reassign filtered label_dict to a new variable to avoid
-        # mypy error regarding change variable of invariant type
-        label_dict_filtered: Dict[str, np.ndarray] = filter_labels(
-            label_dict, filter_dict
-        )
+
+        label_dict = filter_labels(label_dict, filter_dict)
 
     # Confirm that required label sets are available
     func, label_names = METRICS[metric]
+    label_sets: List[np.ndarray] = []
     for label_name in label_names:
-        if label_dict_filtered[label_name] is None:
+        if label_dict[label_name] is None:
             raise ValueError(f"Metric {metric} requires access to {label_name}.")
 
-    label_sets = [label_dict_filtered[label_name] for label_name in label_names]
+        label_set: Optional[np.ndarray] = label_dict[label_name]
+        assert label_set is not None  # mypy
+
+        label_sets.append(label_set)
+
     return func(*label_sets, **kwargs)
 
 

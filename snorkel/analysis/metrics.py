@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, List, NamedTuple, Optional
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Union
 
 import numpy as np
 import sklearn.metrics as skmetrics
@@ -64,17 +64,17 @@ def metric_score(
             raise ValueError(
                 "filter_dict must only include keys in ['golds', 'preds', 'probs']"
             )
-        # Reassign filtered label_dict to a new variable to avoid
-        # mypy error regarding change variable of invariant type
-        label_dict_filtered: Dict[str, np.ndarray] = filter_labels(label_dict, filter_dict)
+        # label_dict is overwritten from type Dict[str, Optional[np.ndarray]]
+        # to Dict[str, np.ndarray]
+        label_dict = filter_labels(label_dict, filter_dict)  # type: ignore
 
     # Confirm that required label sets are available
     func, label_names = METRICS[metric]
     for label_name in label_names:
-        if label_dict_filtered[label_name] is None:
+        if label_dict[label_name] is None:
             raise ValueError(f"Metric {metric} requires access to {label_name}.")
 
-    label_sets = [label_dict_filtered[label_name] for label_name in label_names]
+    label_sets = [label_dict[label_name] for label_name in label_names]
     return func(*label_sets, **kwargs)
 
 

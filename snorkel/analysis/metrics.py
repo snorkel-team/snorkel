@@ -58,13 +58,19 @@ def metric_score(
     preds = to_int_label_array(preds) if preds is not None else None
 
     # Optionally filter out examples (e.g., abstain predictions or unknown labels)
-    label_dict = {"golds": golds, "preds": preds, "probs": probs}
+    label_dict: Dict[str, Optional[np.ndarray]] = {
+        "golds": golds,
+        "preds": preds,
+        "probs": probs,
+    }
     if filter_dict:
         if set(filter_dict.keys()).difference(set(label_dict.keys())):
             raise ValueError(
                 "filter_dict must only include keys in ['golds', 'preds', 'probs']"
             )
-        label_dict = filter_labels(label_dict, filter_dict)
+        # label_dict is overwritten from type Dict[str, Optional[np.ndarray]]
+        # to Dict[str, np.ndarray]
+        label_dict = filter_labels(label_dict, filter_dict)  # type: ignore
 
     # Confirm that required label sets are available
     func, label_names = METRICS[metric]

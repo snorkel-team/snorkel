@@ -5,12 +5,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-## [0.9.9]
+## [0.9.10]
 ### [Breaking Changes]
 ### [Added]
 ### [Changed]
 ### [Deprecated]
 ### [Removed]
+
+## [0.9.9] - 2022-04-14
+### [Added]
+
+* PR #1690: Bumping numpy version for Mac M1 compat
+* PR #1696: Fix linting
+* PR #1694: Fix test loss
+* PR #1693: Update black version to fix build
+* PR #1671: Fixing flaky test
+* PR #1688: Fix branch filtering for complex tests
+* PR #1686: Switch to CircleCI badge
+* PR #1685: Migrating travis -> circle 
+
+
+### [Contributors]
+
+Thanks to @rsmith49, @zexuan-zhou, @humzaiqbal, @fpoms, @crawlingcub, and @henryre for contributions!
+
 
 ## [0.9.8] - 2021-09-23
 ### [Added]

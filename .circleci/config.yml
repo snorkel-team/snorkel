@@ -81,7 +81,7 @@ jobs:
     docker:
       - image: cimg/python:3.6
     environment:
-      TOXENV: coverage,doctest,type,check 
+      TOXENV: coverage,complex,spark,doctest,type,check 
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
 
@@ -111,7 +111,7 @@ jobs:
     docker:
       - image: cimg/python:3.7
     environment:
-      TOXENV: complex,spark,type,check
+      TOXENV: coverage,complex,spark,doctest,type,check 
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
 
@@ -143,12 +143,9 @@ workflows:
 
   Interation-Tests: 
     jobs:
-      - Python38-Integration-Tests:
-          <<: *run_complex
-      - Python37-Integration-Tests:
-         <<: *run_complex
-      - Python36-Integration-Tests:
-          <<: *run_complex
+      - Python38-Integration-Tests
+      - Python37-Integration-Tests
+      - Python36-Integration-Tests
   Unit-Tests:
     jobs:
       - Python37-Unit-Tests

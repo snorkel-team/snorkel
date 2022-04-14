@@ -105,6 +105,7 @@ jobs:
       - run:
           name: "Run Tox"
           command:  tox
+          no_output_timeout: 30m
 
   Python37-Integration-Tests: 
     docker:
@@ -120,6 +121,7 @@ jobs:
       - run:
           name: "Run Tox"
           command:  tox
+          no_output_timeout: 30m
 
   Python36-Integration-Tests: 
     docker:

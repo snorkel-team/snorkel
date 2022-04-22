@@ -34,7 +34,11 @@ class SpacyPreprocessor(Preprocessor):
         SpaCy model to load
         See https://spacy.io/usage/models#usage
     disable
-        List of pipeline components to disable
+        List of pipeline components to disable, component and its data will be loaded with the pipeline,
+        but it will be disabled by default and not run as part of the processing pipeline.
+        See https://spacy.io/usage/processing-pipelines#disabling
+    exclude
+        List of pipline components to exclude, selected components will not be loaded
         See https://spacy.io/usage/processing-pipelines#disabling
     pre
         Preprocessors to run before this preprocessor is executed
@@ -52,6 +56,7 @@ class SpacyPreprocessor(Preprocessor):
         doc_field: str,
         language: str = EN_CORE_WEB_SM,
         disable: Optional[List[str]] = None,
+        exclude: Optional[List[str]] = None,
         pre: Optional[List[BasePreprocessor]] = None,
         memoize: bool = False,
         memoize_key: Optional[HashingFunction] = None,
@@ -69,7 +74,7 @@ class SpacyPreprocessor(Preprocessor):
         self.gpu = gpu
         if self.gpu:
             spacy.prefer_gpu()
-        self._nlp = spacy.load(language, disable=disable or [])
+        self._nlp = spacy.load(language, disable=disable or [], exclude=exclude or [])
 
     def run(self, text: str) -> FieldMap:  # type: ignore
         """Run the SpaCy model on input text.

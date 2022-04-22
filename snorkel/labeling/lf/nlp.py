@@ -17,6 +17,7 @@ class SpacyPreprocessorParameters(NamedTuple):
     doc_field: str
     language: str
     disable: Optional[List[str]]
+    exclude: Optional[List[str]]
     pre: List[BasePreprocessor]
     memoize: bool
     memoize_key: Optional[HashingFunction]
@@ -48,6 +49,7 @@ class BaseNLPLabelingFunction(LabelingFunction):
         doc_field: str,
         language: str,
         disable: Optional[List[str]],
+        exclude: Optional[List[str]],
         pre: List[BasePreprocessor],
         memoize: bool,
         memoize_key: Optional[HashingFunction],
@@ -60,6 +62,7 @@ class BaseNLPLabelingFunction(LabelingFunction):
             doc_field=doc_field,
             language=language,
             disable=disable,
+            exclude=exclude,
             pre=pre,
             memoize=memoize,
             memoize_key=memoize_key,
@@ -84,6 +87,7 @@ class BaseNLPLabelingFunction(LabelingFunction):
         doc_field: str = "doc",
         language: str = EN_CORE_WEB_SM,
         disable: Optional[List[str]] = None,
+        exclude: Optional[List[str]] = None,
         memoize: bool = True,
         memoize_key: Optional[HashingFunction] = None,
         gpu: bool = False,
@@ -93,6 +97,7 @@ class BaseNLPLabelingFunction(LabelingFunction):
             doc_field,
             language,
             disable,
+            exclude,
             pre or [],
             memoize,
             memoize_key,
@@ -140,7 +145,11 @@ class NLPLabelingFunction(BaseNLPLabelingFunction):
         spaCy model to load
         See https://spacy.io/usage/models#usage
     disable
-        List of pipeline components to disable
+        List of pipeline components to disable, component and its data will be loaded with the pipeline,
+        but it will be disabled by default and not run as part of the processing pipeline.
+        See https://spacy.io/usage/processing-pipelines#disabling
+    exclude
+        List of pipline components to exclude, selected components will not be loaded
         See https://spacy.io/usage/processing-pipelines#disabling
     memoize
         Memoize preprocessor outputs?
@@ -195,6 +204,7 @@ class base_nlp_labeling_function(labeling_function):
         doc_field: str = "doc",
         language: str = EN_CORE_WEB_SM,
         disable: Optional[List[str]] = None,
+        exclude: Optional[List[str]] = None,
         memoize: bool = True,
         memoize_key: Optional[HashingFunction] = None,
         gpu: bool = False,
@@ -204,6 +214,7 @@ class base_nlp_labeling_function(labeling_function):
         self.doc_field = doc_field
         self.language = language
         self.disable = disable
+        self.exclude = exclude
         self.memoize = memoize
         self.memoize_key = memoize_key
         self.gpu = gpu
@@ -233,6 +244,7 @@ class base_nlp_labeling_function(labeling_function):
             doc_field=self.doc_field,
             language=self.language,
             disable=self.disable,
+            exclude = self.exclude,
             memoize=self.memoize,
             memoize_key=self.memoize_key,
             gpu=self.gpu,
@@ -258,7 +270,11 @@ class nlp_labeling_function(base_nlp_labeling_function):
         spaCy model to load
         See https://spacy.io/usage/models#usage
     disable
-        List of pipeline components to disable
+        List of pipeline components to disable, component and its data will be loaded with the pipeline,
+        but it will be disabled by default and not run as part of the processing pipeline.
+        See https://spacy.io/usage/processing-pipelines#disabling
+    exclude
+        List of pipline components to exclude, selected components will not be loaded
         See https://spacy.io/usage/processing-pipelines#disabling
     memoize
         Memoize preprocessor outputs?

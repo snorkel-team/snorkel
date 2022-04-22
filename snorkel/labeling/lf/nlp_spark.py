@@ -32,7 +32,11 @@ class SparkNLPLabelingFunction(BaseNLPLabelingFunction):
         SpaCy model to load
         See https://spacy.io/usage/models#usage
     disable
-        List of pipeline components to disable
+        List of pipeline components to disable, component and its data will be loaded with the pipeline,
+        but it will be disabled by default and not run as part of the processing pipeline.
+        See https://spacy.io/usage/processing-pipelines#disabling
+    exclude
+        List of pipline components to exclude, selected components will not be loaded
         See https://spacy.io/usage/processing-pipelines#disabling
     memoize
         Memoize preprocessor outputs?
@@ -80,7 +84,11 @@ class spark_nlp_labeling_function(base_nlp_labeling_function):
         SpaCy model to load
         See https://spacy.io/usage/models#usage
     disable
-        List of pipeline components to disable
+        List of pipeline components to disable, component and its data will be loaded with the pipeline,
+        but it will be disabled by default and not run as part of the processing pipeline.
+        See https://spacy.io/usage/processing-pipelines#disabling
+    exclude
+        List of pipline components to exclude, selected components will not be loaded
         See https://spacy.io/usage/processing-pipelines#disabling
     memoize
         Memoize preprocessor outputs?

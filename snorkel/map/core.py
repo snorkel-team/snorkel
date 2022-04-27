@@ -1,6 +1,6 @@
 import inspect
 import pickle
-from collections import Hashable
+from collections.abc import Hashable
 from types import SimpleNamespace
 from typing import Any, Callable, Dict, List, Mapping, Optional
 

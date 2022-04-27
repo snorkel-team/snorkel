@@ -18,7 +18,7 @@ pandas>=1.0.0,<2.0.0
 tqdm>=4.33.0,<5.0.0
 
 # Internal models
-scikit-learn>=0.20.2,<0.25.0
+scikit-learn>=0.20.2,<1.1
 torch>=1.2.0,<2.0.0
 munkres>=1.0.6
 
@@ -35,8 +35,8 @@ spacy>=2.1.0,<3.0.0
 blis>=0.3.0,<=0.7.7
 
 # Dask (parallelism)
-dask[dataframe]>=2.1.0,<2.31.0
-distributed>=2.1.0,<2.31.0
+dask[dataframe]>=2020.12.0,<2022.04.1
+distributed>=2020.12.0,<2022.04.1
 
 # Dill (serialization)
 dill>=0.3.0,<0.4.0
@@ -47,7 +47,7 @@ dill>=0.3.0,<0.4.0
 black>=22.3
 flake8>=3.7.0,<4.0.0
 isort>=4.3.0,<5.0.0
-mypy==0.720
+mypy==0.931
 pydocstyle>=4.0.0,<5.0.0
 pytest>=5.0.0,<6.0.0
 pytest-cov>=2.7.0,<3.0.0

@@ -25,7 +25,7 @@ Then run `chmod 600 ./.pypirc` so only you can read/write.
 1. Make sure you're in the top-level `snorkel` directory.
 1. Make certain your branch is in sync with head:
    
-       $ git pull origin master
+       $ git pull origin main
 
 1. Make sure `CHANGELOG.md` is up to date for the release: compare against PRs
    merged since the last release & update top heading with release date.
@@ -39,7 +39,7 @@ Then run `chmod 600 ./.pypirc` so only you can read/write.
        git commit -m "[RELEASE]: v0.9.0"
        git push --set-upstream origin release-v0.9.0
 
-1. Once the PR is approved, merge it and pull master locally.
+1. Once the PR is approved, merge it and pull main locally.
 
 1. Tag the release:
 
@@ -95,7 +95,7 @@ Then run `chmod 600 ./.pypirc` so only you can read/write.
 
        
 1. Add the new tag to [the Snorkel project on ReadTheDocs](https://readthedocs.org/projects/snorkel),
-    * Trigger a build for master to pull new tags.
+    * Trigger a build for main to pull new tags.
     * Go to the "Versions" tab, and "Activate" the new tag.
     * Go to Admin/Advanced to set this tag as the new default version.
     * In "Overview", make sure a build is triggered:

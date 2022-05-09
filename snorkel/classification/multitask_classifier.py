@@ -360,17 +360,17 @@ class MultitaskClassifier(nn.Module):
                 prob_dict_list[label_name].extend(prob_batch_dict[task_name])
                 gold_dict_list[label_name].extend(Y.cpu().numpy())
 
-        gold_dict: Dict[str, np.ndarray] = {}
-        prob_dict: Dict[str, np.ndarray] = {}
+        gold_dict: Dict[str, torch.Tensor] = {}
+        prob_dict: Dict[str, torch.Tensor] = {}
 
         for task_name in gold_dict_list:
-            gold_dict[task_name] = np.array(gold_dict_list[task_name])
-            prob_dict[task_name] = np.array(prob_dict_list[task_name])
+            gold_dict[task_name] = torch.Tensor(np.array(gold_dict_list[task_name]))
+            prob_dict[task_name] = torch.Tensor(np.array(prob_dict_list[task_name]))
 
         if return_preds:
-            pred_dict: Dict[str, np.ndarray] = defaultdict(list)
+            pred_dict: Dict[str, torch.Tensor] = defaultdict(torch.Tensor)
             for task_name, probs in prob_dict.items():
-                pred_dict[task_name] = probs_to_preds(probs)
+                pred_dict[task_name] = torch.Tensor(probs_to_preds(probs.numpy()))
 
         results = {"golds": gold_dict, "probs": prob_dict}
 
@@ -431,9 +431,9 @@ class MultitaskClassifier(nn.Module):
             # Score and record metrics for each set of predictions
             for label_name, task_name in labels_to_tasks.items():
                 metric_scores = self.scorers[task_name].score(
-                    golds=results["golds"][label_name],
-                    preds=results["preds"][label_name],
-                    probs=results["probs"][label_name],
+                    golds=results["golds"][label_name].numpy(),
+                    preds=results["preds"][label_name].numpy(),
+                    probs=results["probs"][label_name].numpy(),
                 )
 
                 for metric_name, metric_value in metric_scores.items():

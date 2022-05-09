@@ -10,7 +10,7 @@ from snorkel.types import DataPoint
 
 @preprocessor()
 def square(x: DataPoint) -> DataPoint:
-    x.num = x.num ** 2
+    x.num = x.num**2
     return x
 
 
@@ -74,7 +74,7 @@ class TestLabelingFunction(unittest.TestCase):
         self._run_lf(lf)
 
     def test_labeling_function_decorator_args(self) -> None:
-        db = [3, 6, 43 ** 2]
+        db = [3, 6, 43**2]
 
         @labeling_function(name="my_lf", resources=dict(db=db), pre=[square])
         def lf(x: DataPoint, db: List[int]) -> int:

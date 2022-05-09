@@ -68,8 +68,8 @@ class SlicingConvergenceTest(unittest.TestCase):
 
     @pytest.mark.complex
     def test_convergence(self):
-        """ Test slicing convergence with 1 slice task that represents ~25% of
-        the data. """
+        """Test slicing convergence with 1 slice task that represents ~25% of
+        the data."""
 
         dataloaders = []
         for df, split in [(self.df_train, "train"), (self.df_valid, "valid")]:
@@ -103,9 +103,9 @@ class SlicingConvergenceTest(unittest.TestCase):
         scores = model.score(dataloaders)
 
         # Confirm near perfect scores
-        self.assertGreater(scores["task/TestData/valid/accuracy"], 0.95)
-        self.assertGreater(scores["task_slice:h_pred/TestData/valid/accuracy"], 0.95)
-        self.assertGreater(scores["task_slice:h_ind/TestData/valid/f1"], 0.95)
+        self.assertGreater(scores["task/TestData/valid/accuracy"], 0.94)
+        self.assertGreater(scores["task_slice:h_pred/TestData/valid/accuracy"], 0.94)
+        self.assertGreater(scores["task_slice:h_ind/TestData/valid/f1"], 0.94)
 
         # Calculate/check train/val loss
         train_dataset = dataloaders[0].dataset
@@ -122,8 +122,8 @@ class SlicingConvergenceTest(unittest.TestCase):
 
     @pytest.mark.complex
     def test_performance(self):
-        """ Test slicing performance with 2 corresponding slice tasks that
-        represent roughly <10% of the data. """
+        """Test slicing performance with 2 corresponding slice tasks that
+        represent roughly <10% of the data."""
 
         dataloaders = []
         for df, split in [(self.df_train, "train"), (self.df_valid, "valid")]:

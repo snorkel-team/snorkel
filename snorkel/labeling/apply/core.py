@@ -69,7 +69,7 @@ class BaseLFApplier:
         if self._use_recarray:
             n_rows, _ = L.shape
             dtype = [(name, np.int64) for name in self._lf_names]
-            recarray = np.recarray(n_rows, dtype=dtype)
+            recarray: np.ndarray = np.recarray(n_rows, dtype=dtype)
             for idx, name in enumerate(self._lf_names):
                 recarray[name] = L[:, idx]
 

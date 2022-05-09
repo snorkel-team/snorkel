@@ -112,8 +112,8 @@ Any test that runs longer than half a second should be marked with the
 `@pytest.mark.complex` decorator.
 Typically, these will be integration tests or tests that verify complex
 properties like model convergence.
-We exclude long-running tests from the default `tox` and Travis builds
-on non-master and non-release branches to keep things moving fast.
+We exclude long-running tests from the default `tox` and Circle CI builds
+on non-main and non-release branches to keep things moving fast.
 If you're touching areas of the code that could break a long-running test,
 you should include the results of `tox -e complex` in the PR's test plan.
 To see the durations of the 10 longest-running tests, run
@@ -124,7 +124,7 @@ To see the durations of the 10 longest-running tests, run
 
 PySpark tests are invoked separately from the rest since they require
 installing Java and the large PySpark package.
-They are executed on Travis, but not by default for a local `tox` command.
+They are executed on Circle CI, but not by default for a local `tox` command.
 If you're making changes to Spark-based operators, make sure you have
 Java 8 installed locally and then run `tox -e spark`.
 If you add a test that imports PySpark mark it with the
@@ -138,7 +138,7 @@ action (e.g. `.collect()`).
 ### Submitting PRs
 
 When submitting a PR, make sure to use the preformatted template.
-Except in special cases, all PRs should be against `master`.
+Except in special cases, all PRs should be against `main`.
 Avoid using "staging branches" as much as possible.
 If you want to add complicated features, please
 [stack your PRs](https://graysonkoonce.com/stacked-pull-requests-keeping-github-diffs-small/)
@@ -149,8 +149,8 @@ It's unlikely that we'll approve any
 
 ### Requesting reviews
 
-Direct commits to master are blocked, and PRs require an approving review
-to merge into master.
+Direct commits to main are blocked, and PRs require an approving review
+to merge into main.
 By convention, the Snorkel maintainers will review PRs when:
   * An initial review has been requested
   * A maintainer is tagged in the PR comments and asked to complete a review

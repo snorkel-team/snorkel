@@ -104,7 +104,9 @@ jobs:
       - setup_dependencies
       - run:
           name: "Run Tox"
-          command:  tox
+          command:  |
+            export PYTHONUNBUFFERED=1
+            tox
           no_output_timeout: 30m
 
   Python37-Integration-Tests: 
@@ -120,7 +122,9 @@ jobs:
       - setup_dependencies
       - run:
           name: "Run Tox"
-          command:  tox
+          command:  |
+            export PYTHONUNBUFFERED=1
+            tox
           no_output_timeout: 30m
 
   Python36-Integration-Tests: 

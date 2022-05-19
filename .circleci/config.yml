@@ -98,6 +98,8 @@ jobs:
       TOXENV: complex,type,check
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+    resource_class: large
+    
 
     steps:
       - checkout
@@ -116,6 +118,7 @@ jobs:
       TOXENV: complex,spark,type,check
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+    resource_class: large
 
     steps:
       - checkout
@@ -134,6 +137,7 @@ jobs:
       TOXENV: coverage,complex,spark,doctest,type,check 
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+    resource_class: large
 
     steps:
       - checkout

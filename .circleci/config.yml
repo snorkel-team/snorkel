@@ -93,7 +93,7 @@ jobs:
           command:  tox
   Python38-Integration-Tests: 
     docker:
-      - image: cimg/python:3.8
+      - image: cimg/python:3.8.12
     environment:
       TOXENV: complex,type,check
       TOX_INSTALL_DIR: .env
@@ -107,7 +107,7 @@ jobs:
           command:  |
             export PYTHONUNBUFFERED=1
             tox
-          no_output_timeout: 30m
+          no_output_timeout: 10m
 
   Python37-Integration-Tests: 
     docker:
@@ -125,7 +125,7 @@ jobs:
           command:  |
             export PYTHONUNBUFFERED=1
             tox
-          no_output_timeout: 30m
+          no_output_timeout: 10m
 
   Python36-Integration-Tests: 
     docker:

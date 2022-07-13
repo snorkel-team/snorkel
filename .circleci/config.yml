@@ -159,7 +159,7 @@ workflows:
           <<: *run_complex
   Unit-Tests:
     jobs:
-      - Python37-Unit-Tests
-      - Python36-Unit-Tests
-      - Python38-Unit-Tests
+      - Python38-Integration-Tests
+      - Python37-Integration-Tests
+      - Python36-Integration-Tests
 

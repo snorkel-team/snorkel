@@ -95,7 +95,7 @@ jobs:
     docker:
       - image: cimg/python:3.8.12
     environment:
-      TOXENV: complex,type,check
+      TOXENV: coverage,complex,spark,doctest,type,check 
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
     resource_class: large
@@ -115,7 +115,7 @@ jobs:
     docker:
       - image: cimg/python:3.7
     environment:
-      TOXENV: complex,spark,type,check
+      TOXENV: coverage,complex,spark,doctest,type,check 
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
     resource_class: large

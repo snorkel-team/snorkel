@@ -1,3 +1,4 @@
+import logging
 import random
 import unittest
 from typing import List
@@ -81,32 +82,32 @@ class SlicingConvergenceTest(unittest.TestCase):
         # Apply SFs
         slicing_functions = [h]  # high coverage slice
         slice_names = [sf.name for sf in slicing_functions]
-        print("STARTING APPLYING")
+        logging.info("STARTING APPLYING")
         applier = PandasSFApplier(slicing_functions)
         S_train = applier.apply(self.df_train, progress_bar=False)
         S_valid = applier.apply(self.df_valid, progress_bar=False)
-        print("FINISHED APPLYING")
+        logging.info("FINISHED APPLYING")
 
         self.assertEqual(S_train.shape, (self.N_TRAIN,))
         self.assertEqual(S_valid.shape, (self.N_VALID,))
         self.assertIn("h", S_train.dtype.names)
-        print("ADDING SLISCE LABELS")
+        logging.info("ADDING SLISCE LABELS")
 
         # Add slice labels
         add_slice_labels(dataloaders[0], base_task, S_train)
         add_slice_labels(dataloaders[1], base_task, S_valid)
-        print("CONVERTING SLICE TASKS")
+        logging.info("CONVERTING SLICE TASKS")
 
         # Convert to slice tasks
         tasks = convert_to_slice_tasks(base_task, slice_names)
         model = MultitaskClassifier(tasks=tasks)
-        print("TRAINING MODEL")
+        logging.info("TRAINING MODEL")
 
         # Train
         trainer = Trainer(lr=0.001, n_epochs=50, progress_bar=True)
-        print("INITIALIZED TRAINING")
+        logging.info("INITIALIZED TRAINING")
         trainer.fit(model, dataloaders)
-        print("TRAINED MODEL")
+        logging.info("TRAINED MODEL")
         scores = model.score(dataloaders)
 
         # Confirm near perfect scores

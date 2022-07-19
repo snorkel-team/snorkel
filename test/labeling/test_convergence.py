@@ -1,3 +1,4 @@
+import logging
 import random
 import unittest
 
@@ -10,7 +11,7 @@ from snorkel.labeling import LabelingFunction, PandasLFApplier, labeling_functio
 from snorkel.labeling.model import LabelModel
 from snorkel.preprocess import preprocessor
 from snorkel.types import DataPoint
-import logging
+
 
 def create_data(n: int) -> pd.DataFrame:
     """Create random pairs x1, x2 in [-1., 1.] with label x1 > x2 + 0.25."""

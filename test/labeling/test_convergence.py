@@ -77,15 +77,21 @@ class LabelingConvergenceTest(unittest.TestCase):
             + [get_positive_labeling_function(divisor) for divisor in range(2, 9)]
             + [get_negative_labeling_function(divisor) for divisor in range(2, 9)]
         )
+        print("CREATED LABELING FUNCTIONS")
         applier = PandasLFApplier(labeling_functions)
+        print("APPLED LABEL FUNCTIONS")
         L_train = applier.apply(self.df_train, progress_bar=False)
+        print("CREATED L TRAIN")
 
         self.assertEqual(L_train.shape, (self.N_TRAIN, len(labeling_functions)))
 
         # Train LabelModel
         label_model = LabelModel(cardinality=self.cardinality, verbose=False)
+        print("INIT LABEL MODEL")
         label_model.fit(L_train, n_epochs=100, lr=0.01, l2=0.0)
+        print("FIT LABEL MODEL")
         Y_lm = label_model.predict_proba(L_train).argmax(axis=1)
+        print("PREDICTED LABEL MODEL")
         Y = self.df_train.y
         err = np.where(Y != Y_lm, 1, 0).sum() / self.N_TRAIN
         self.assertLess(err, 0.06)

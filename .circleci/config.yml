@@ -56,6 +56,7 @@ jobs:
       TOXENV: coverage,doctest,type,check 
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
     steps:
       - checkout
@@ -71,6 +72,7 @@ jobs:
       TOXENV: coverage,doctest,type,check 
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
     steps:
       - checkout

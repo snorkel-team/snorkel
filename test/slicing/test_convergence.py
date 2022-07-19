@@ -98,7 +98,7 @@ class SlicingConvergenceTest(unittest.TestCase):
         model = MultitaskClassifier(tasks=tasks)
 
         # Train
-        trainer = Trainer(lr=0.001, n_epochs=5, progress_bar=True)
+        trainer = Trainer(lr=0.001, n_epochs=10, progress_bar=True)
         trainer.fit(model, dataloaders)
         scores = model.score(dataloaders)
 
@@ -149,7 +149,7 @@ class SlicingConvergenceTest(unittest.TestCase):
 
         # Train
         # NOTE: Needs more epochs to convergence with more heads
-        trainer = Trainer(lr=0.001, n_epochs=5, progress_bar=False)
+        trainer = Trainer(lr=0.001, n_epochs=10, progress_bar=False)
         trainer.fit(model, dataloaders)
         scores = model.score(dataloaders)
 

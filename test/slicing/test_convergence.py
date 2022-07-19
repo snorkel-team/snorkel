@@ -84,8 +84,8 @@ class SlicingConvergenceTest(unittest.TestCase):
         slice_names = [sf.name for sf in slicing_functions]
         logging.info("STARTING APPLYING")
         applier = PandasSFApplier(slicing_functions)
-        S_train = applier.apply(self.df_train, progress_bar=False)
-        S_valid = applier.apply(self.df_valid, progress_bar=False)
+        S_train = applier.apply(self.df_train, progress_bar=True)
+        S_valid = applier.apply(self.df_valid, progress_bar=True)
         logging.info("FINISHED APPLYING")
 
         self.assertEqual(S_train.shape, (self.N_TRAIN,))

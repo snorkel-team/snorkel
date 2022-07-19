@@ -53,4 +53,4 @@ pytest>=5.0.0,<6.0.0
 pytest-cov>=2.7.0,<3.0.0
 pytest-doctestplus>=0.3.0,<0.4.0
 tox>=3.13.0,<4.0.0
-pip install protobuf==3.20.*
+pip install protobuf==3.20.1

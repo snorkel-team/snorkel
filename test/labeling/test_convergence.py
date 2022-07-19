@@ -82,7 +82,7 @@ class LabelingConvergenceTest(unittest.TestCase):
         applier = PandasLFApplier(labeling_functions)
         logging.info("APPLED LABEL FUNCTIONS")
         logging.debug("APPLED LABEL FUNCTIONS")
-        L_train = applier.apply(self.df_train, progress_bar=False)
+        L_train = applier.apply(self.df_train, progress_bar=True)
         logging.info("CREATED L TRAIN")
 
         self.assertEqual(L_train.shape, (self.N_TRAIN, len(labeling_functions)))

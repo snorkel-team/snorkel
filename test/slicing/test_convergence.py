@@ -71,6 +71,7 @@ class SlicingConvergenceTest(unittest.TestCase):
     def test_convergence(self):
         """Test slicing convergence with 1 slice task that represents ~25% of
         the data."""
+        assert 1 == 3
 
         dataloaders = []
         for df, split in [(self.df_train, "train"), (self.df_valid, "valid")]:

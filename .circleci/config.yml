@@ -1,3 +1,5 @@
+
+
 # Use the latest 2.1 version of CircleCI pipeline process engine.
 version: 2.1
 
@@ -36,12 +38,12 @@ commands:
           command: pip install -U codecov
       - steps: << parameters.after-deps >>
 
-# We want to make sure we run this only on master branch, release, or when we make tags
+# We want to make sure we run this only on main branch, release, or when we make tags
 run_complex: &run_complex
   filters:
     branches:
       only:
-        - master
+        - main
         - /release-v.*/
     tags:
       only: /.*/
@@ -93,23 +95,18 @@ jobs:
           command:  tox
   Python38-Integration-Tests: 
     docker:
-      - image: cimg/python:3.8.12
+      - image: cimg/python:3.8
     environment:
       TOXENV: coverage,complex,spark,doctest,type,check 
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
-    resource_class: large
-    
 
     steps:
       - checkout
       - setup_dependencies
       - run:
           name: "Run Tox"
-          command:  |
-            export PYTHONUNBUFFERED=1
-            tox
-          no_output_timeout: 10m
+          command:  tox
 
   Python37-Integration-Tests: 
     docker:
@@ -118,17 +115,13 @@ jobs:
       TOXENV: coverage,complex,spark,doctest,type,check 
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
-    resource_class: large
 
     steps:
       - checkout
       - setup_dependencies
       - run:
           name: "Run Tox"
-          command:  |
-            export PYTHONUNBUFFERED=1
-            tox
-          no_output_timeout: 10m
+          command:  tox
 
   Python36-Integration-Tests: 
     docker:
@@ -137,7 +130,6 @@ jobs:
       TOXENV: coverage,complex,spark,doctest,type,check 
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
-    resource_class: large
 
     steps:
       - checkout
@@ -162,4 +154,3 @@ workflows:
       - Python37-Unit-Tests
       - Python36-Unit-Tests
       - Python38-Unit-Tests
-

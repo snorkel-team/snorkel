@@ -185,13 +185,14 @@ class Trainer:
         self._reset_losses()
 
         for epoch_num in range(self.config.n_epochs):
-            logging.warning(f'Starting epoch {epoch_num}')
             batches = tqdm(
                 enumerate(self.batch_scheduler.get_batches(train_dataloaders)),
                 total=self.n_batches_per_epoch,
                 disable=(not self.config.progress_bar),
                 desc=f"Epoch {epoch_num}:",
             )
+            if epoch_num == self.config.n_epochs - 1:
+                assert 1 == 3
             for batch_num, (batch, dataloader) in batches:
                 X_dict, Y_dict = batch
 

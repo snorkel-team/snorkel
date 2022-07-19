@@ -86,7 +86,7 @@ class LabelingConvergenceTest(unittest.TestCase):
         self.assertEqual(L_train.shape, (self.N_TRAIN, len(labeling_functions)))
 
         # Train LabelModel
-        label_model = LabelModel(cardinality=self.cardinality, verbose=False)
+        label_model = LabelModel(cardinality=self.cardinality, verbose=True)
         print("INIT LABEL MODEL")
         label_model.fit(L_train, n_epochs=100, lr=0.01, l2=0.0)
         print("FIT LABEL MODEL")

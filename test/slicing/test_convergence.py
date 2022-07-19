@@ -1,4 +1,3 @@
-import logging
 import random
 import unittest
 from typing import List
@@ -71,7 +70,6 @@ class SlicingConvergenceTest(unittest.TestCase):
     def test_convergence(self):
         """Test slicing convergence with 1 slice task that represents ~25% of
         the data."""
-        assert 1 == 3
 
         dataloaders = []
         for df, split in [(self.df_train, "train"), (self.df_valid, "valid")]:
@@ -83,32 +81,25 @@ class SlicingConvergenceTest(unittest.TestCase):
         # Apply SFs
         slicing_functions = [h]  # high coverage slice
         slice_names = [sf.name for sf in slicing_functions]
-        logging.info("STARTING APPLYING")
         applier = PandasSFApplier(slicing_functions)
-        S_train = applier.apply(self.df_train, progress_bar=True)
-        S_valid = applier.apply(self.df_valid, progress_bar=True)
-        logging.info("FINISHED APPLYING")
+        S_train = applier.apply(self.df_train, progress_bar=False)
+        S_valid = applier.apply(self.df_valid, progress_bar=False)
 
         self.assertEqual(S_train.shape, (self.N_TRAIN,))
         self.assertEqual(S_valid.shape, (self.N_VALID,))
         self.assertIn("h", S_train.dtype.names)
-        logging.info("ADDING SLISCE LABELS")
 
         # Add slice labels
         add_slice_labels(dataloaders[0], base_task, S_train)
         add_slice_labels(dataloaders[1], base_task, S_valid)
-        logging.info("CONVERTING SLICE TASKS")
 
         # Convert to slice tasks
         tasks = convert_to_slice_tasks(base_task, slice_names)
         model = MultitaskClassifier(tasks=tasks)
-        logging.info("TRAINING MODEL")
 
         # Train
-        trainer = Trainer(lr=0.001, n_epochs=50, progress_bar=True)
-        logging.info("INITIALIZED TRAINING")
+        trainer = Trainer(lr=0.001, n_epochs=1, progress_bar=True)
         trainer.fit(model, dataloaders)
-        logging.info("TRAINED MODEL")
         scores = model.score(dataloaders)
 
         # Confirm near perfect scores
@@ -158,7 +149,7 @@ class SlicingConvergenceTest(unittest.TestCase):
 
         # Train
         # NOTE: Needs more epochs to convergence with more heads
-        trainer = Trainer(lr=0.001, n_epochs=65, progress_bar=False)
+        trainer = Trainer(lr=0.001, n_epochs=1, progress_bar=False)
         trainer.fit(model, dataloaders)
         scores = model.score(dataloaders)
 

@@ -63,6 +63,7 @@ jobs:
       - setup_dependencies
       - run:
           name: "Run Tox"
+          no_output_timeout: 50m
           command:  tox
 
   Python37-Unit-Tests: 

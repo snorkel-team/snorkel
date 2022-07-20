@@ -118,7 +118,9 @@ jobs:
       - setup_dependencies
       - run:
           name: "Run Tox"
-          command:  tox
+          command: |
+            export PYTHONUNBUFFERED=1
+            tox
 
   Python37-Integration-Tests: 
     docker:
@@ -156,6 +158,10 @@ workflows:
   Interation-Tests: 
     jobs:
       - Python38-Integration-Tests:
+          <<: *run_complex
+      - Python37-Integration-Tests:
+          <<: *run_complex
+      - Python36-Integration-Tests:
           <<: *run_complex
   Unit-Tests:
     jobs:

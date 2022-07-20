@@ -99,7 +99,7 @@ jobs:
     docker:
       - image: cimg/python:3.6
     environment:
-      TOXENV: coverage,complex,spark,doctest,type,check 
+      TOXENV: complex,type,check
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
 
@@ -125,9 +125,9 @@ jobs:
 
   Python37-Integration-Tests: 
     docker:
-      - image: cimg/python:3.6
+      - image: cimg/python:3.7
     environment:
-      TOXENV: coverage,complex,spark,doctest,type,check 
+      TOXENV: complex,type,check
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
 
@@ -136,7 +136,10 @@ jobs:
       - setup_dependencies
       - run:
           name: "Run Tox"
-          command:  tox
+          no_output_timeout: 50m
+          command: |
+            export PYTHONUNBUFFERED=1
+            tox
 
   Python36-Integration-Tests: 
     docker:
@@ -156,7 +159,7 @@ jobs:
 workflows:
   version: 2
 
-  Interation-Tests: 
+  Integration-Tests: 
     jobs:
       - Python38-Integration-Tests:
           <<: *run_complex

@@ -97,7 +97,7 @@ jobs:
           command:  tox
   Python38-Integration-Tests: 
     docker:
-      - image: cimg/python:3.6
+      - image: cimg/python:3.8
     environment:
       TOXENV: coverage,complex,spark,doctest,type,check 
       TOX_INSTALL_DIR: .env
@@ -105,12 +105,6 @@ jobs:
 
     steps:
       - checkout
-      - run:
-          name: Install Python Dev
-          command: sudo apt-get install python-dev libsnappy-dev -y
-      - run:
-          name: Setup Python VE
-          command: python -m venv .env; source .env/bin/activate
       - run:
           name: Setup python3
           command: |

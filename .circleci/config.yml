@@ -97,7 +97,7 @@ jobs:
           command:  tox
   Python38-Integration-Tests: 
     docker:
-      - image: cimg/python:3.8
+      - image: cimg/python:3.6
     environment:
       TOXENV: coverage,complex,spark,doctest,type,check 
       TOX_INSTALL_DIR: .env
@@ -112,7 +112,7 @@ jobs:
 
   Python37-Integration-Tests: 
     docker:
-      - image: cimg/python:3.7
+      - image: cimg/python:3.6
     environment:
       TOXENV: coverage,complex,spark,doctest,type,check 
       TOX_INSTALL_DIR: .env

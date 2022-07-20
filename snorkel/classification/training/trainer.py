@@ -191,8 +191,6 @@ class Trainer:
                 disable=(not self.config.progress_bar),
                 desc=f"Epoch {epoch_num}:",
             )
-            if epoch_num == self.config.n_epochs - 1:
-                assert 1 == 3
             for batch_num, (batch, dataloader) in batches:
                 X_dict, Y_dict = batch
 

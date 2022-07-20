@@ -105,6 +105,22 @@ jobs:
 
     steps:
       - checkout
+      - run:
+          name: Install Python Dev
+          command: sudo apt-get install python-dev libsnappy-dev -y
+      - run:
+          name: Setup Python VE
+          command: python -m venv .env; source .env/bin/activate
+      - run:
+          name: Setup python3
+          command: |
+            pyenv global 3.8.9 > /dev/null && activated=0 || activated=1
+            if [[ $activated -ne 0 ]]; then
+              for i in {1..6}; do
+                pyenv install 3.8.9 && break || sleep $((2 ** $i))
+              done
+              pyenv global 3.8.9
+            fi
       - setup_dependencies
       - run:
           name: "Run Tox"

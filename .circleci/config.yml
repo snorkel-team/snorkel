@@ -118,7 +118,7 @@ jobs:
       - setup_dependencies
       - run:
           name: "Run Tox"
-          no_output_timeout: 50m
+          no_output_timeout: 10m
           command: |
             export PYTHONUNBUFFERED=1
             tox
@@ -136,7 +136,7 @@ jobs:
       - setup_dependencies
       - run:
           name: "Run Tox"
-          no_output_timeout: 50m
+          no_output_timeout: 10m
           command: |
             export PYTHONUNBUFFERED=1
             tox

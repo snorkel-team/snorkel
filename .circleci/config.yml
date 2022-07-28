@@ -97,7 +97,7 @@ jobs:
           command:  tox
   Python38-Integration-Tests: 
     docker:
-      - image: cimg/python:3.6
+      - image: cimg/python:3.8
     environment:
       TOXENV: complex,type,check
       TOX_INSTALL_DIR: .env
@@ -108,12 +108,12 @@ jobs:
       - run:
           name: Setup python3
           command: |
-            pyenv global 3.8.9 > /dev/null && activated=0 || activated=1
+            pyenv global 3.8.13 > /dev/null && activated=0 || activated=1
             if [[ $activated -ne 0 ]]; then
               for i in {1..6}; do
-                pyenv install 3.8.9 && break || sleep $((2 ** $i))
+                pyenv install 3.8.13 && break || sleep $((2 ** $i))
               done
-              pyenv global 3.8.9
+              pyenv global 3.8.13
             fi
       - setup_dependencies
       - run:

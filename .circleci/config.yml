@@ -161,12 +161,9 @@ workflows:
 
   Integration-Tests: 
     jobs:
-      - Python38-Integration-Tests:
-          <<: *run_complex
-      - Python37-Integration-Tests:
-          <<: *run_complex
-      - Python36-Integration-Tests:
-          <<: *run_complex
+      - Python38-Integration-Tests
+      - Python37-Integration-Tests
+      - Python36-Integration-Tests
   Unit-Tests:
     jobs:
       - Python37-Unit-Tests

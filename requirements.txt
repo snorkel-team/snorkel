@@ -53,6 +53,3 @@ pytest-cov>=2.7.0
 pytest-doctestplus>=0.3.0
 tox>=3.13.0
 protobuf==3.19.4
-setuptools
-wheel
-twine

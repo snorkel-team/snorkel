@@ -576,7 +576,7 @@ class LabelModel(nn.Module, BaseLabeler):
                 )
         elif Y_dev is not None:
             class_counts = Counter(Y_dev)  # type: ignore
-            sorted_counts = np.array([v for k, v in sorted(class_counts.items())])
+            sorted_counts = np.array([v for k, v in sorted(class_counts.items())])  # type: ignore
             self.p = sorted_counts / sum(sorted_counts)
             if len(self.p) != self.cardinality:
                 raise ValueError(

@@ -358,7 +358,7 @@ class LFAnalysis:
                 np.concatenate((Y.flatten(), self.L.flatten(), np.array([-1])))
             )
             confusions = [
-                confusion_matrix(Y, self.L[:, i], labels)[1:, 1:] for i in range(m)
+                confusion_matrix(Y, self.L[:, i], labels=labels)[1:, 1:] for i in range(m)
             ]
             corrects = [np.diagonal(conf).sum() for conf in confusions]
             incorrects = [

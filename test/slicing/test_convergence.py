@@ -66,7 +66,6 @@ class SlicingConvergenceTest(unittest.TestCase):
         cls.df_train = create_data(cls.N_TRAIN)
         cls.df_valid = create_data(cls.N_VALID)
 
-
     @pytest.mark.complex
     def test_performance(self):
         """Test slicing performance with 2 corresponding slice tasks that

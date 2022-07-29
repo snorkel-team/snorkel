@@ -66,59 +66,6 @@ class SlicingConvergenceTest(unittest.TestCase):
         cls.df_train = create_data(cls.N_TRAIN)
         cls.df_valid = create_data(cls.N_VALID)
 
-    @pytest.mark.complex
-    def test_convergence(self):
-        """Test slicing convergence with 1 slice task that represents ~25% of
-        the data."""
-
-        dataloaders = []
-        for df, split in [(self.df_train, "train"), (self.df_valid, "valid")]:
-            dataloader = create_dataloader(df, split)
-            dataloaders.append(dataloader)
-
-        base_task = create_task("task", module_suffixes=["A", "B"])
-
-        # Apply SFs
-        slicing_functions = [h]  # high coverage slice
-        slice_names = [sf.name for sf in slicing_functions]
-        applier = PandasSFApplier(slicing_functions)
-        S_train = applier.apply(self.df_train, progress_bar=False)
-        S_valid = applier.apply(self.df_valid, progress_bar=False)
-
-        self.assertEqual(S_train.shape, (self.N_TRAIN,))
-        self.assertEqual(S_valid.shape, (self.N_VALID,))
-        self.assertIn("h", S_train.dtype.names)
-
-        # Add slice labels
-        add_slice_labels(dataloaders[0], base_task, S_train)
-        add_slice_labels(dataloaders[1], base_task, S_valid)
-
-        # Convert to slice tasks
-        tasks = convert_to_slice_tasks(base_task, slice_names)
-        model = MultitaskClassifier(tasks=tasks)
-
-        # Train
-        trainer = Trainer(lr=0.001, n_epochs=50, progress_bar=True)
-        trainer.fit(model, dataloaders)
-        scores = model.score(dataloaders)
-
-        # Confirm near perfect scores
-        self.assertGreater(scores["task/TestData/valid/accuracy"], 0.94)
-        self.assertGreater(scores["task_slice:h_pred/TestData/valid/accuracy"], 0.94)
-        self.assertGreater(scores["task_slice:h_ind/TestData/valid/f1"], 0.94)
-
-        # Calculate/check train/val loss
-        train_dataset = dataloaders[0].dataset
-        train_loss_output = model.calculate_loss(
-            train_dataset.X_dict, train_dataset.Y_dict
-        )
-        train_loss = train_loss_output[0]["task"].item()
-        self.assertLess(train_loss, 0.1)
-
-        val_dataset = dataloaders[1].dataset
-        val_loss_output = model.calculate_loss(val_dataset.X_dict, val_dataset.Y_dict)
-        val_loss = val_loss_output[0]["task"].item()
-        self.assertLess(val_loss, 0.1)
 
     @pytest.mark.complex
     def test_performance(self):

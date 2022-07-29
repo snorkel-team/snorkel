@@ -99,7 +99,7 @@ jobs:
     docker:
       - image: cimg/python:3.8
     environment:
-      TOXENV: type,check
+      TOXENV: complex,type,check
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
 
@@ -127,7 +127,7 @@ jobs:
     docker:
       - image: cimg/python:3.7
     environment:
-      TOXENV: type,check
+      TOXENV: complex,type,check
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
 

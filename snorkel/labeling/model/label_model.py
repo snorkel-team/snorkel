@@ -569,13 +569,13 @@ class LabelModel(nn.Module, BaseLabeler):
         3) Assume uniform class distribution
         """
         if class_balance is not None:
-            self.p = np.array(class_balance)
+            self.p = np.array(class_balance)  # type: ignore
             if len(self.p) != self.cardinality:
                 raise ValueError(
                     f"class_balance has {len(self.p)} entries. Does not match LabelModel cardinality {self.cardinality}."
                 )
         elif Y_dev is not None:
-            class_counts = Counter(Y_dev)
+            class_counts = Counter(Y_dev)  # type: ignore
             sorted_counts = np.array([v for k, v in sorted(class_counts.items())])
             self.p = sorted_counts / sum(sorted_counts)
             if len(self.p) != self.cardinality:

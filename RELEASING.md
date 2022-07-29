@@ -29,7 +29,7 @@ Then run `chmod 600 ./.pypirc` so only you can read/write.
 
 1. Add a new changelog entry for the release.
 
-       ## [0.9.0]
+       ##  [0.9.0]
        ### [Breaking Changes]
        ### [Added]
        ### [Changed]

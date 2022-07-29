@@ -42,7 +42,7 @@ setup(
         "tqdm>=4.33.0",
         "scikit-learn>=0.20.2",
         "torch>=1.2.0",
-        "tensorboard>=2.0.0",
+        "tensorboard>=2.9.1",
         "networkx>=2.2",
     ],
     python_requires=">=3.6",

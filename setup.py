@@ -41,7 +41,7 @@ setup(
         "pandas>=1.0.0",
         "tqdm>=4.33.0",
         "scikit-learn>=0.20.2",
-        "torch>=1.2.0",
+        "torch>=1.11.0",
         "tensorboard>=2.9.1",
         "networkx>=2.2",
     ],

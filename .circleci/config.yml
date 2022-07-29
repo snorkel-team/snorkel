@@ -1,3 +1,5 @@
+
+
 # Use the latest 2.1 version of CircleCI pipeline process engine.
 version: 2.1
 
@@ -54,6 +56,7 @@ jobs:
       TOXENV: coverage,doctest,type,check 
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
     steps:
       - checkout
@@ -69,6 +72,7 @@ jobs:
       TOXENV: coverage,doctest,type,check 
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
     steps:
       - checkout
@@ -101,16 +105,29 @@ jobs:
 
     steps:
       - checkout
+      - run:
+          name: Setup python3
+          command: |
+            pyenv global 3.8.13 > /dev/null && activated=0 || activated=1
+            if [[ $activated -ne 0 ]]; then
+              for i in {1..6}; do
+                pyenv install 3.8.13 && break || sleep $((2 ** $i))
+              done
+              pyenv global 3.8.13
+            fi
       - setup_dependencies
       - run:
           name: "Run Tox"
-          command:  tox
+          no_output_timeout: 60m
+          command: |
+            export PYTHONUNBUFFERED=1
+            tox
 
   Python37-Integration-Tests: 
     docker:
       - image: cimg/python:3.7
     environment:
-      TOXENV: complex,spark,type,check
+      TOXENV: complex,type,check
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
 
@@ -119,7 +136,10 @@ jobs:
       - setup_dependencies
       - run:
           name: "Run Tox"
-          command:  tox
+          no_output_timeout: 60m
+          command: |
+            export PYTHONUNBUFFERED=1
+            tox
 
   Python36-Integration-Tests: 
     docker:
@@ -139,12 +159,12 @@ jobs:
 workflows:
   version: 2
 
-  Interation-Tests: 
+  Integration-Tests: 
     jobs:
       - Python38-Integration-Tests:
           <<: *run_complex
       - Python37-Integration-Tests:
-         <<: *run_complex
+          <<: *run_complex
       - Python36-Integration-Tests:
           <<: *run_complex
   Unit-Tests:
@@ -152,4 +172,3 @@ workflows:
       - Python37-Unit-Tests
       - Python36-Unit-Tests
       - Python38-Unit-Tests
-

@@ -15,11 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.9.9] - 2022-04-14
 ### [Added]
 
-* PR #1690: Bumping numpy version for Mac M1 compat
+* PR #1690: Bump numpy version for Mac M1 compat
 * PR #1696: Fix linting
 * PR #1694: Fix test loss
 * PR #1693: Update black version to fix build
-* PR #1671: Fixing flaky test
+* PR #1671: Fix flaky test
 * PR #1688: Fix branch filtering for complex tests
 * PR #1686: Switch to CircleCI badge
 * PR #1685: Migrating travis -> circle 

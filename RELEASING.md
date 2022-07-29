@@ -40,14 +40,6 @@ Then run `chmod 600 ./.pypirc` so only you can read/write.
 
 1. Update version to, e.g. 0.9.0 (remove the `+dev` label) in `snorkel/version.py`.
 
-1. Add a new changelog entry for the unreleased version:
-
-       ##  [Unreleased]
-       ### [Breaking Changes]
-       ### [Added]
-       ### [Changed]
-       ### [Deprecated]
-       ### [Removed]
 
 1. Commit these changes and create a PR:
 
@@ -92,6 +84,15 @@ Then run `chmod 600 ./.pypirc` so only you can read/write.
 
 
 1. Update version to, e.g. 0.9.1+dev in `snorkel/version.py`.
+
+1. Add a new changelog entry for the unreleased version in `CHANGELOG.md`:
+
+       ##  [Unreleased]
+       ### [Breaking Changes]
+       ### [Added]
+       ### [Changed]
+       ### [Deprecated]
+       ### [Removed]
 
 1. Commit these changes and create a PR:
 

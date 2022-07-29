@@ -49,7 +49,7 @@ flake8>=3.7.0
 isort>=4.3.0
 mypy==0.760
 pydocstyle>=4.0.0
-pytest>=5.0.0
+pytest>=5.0.0,<6.0.0
 pytest-cov>=2.7.0
 pytest-doctestplus>=0.3.0
 tox>=3.13.0

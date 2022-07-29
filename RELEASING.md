@@ -28,7 +28,7 @@ Then run `chmod 600 ./.pypirc` so only you can read/write.
        $ git pull origin main
 
 1. Make sure `CHANGELOG.md` is up to date for the release: compare against PRs
-   merged since the last release & update top heading with release date.
+   merged since the last release & update top heading with the release version, e.g 0.9.0 and the release date.
 
 1. Update version to, e.g. 0.9.0 (remove the `+dev` label) in `snorkel/version.py`.
 
@@ -75,16 +75,6 @@ Then run `chmod 600 ./.pypirc` so only you can read/write.
 
 
 1. Update version to, e.g. 0.9.1+dev in `snorkel/version.py`.
-
-1. Add a new changelog entry for the unreleased version:
-
-       ## [Unreleased]
-       ## [0.9.1]
-       ### [Breaking Changes]
-       ### [Added]
-       ### [Changed]
-       ### [Deprecated]
-       ### [Removed]
 
 1. Commit these changes and create a PR:
 

@@ -5,14 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-## [0.9.10]
 ### [Breaking Changes]
 ### [Added]
 ### [Changed]
 ### [Deprecated]
 ### [Removed]
 
-## [0.9.9] - 2022-04-14
+## [0.9.9] - 2022-07-28
 ### [Added]
 
 * PR #1690: Bump numpy version for Mac M1 compat

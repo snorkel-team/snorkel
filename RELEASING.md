@@ -41,7 +41,7 @@ Then run `chmod 600 ./.pypirc` so only you can read/write.
 
 1. Add a new changelog entry for the unreleased version:
 
-       ## [Unreleased]
+       ##  [Unreleased]
        ### [Breaking Changes]
        ### [Added]
        ### [Changed]

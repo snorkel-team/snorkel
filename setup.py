@@ -118,7 +118,7 @@ setup(
         "sortedcontainers==2.4.0",
         "spacy==3.4.1",
         "spacy-legacy==3.0.9",
-        "spacy-loggers==1.0.3"
+        "spacy-loggers==1.0.3",
         "srsly==2.4.4",
         "tblib==1.7.0",
         "tensorboard==2.9.1",

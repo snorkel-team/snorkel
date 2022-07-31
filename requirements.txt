@@ -21,7 +21,6 @@ contextvars==2.4
 coverage==6.2
 cymem==2.0.6
 dask==2021.3.0
-dataclasses==0.8
 decorator==4.4.2
 dill==0.3.4
 distlib==0.3.5

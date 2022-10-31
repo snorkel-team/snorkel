@@ -51,7 +51,7 @@ class ClassifierConvergenceTest(unittest.TestCase):
         model = MultitaskClassifier(tasks=[task1, task2])
 
         # Train
-        trainer = Trainer(lr=0.001, n_epochs=10, progress_bar=False)
+        trainer = Trainer(lr=0.0024, n_epochs=10, progress_bar=False)
         trainer.fit(model, dataloaders)
         scores = model.score(dataloaders)
 

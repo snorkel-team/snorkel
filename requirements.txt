@@ -31,7 +31,7 @@ tensorboard>=2.9.1
 #### EXTRA/TEST LIBRARIES
 
 # spaCy (NLP)
-spacy>=2.1.0
+spacy>=2.1.0,<3.5
 blis>=0.3.0
 
 # Dask (parallelism)

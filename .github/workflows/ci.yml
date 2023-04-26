@@ -1,0 +1,33 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9"]
+        os: [ubuntu-latest]
+    steps:
+      - run: sudo apt install -y libpython3-dev
+      - uses: actions/checkout@v3
+      - name: Use Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'adopt'
+          java-version: '8'
+      - run: |
+          pip install -U pip setuptools wheel
+          pip install -U tox tox-gh-actions
+          pip install -U codecov
+      - run: |
+          tox

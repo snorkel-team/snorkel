@@ -16,7 +16,7 @@ from snorkel.types import DataPoint
 
 @transformation_function()
 def square(x: DataPoint) -> DataPoint:
-    x.num = x.num**2
+    x.num = x.num ** 2
     return x
 
 
@@ -24,7 +24,7 @@ def square(x: DataPoint) -> DataPoint:
 def square_returns_none(x: DataPoint) -> DataPoint:
     if x.num == 2:
         return None
-    x.num = x.num**2
+    x.num = x.num ** 2
     return x
 
 

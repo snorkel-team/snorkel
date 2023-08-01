@@ -250,12 +250,7 @@ class TrainerTest(unittest.TestCase):
             if isinstance(dict1_, collections.Mapping):
                 self.dict_check(dict1_, dict2_)
             elif isinstance(dict1_, torch.Tensor):
-                self.assertTrue(
-                    torch.eq(
-                        dict1_,
-                        dict2_,
-                    ).all()
-                )
+                self.assertTrue(torch.eq(dict1_, dict2_,).all())
             else:
                 self.assertEqual(dict1_, dict2_)
 

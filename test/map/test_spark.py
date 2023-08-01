@@ -37,13 +37,13 @@ class SquareHitTracker:
 
     def __call__(self, x: float) -> float:
         self.n_hits += 1
-        return x**2
+        return x ** 2
 
 
 @lambda_mapper()
 def square(x: DataPoint) -> DataPoint:
     fields = x.asDict()
-    fields["num_squared"] = x.num**2
+    fields["num_squared"] = x.num ** 2
     return Row(**fields)
 
 

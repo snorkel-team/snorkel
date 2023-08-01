@@ -9,7 +9,7 @@ from snorkel.types import DataPoint
 
 @preprocessor()
 def square(x: DataPoint) -> DataPoint:
-    x.num_squared = x.num**2
+    x.num_squared = x.num ** 2
     return x
 
 
@@ -19,7 +19,7 @@ class SquareHitTracker:
 
     def __call__(self, x: float) -> float:
         self.n_hits += 1
-        return x**2
+        return x ** 2
 
 
 @slicing_function()

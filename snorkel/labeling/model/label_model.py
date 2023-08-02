@@ -575,7 +575,7 @@ class LabelModel(nn.Module, BaseLabeler):
                     f"class_balance has {len(self.p)} entries. Does not match LabelModel cardinality {self.cardinality}."
                 )
         elif Y_dev is not None:
-            class_counts = Counter(Y_dev)  # type: ignore
+            class_counts: Counter = Counter(Y_dev)
             sorted_counts = np.array([v for k, v in sorted(class_counts.items())])  # type: ignore
             self.p = sorted_counts / sum(sorted_counts)
             if len(self.p) != self.cardinality:

@@ -27,6 +27,7 @@ networkx>=2.2
 
 # Model introspection tools
 tensorboard>=2.9.1
+protobuf==3.19.6
 
 #### EXTRA/TEST LIBRARIES
 

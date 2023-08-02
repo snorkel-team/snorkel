@@ -47,6 +47,7 @@ dill>=0.3.0
 
 black==22.8
 flake8>=3.7.0
+importlib_metadata<5 # necessary for flake8
 isort>=4.3.0
 mypy==0.760
 pydocstyle>=4.0.0

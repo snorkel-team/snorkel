@@ -9,7 +9,7 @@
 #### ESSENTIAL LIBRARIES
 
 # General scientific computing
-numpy>=1.25.1
+numpy>=1.24.0
 scipy>=1.2.0
 
 # Data storage and function application

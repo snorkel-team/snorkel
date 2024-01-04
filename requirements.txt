@@ -9,7 +9,6 @@
 #### ESSENTIAL LIBRARIES
 
 # General scientific computing
-
 numpy>=1.25.1
 scipy>=1.2.0
 

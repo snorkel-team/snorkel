@@ -65,22 +65,6 @@ jobs:
           name: "Run Tox"
           command:  tox
 
-  Python37-Unit-Tests:
-    docker:
-      - image: cimg/python:3.7
-    environment:
-      TOXENV: coverage,doctest,type,check
-      TOX_INSTALL_DIR: .env
-      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
-      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
-
-    steps:
-      - checkout
-      - setup_dependencies
-      - run:
-          name: "Run Tox"
-          command:  tox
-
   Python38-Integration-Tests:
     docker:
       - image: cimg/python:3.8
@@ -109,34 +93,13 @@ jobs:
             export PYTHONUNBUFFERED=1
             tox
 
-  Python37-Integration-Tests:
-    docker:
-      - image: cimg/python:3.7
-    environment:
-      TOXENV: complex,type,check
-      TOX_INSTALL_DIR: .env
-      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
-
-    steps:
-      - checkout
-      - setup_dependencies
-      - run:
-          name: "Run Tox"
-          no_output_timeout: 60m
-          command: |
-            export PYTHONUNBUFFERED=1
-            tox
-
 workflows:
   version: 2
 
   Integration-Tests:
     jobs:
-      - Python37-Integration-Tests:
-          <<: *run_complex
       - Python38-Integration-Tests:
           <<: *run_complex
   Unit-Tests:
     jobs:
-      - Python37-Unit-Tests
       - Python38-Unit-Tests

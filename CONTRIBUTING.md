@@ -38,7 +38,7 @@ python3 -c "import snorkel.labeling; print(dir(snorkel.labeling))"
 There are a number of useful tox commands defined:
 
 ```bash
-tox -e py37  # Run unit tests pytest in Python 3.7
+tox -e py38  # Run unit tests pytest in Python 3.8
 tox -e coverage  # Compute unit test coverage
 tox -e spark  # Run Spark-based tests (marked with @pytest.mark.spark)
 tox -e complex  # Run more complex, integration tests (marked with @pytest.mark.complex)

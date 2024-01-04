@@ -15,25 +15,25 @@ commands:
         type: steps
         default: []
     steps:
-      - run: 
+      - run:
           name: "Install open JDK"
           command: sudo add-apt-repository -y ppa:openjdk-r/ppa
-      - run: 
+      - run:
           name: "Install qq"
           command: sudo apt-get -qq update
-      - run: 
+      - run:
           name: "No install recommends for JDK"
           command: sudo apt-get install -y openjdk-8-jdk --no-install-recommends
-      - run: 
+      - run:
           name: "Run Java Alternatives install for JDK"
           command: sudo update-java-alternatives -s java-1.8.0-openjdk-amd64
       - run:
           name: "Run pip install setup tools and wheel"
           command: pip install -U pip setuptools wheel
-      - run:  
+      - run:
           name: "Install Tox"
           command: pip install -U tox==3.12.0
-      - run: 
+      - run:
           name: "Install Code Cov"
           command: pip install -U codecov
       - steps: << parameters.after-deps >>
@@ -49,11 +49,11 @@ run_complex: &run_complex
       only: /.*/
 
 jobs:
-  Python38-Unit-Tests: 
+  Python38-Unit-Tests:
     docker:
       - image: cimg/python:3.8
     environment:
-      TOXENV: coverage,doctest,type,check 
+      TOXENV: coverage,doctest,type,check
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
       PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
@@ -65,11 +65,11 @@ jobs:
           name: "Run Tox"
           command:  tox
 
-  Python37-Unit-Tests: 
+  Python37-Unit-Tests:
     docker:
       - image: cimg/python:3.7
     environment:
-      TOXENV: coverage,doctest,type,check 
+      TOXENV: coverage,doctest,type,check
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
       PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
@@ -81,21 +81,7 @@ jobs:
           name: "Run Tox"
           command:  tox
 
-  Python36-Unit-Tests: 
-    docker:
-      - image: cimg/python:3.6
-    environment:
-      TOXENV: coverage,doctest,type,check 
-      TOX_INSTALL_DIR: .env
-      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
-
-    steps:
-      - checkout
-      - setup_dependencies
-      - run:
-          name: "Run Tox"
-          command:  tox
-  Python38-Integration-Tests: 
+  Python38-Integration-Tests:
     docker:
       - image: cimg/python:3.8
     environment:
@@ -123,7 +109,7 @@ jobs:
             export PYTHONUNBUFFERED=1
             tox
 
-  Python37-Integration-Tests: 
+  Python37-Integration-Tests:
     docker:
       - image: cimg/python:3.7
     environment:
@@ -141,34 +127,16 @@ jobs:
             export PYTHONUNBUFFERED=1
             tox
 
-  Python36-Integration-Tests: 
-    docker:
-      - image: cimg/python:3.6
-    environment:
-      TOXENV: coverage,complex,spark,doctest,type,check 
-      TOX_INSTALL_DIR: .env
-      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
-
-    steps:
-      - checkout
-      - setup_dependencies
-      - run:
-          name: "Run Tox"
-          command:  tox
-
 workflows:
   version: 2
 
-  Integration-Tests: 
+  Integration-Tests:
     jobs:
-      - Python38-Integration-Tests:
-          <<: *run_complex
       - Python37-Integration-Tests:
           <<: *run_complex
-      - Python36-Integration-Tests:
+      - Python38-Integration-Tests:
           <<: *run_complex
   Unit-Tests:
     jobs:
       - Python37-Unit-Tests
-      - Python36-Unit-Tests
       - Python38-Unit-Tests

@@ -10,7 +10,7 @@
 
 # General scientific computing
 
-numpy>=1.16.5
+numpy>=1.25.1
 scipy>=1.2.0
 
 # Data storage and function application
@@ -26,8 +26,8 @@ munkres>=1.0.6
 networkx>=2.2
 
 # Model introspection tools
-tensorboard>=2.9.1
-protobuf==3.19.6
+protobuf>=3.19.6
+tensorboard>=2.13.0
 
 #### EXTRA/TEST LIBRARIES
 
@@ -37,7 +37,7 @@ blis>=0.3.0
 
 # Dask (parallelism)
 dask[dataframe]>=2020.12.0
-distributed>=2020.12.0
+distributed>=2023.7.0
 
 # Dill (serialization)
 dill>=0.3.0

@@ -448,7 +448,6 @@ class Trainer:
 
         # Evaluate the model and log the metric
         if self.log_manager.trigger_evaluation():
-
             # Log metrics
             metric_dict.update(
                 self._evaluate(model, dataloaders, self.config.valid_split)

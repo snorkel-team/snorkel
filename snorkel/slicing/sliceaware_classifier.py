@@ -53,7 +53,6 @@ class SliceAwareClassifier(MultitaskClassifier):
         scorer: Scorer = Scorer(metrics=["accuracy", "f1"]),
         **multitask_kwargs: Any,
     ) -> None:
-
         # Initialize module_pool with 1) base_architecture and 2) prediction_head
         # Assuming `head_dim` can be used to map base_architecture to prediction_head
         module_pool = nn.ModuleDict(

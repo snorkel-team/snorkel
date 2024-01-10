@@ -151,7 +151,6 @@ class Checkpointer:
                 )
 
     def _is_new_best(self, metric_dict: Metrics) -> Set[str]:
-
         best_metric = set()
 
         for metric in metric_dict:

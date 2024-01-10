@@ -70,7 +70,7 @@ L_EXPECTED = np.array([[-1, 0], [0, -1], [-1, -1], [-1, 0], [-1, 0]])
 L_EXPECTED_BAD = np.array([[-1, -1], [0, -1], [-1, -1], [-1, -1], [-1, -1]])
 L_PREPROCESS_EXPECTED = np.array([[-1, -1], [0, 0], [-1, 0], [-1, 0], [-1, -1]])
 
-TEXT_DATA = ["Jane.", "Jane plays soccer.", "Jane plays soccer."]
+TEXT_DATA = ["Jane Doe.", "Jane plays soccer.", "Jane plays soccer."]
 L_TEXT_EXPECTED = np.array([[0, -1], [0, 0], [0, 0]])
 
 

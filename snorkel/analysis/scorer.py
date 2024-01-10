@@ -42,7 +42,6 @@ class Scorer:
         custom_metric_funcs: Optional[Mapping[str, Callable[..., float]]] = None,
         abstain_label: Optional[int] = -1,
     ) -> None:
-
         self.metrics: Dict[str, Callable[..., float]]
         self.metrics = {}
         if metrics:

@@ -49,9 +49,9 @@ run_complex: &run_complex
       only: /.*/
 
 jobs:
-  Python38-Unit-Tests:
+  Python311-Unit-Tests:
     docker:
-      - image: cimg/python:3.8
+      - image: cimg/python:3.11
     environment:
       TOXENV: coverage,doctest,type,check
       TOX_INSTALL_DIR: .env
@@ -65,9 +65,9 @@ jobs:
           name: "Run Tox"
           command:  tox
 
-  Python38-Integration-Tests:
+  Python311-Integration-Tests:
     docker:
-      - image: cimg/python:3.8
+      - image: cimg/python:3.11
     environment:
       TOXENV: complex,type,check
       TOX_INSTALL_DIR: .env
@@ -78,12 +78,12 @@ jobs:
       - run:
           name: Setup python3
           command: |
-            pyenv global 3.8.13 > /dev/null && activated=0 || activated=1
+            pyenv global 3.11.3 > /dev/null && activated=0 || activated=1
             if [[ $activated -ne 0 ]]; then
               for i in {1..6}; do
-                pyenv install 3.8.13 && break || sleep $((2 ** $i))
+                pyenv install 3.11.3 && break || sleep $((2 ** $i))
               done
-              pyenv global 3.8.13
+              pyenv global 3.11.3
             fi
       - setup_dependencies
       - run:
@@ -98,8 +98,8 @@ workflows:
 
   Integration-Tests:
     jobs:
-      - Python38-Integration-Tests:
+      - Python311-Integration-Tests:
           <<: *run_complex
   Unit-Tests:
     jobs:
-      - Python38-Unit-Tests
+      - Python311-Unit-Tests

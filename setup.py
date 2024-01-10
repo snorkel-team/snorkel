@@ -46,6 +46,6 @@ setup(
         "protobuf>=3.19.6",
         "networkx>=2.2",
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.11",
     keywords="machine-learning ai weak-supervision",
 )

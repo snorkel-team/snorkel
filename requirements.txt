@@ -41,16 +41,15 @@ distributed>=2023.7.0
 # Dill (serialization)
 dill>=0.3.0
 
-
 #### DEV TOOLS
 
 black>=22.8
 flake8>=3.7.0
 importlib_metadata<5 # necessary for flake8
 isort>=4.3.0
-mypy==0.760
+mypy>=0.760
 pydocstyle>=4.0.0
-pytest>=5.0.0,<6.0.0
+pytest>=6.0.0
 pytest-cov>=2.7.0
 pytest-doctestplus>=0.3.0
 tox>=3.13.0

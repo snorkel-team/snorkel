@@ -32,7 +32,7 @@ commands:
           command: pip install -U pip setuptools wheel
       - run:
           name: "Install Tox"
-          command: pip install -U tox==3.12.0
+          command: pip install -U tox==4.11.4
       - run:
           name: "Install Code Cov"
           command: pip install -U codecov

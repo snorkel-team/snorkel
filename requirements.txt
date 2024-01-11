@@ -9,8 +9,7 @@
 #### ESSENTIAL LIBRARIES
 
 # General scientific computing
-
-numpy>=1.25.1
+numpy>=1.24.0
 scipy>=1.2.0
 
 # Data storage and function application
@@ -26,6 +25,7 @@ munkres>=1.0.6
 networkx>=2.2
 
 # Model introspection tools
+protobuf>=3.19.6
 tensorboard>=2.13.0
 
 #### EXTRA/TEST LIBRARIES
@@ -41,16 +41,15 @@ distributed>=2023.7.0
 # Dill (serialization)
 dill>=0.3.0
 
-
 #### DEV TOOLS
 
-black>=22.3
+black>=22.8
 flake8>=3.7.0
+importlib_metadata<5 # necessary for flake8
 isort>=4.3.0
-mypy==0.760
+mypy>=0.760
 pydocstyle>=4.0.0
-pytest>=5.0.0,<6.0.0
+pytest>=6.0.0
 pytest-cov>=2.7.0
 pytest-doctestplus>=0.3.0
 tox>=3.13.0
-protobuf>=3.19.5

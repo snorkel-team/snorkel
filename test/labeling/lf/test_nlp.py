@@ -84,7 +84,6 @@ class TestNLPLabelingFunction(unittest.TestCase):
         self.assertEqual(len(lf2._nlp_config.nlp._cache), 2)
 
     def test_nlp_labeling_function_raises(self) -> None:
-
         with self.assertRaisesRegex(ValueError, "different parameters"):
 
             @nlp_labeling_function()

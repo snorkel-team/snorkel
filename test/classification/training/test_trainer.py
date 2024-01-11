@@ -1,9 +1,9 @@
-import collections
 import copy
 import json
 import os
 import tempfile
 import unittest
+from collections.abc import Mapping
 
 import torch
 import torch.nn as nn
@@ -247,7 +247,7 @@ class TrainerTest(unittest.TestCase):
         for k in dict1.keys():
             dict1_ = dict1[k]
             dict2_ = dict2[k]
-            if isinstance(dict1_, collections.Mapping):
+            if isinstance(dict1_, Mapping):
                 self.dict_check(dict1_, dict2_)
             elif isinstance(dict1_, torch.Tensor):
                 self.assertTrue(

@@ -44,7 +44,7 @@ class LogWriter:
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        self.config = LogWriterConfig(**kwargs)
+        self.config = LogWriterConfig(**kwargs)  # type: ignore
 
         self.run_name = self.config.run_name
         if self.run_name is None:

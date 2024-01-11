@@ -236,7 +236,6 @@ class LabelModelTest(unittest.TestCase):
             self.assertAlmostEqual(accs[i], true_acc, delta=0.1)
 
     def test_build_mask(self):
-
         L = np.array([[0, 1, 0], [0, 1, 0]])
         label_model = self._set_up_model(L)
 

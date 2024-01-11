@@ -61,7 +61,7 @@ class Checkpointer:
     def __init__(
         self, counter_unit: str, evaluation_freq: float, **kwargs: Any
     ) -> None:
-        self.config = CheckpointerConfig(**kwargs)
+        self.config = CheckpointerConfig(**kwargs)  # type: ignore
         self._validate_config()
 
         # Pull out checkpoint settings
@@ -151,7 +151,6 @@ class Checkpointer:
                 )
 
     def _is_new_best(self, metric_dict: Metrics) -> Set[str]:
-
         best_metric = set()
 
         for metric in metric_dict:

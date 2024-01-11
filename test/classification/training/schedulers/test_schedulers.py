@@ -32,7 +32,7 @@ class SequentialTest(unittest.TestCase):
     def test_sequential(self):
         scheduler = SequentialScheduler()
         data = []
-        for (batch, dl) in scheduler.get_batches(dataloaders):
+        for batch, dl in scheduler.get_batches(dataloaders):
             X_dict, Y_dict = batch
             data.extend(X_dict["data"])
         self.assertEqual(data, sorted(data))
@@ -43,7 +43,7 @@ class SequentialTest(unittest.TestCase):
         torch.manual_seed(123)
         scheduler = ShuffledScheduler()
         data = []
-        for (batch, dl) in scheduler.get_batches(dataloaders):
+        for batch, dl in scheduler.get_batches(dataloaders):
             X_dict, Y_dict = batch
             data.extend(X_dict["data"])
         self.assertNotEqual(data, sorted(data))

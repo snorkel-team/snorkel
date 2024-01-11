@@ -46,7 +46,7 @@ class LogManager:
         checkpointer: Optional[Checkpointer] = None,
         **kwargs: Any,
     ) -> None:
-        self.config = LogManagerConfig(**kwargs)
+        self.config = LogManagerConfig(**kwargs)  # type: ignore
         self.n_batches_per_epoch = n_batches_per_epoch
 
         self.log_writer = log_writer

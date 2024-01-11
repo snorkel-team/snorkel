@@ -41,7 +41,7 @@ These tutorials demonstrate a variety of tasks, domains, labeling techniques, an
 
 # Installation
 
-Snorkel requires Python 3.6 or later. To install Snorkel, we recommend using `pip`:
+Snorkel requires Python 3.11 or later. To install Snorkel, we recommend using `pip`:
 
 ```bash
 pip install snorkel
@@ -60,12 +60,12 @@ For information on installing from source and contributing to Snorkel, see our
 <p>
 
 The following example commands give some more color on installing with `conda`.
-These commands assume that your `conda` installation is Python 3.6,
+These commands assume that your `conda` installation is Python 3.11,
 and that you want to use a virtual environment called `snorkel-env`.
 
 ```bash
 # [OPTIONAL] Activate a virtual environment called "snorkel"
-conda create --yes -n snorkel-env python=3.6
+conda create --yes -n snorkel-env python=3.11
 conda activate snorkel-env
 
 # We specify PyTorch here to ensure compatibility, but it may not be necessary.

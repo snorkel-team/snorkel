@@ -15,25 +15,25 @@ commands:
         type: steps
         default: []
     steps:
-      - run: 
+      - run:
           name: "Install open JDK"
           command: sudo add-apt-repository -y ppa:openjdk-r/ppa
-      - run: 
+      - run:
           name: "Install qq"
           command: sudo apt-get -qq update
-      - run: 
+      - run:
           name: "No install recommends for JDK"
           command: sudo apt-get install -y openjdk-8-jdk --no-install-recommends
-      - run: 
+      - run:
           name: "Run Java Alternatives install for JDK"
           command: sudo update-java-alternatives -s java-1.8.0-openjdk-amd64
       - run:
           name: "Run pip install setup tools and wheel"
           command: pip install -U pip setuptools wheel
-      - run:  
+      - run:
           name: "Install Tox"
-          command: pip install -U tox==3.12.0
-      - run: 
+          command: pip install -U tox==4.11.4
+      - run:
           name: "Install Code Cov"
           command: pip install -U codecov
       - steps: << parameters.after-deps >>
@@ -49,11 +49,11 @@ run_complex: &run_complex
       only: /.*/
 
 jobs:
-  Python38-Unit-Tests: 
+  Python311-Unit-Tests:
     docker:
-      - image: cimg/python:3.8
+      - image: cimg/python:3.11
     environment:
-      TOXENV: coverage,doctest,type,check 
+      TOXENV: coverage,doctest,type,check
       TOX_INSTALL_DIR: .env
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
       PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
@@ -65,39 +65,9 @@ jobs:
           name: "Run Tox"
           command:  tox
 
-  Python37-Unit-Tests: 
+  Python311-Integration-Tests:
     docker:
-      - image: cimg/python:3.7
-    environment:
-      TOXENV: coverage,doctest,type,check 
-      TOX_INSTALL_DIR: .env
-      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
-      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
-
-    steps:
-      - checkout
-      - setup_dependencies
-      - run:
-          name: "Run Tox"
-          command:  tox
-
-  Python36-Unit-Tests: 
-    docker:
-      - image: cimg/python:3.6
-    environment:
-      TOXENV: coverage,doctest,type,check 
-      TOX_INSTALL_DIR: .env
-      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
-
-    steps:
-      - checkout
-      - setup_dependencies
-      - run:
-          name: "Run Tox"
-          command:  tox
-  Python38-Integration-Tests: 
-    docker:
-      - image: cimg/python:3.8
+      - image: cimg/python:3.11
     environment:
       TOXENV: complex,type,check
       TOX_INSTALL_DIR: .env
@@ -108,12 +78,12 @@ jobs:
       - run:
           name: Setup python3
           command: |
-            pyenv global 3.8.13 > /dev/null && activated=0 || activated=1
+            pyenv global 3.11.3 > /dev/null && activated=0 || activated=1
             if [[ $activated -ne 0 ]]; then
               for i in {1..6}; do
-                pyenv install 3.8.13 && break || sleep $((2 ** $i))
+                pyenv install 3.11.3 && break || sleep $((2 ** $i))
               done
-              pyenv global 3.8.13
+              pyenv global 3.11.3
             fi
       - setup_dependencies
       - run:
@@ -123,52 +93,13 @@ jobs:
             export PYTHONUNBUFFERED=1
             tox
 
-  Python37-Integration-Tests: 
-    docker:
-      - image: cimg/python:3.7
-    environment:
-      TOXENV: complex,type,check
-      TOX_INSTALL_DIR: .env
-      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
-
-    steps:
-      - checkout
-      - setup_dependencies
-      - run:
-          name: "Run Tox"
-          no_output_timeout: 60m
-          command: |
-            export PYTHONUNBUFFERED=1
-            tox
-
-  Python36-Integration-Tests: 
-    docker:
-      - image: cimg/python:3.6
-    environment:
-      TOXENV: coverage,complex,spark,doctest,type,check 
-      TOX_INSTALL_DIR: .env
-      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
-
-    steps:
-      - checkout
-      - setup_dependencies
-      - run:
-          name: "Run Tox"
-          command:  tox
-
 workflows:
   version: 2
 
-  Integration-Tests: 
+  Integration-Tests:
     jobs:
-      - Python38-Integration-Tests:
-          <<: *run_complex
-      - Python37-Integration-Tests:
-          <<: *run_complex
-      - Python36-Integration-Tests:
+      - Python311-Integration-Tests:
           <<: *run_complex
   Unit-Tests:
     jobs:
-      - Python37-Unit-Tests
-      - Python36-Unit-Tests
-      - Python38-Unit-Tests
+      - Python311-Unit-Tests

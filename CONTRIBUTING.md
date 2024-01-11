@@ -21,7 +21,7 @@ cd snorkel
 tox --devenv .env
 ```
 
-Running `tox --devenv .env` will install create a virtual environment with Snorkel
+Running `tox --devenv .env` will create a virtual environment with Snorkel
 and all of its dependencies installed in the directory `.env`.
 This can be used in a number of ways, e.g. with `source .env/bin/activate`
 or for [linting in VSCode](https://code.visualstudio.com/docs/python/environments#_where-the-extension-looks-for-environments).
@@ -38,8 +38,7 @@ python3 -c "import snorkel.labeling; print(dir(snorkel.labeling))"
 There are a number of useful tox commands defined:
 
 ```bash
-tox -e py36  # Run unit tests pytest in Python 3.6
-tox -e py37  # Run unit tests pytest in Python 3.7
+tox -e py311  # Run unit tests pytest in Python 3.11
 tox -e coverage  # Compute unit test coverage
 tox -e spark  # Run Spark-based tests (marked with @pytest.mark.spark)
 tox -e complex  # Run more complex, integration tests (marked with @pytest.mark.complex)

@@ -56,7 +56,6 @@ L_EXPECTED = np.array([[0, 1], [1, 0], [0, 0], [0, 1]])
 
 
 def build_lf_matrix() -> None:
-
     logging.info("Getting Spark context")
     sc = SparkContext()
     sc.addPyFile("snorkel-package.zip")

@@ -341,7 +341,7 @@ class Trainer:
         # Set lr scheduler
         lr_scheduler_name = self.config.lr_scheduler
         lr_scheduler_config = self.config.lr_scheduler_config
-        lr_scheduler: Optional[optim.lr_scheduler._LRScheduler]
+        lr_scheduler: Any
 
         if lr_scheduler_name == "constant":
             lr_scheduler = None
@@ -569,7 +569,9 @@ class Trainer:
                 )
             raise
 
-        self.config = TrainerConfig(**saved_state["trainer_config"])
+        self.config = TrainerConfig(
+            *[saved_state["trainer_config"][field] for field in TrainerConfig._fields]
+        )
         logging.info(f"[{self.name}] Trainer config loaded from {trainer_path}")
 
         if model is not None:

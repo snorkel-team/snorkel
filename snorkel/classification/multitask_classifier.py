@@ -82,7 +82,7 @@ class MultitaskClassifier(nn.Module):
         self, tasks: List[Task], name: Optional[str] = None, **kwargs: Any
     ) -> None:
         super().__init__()
-        self.config = ClassifierConfig(**kwargs)
+        self.config = ClassifierConfig(**kwargs)  # type: ignore
         self.name = name or type(self).__name__
 
         # Initiate the model attributes

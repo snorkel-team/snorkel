@@ -61,7 +61,7 @@ class Checkpointer:
     def __init__(
         self, counter_unit: str, evaluation_freq: float, **kwargs: Any
     ) -> None:
-        self.config = CheckpointerConfig(**kwargs)
+        self.config = CheckpointerConfig(**kwargs)  # type: ignore
         self._validate_config()
 
         # Pull out checkpoint settings

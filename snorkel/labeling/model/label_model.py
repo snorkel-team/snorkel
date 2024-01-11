@@ -135,7 +135,7 @@ class LabelModel(nn.Module, BaseLabeler):
 
     def __init__(self, cardinality: int = 2, **kwargs: Any) -> None:
         super().__init__()
-        self.config: LabelModelConfig = LabelModelConfig(**kwargs)
+        self.config: LabelModelConfig = LabelModelConfig(**kwargs)  # type: ignore
         self.cardinality = cardinality
 
         # Confirm that cuda is available if config is using CUDA
@@ -667,7 +667,7 @@ class LabelModel(nn.Module, BaseLabeler):
         # Set lr scheduler
         lr_scheduler_name = self.train_config.lr_scheduler
         lr_scheduler_config = self.train_config.lr_scheduler_config
-        lr_scheduler: Optional[optim.lr_scheduler._LRScheduler]
+        lr_scheduler: Any
 
         if lr_scheduler_name == "constant":
             lr_scheduler = None

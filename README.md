@@ -3,11 +3,10 @@
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/snorkel)
 ![PyPI](https://img.shields.io/pypi/v/snorkel)
 ![Conda](https://img.shields.io/conda/v/conda-forge/snorkel)
-[![CircleCI](https://circleci.com/gh/snorkel-team/snorkel/tree/master.svg?style=svg)](https://circleci.com/gh/snorkel-team/snorkel/tree/master)
+[![CircleCI](https://circleci.com/gh/snorkel-team/snorkel/tree/main.svg?style=svg)](https://circleci.com/gh/snorkel-team/snorkel/tree/main)
 [![docs](https://readthedocs.org/projects/snorkel/badge/?version=master)](https://snorkel.readthedocs.io/en/master)
 [![coverage](https://codecov.io/gh/snorkel-team/snorkel/branch/master/graph/badge.svg)](https://codecov.io/gh/snorkel-team/snorkel/branch/master)
 [![license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/snorkel)
 
 ***Programmatically Build and Manage Training Data***
 

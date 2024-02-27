@@ -34,7 +34,6 @@ Thanks to @bhancock8, @kamelCased, @MLobo1997, and @rsmith49 for contributions!
 * PR #1686: Switch to CircleCI badge
 * PR #1685: Migrating travis -> circle 
 
-
 ### [Contributors]
 
 Thanks to @rsmith49, @zexuan-zhou, @humzaiqbal, @fpoms, @crawlingcub, and @henryre for contributions!

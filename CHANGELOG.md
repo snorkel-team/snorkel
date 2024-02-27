@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### [Deprecated]
 ### [Removed]
 
+
+##  [0.10.0] - 2023-02-27
+### [Breaking Changes]
+
+* PR #1729: Add support for Python 3.11 and remove support for all other minor versions
+
+### [Contributors]
+
+Thanks to @bhancock8, @kamelCased, @MLobo1997, and @rsmith49 for contributions!
+
+
 ## [0.9.9] - 2022-07-28
 ### [Added]
 

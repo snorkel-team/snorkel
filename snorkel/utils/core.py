@@ -1,3 +1,4 @@
+import functools
 import hashlib
 from typing import Dict, List, Optional
 
@@ -174,7 +175,7 @@ def filter_labels(
         if label_array is not None:
             # _get_mask requires not-null input
             masks.append(_get_mask(label_array, filter_values))
-    mask = (np.multiply(*masks) if len(masks) > 1 else masks[0]).squeeze()
+    mask = functools.reduce(np.logical_and, masks).squeeze()
 
     filtered = {}
     for label_name, label_array in label_dict.items():

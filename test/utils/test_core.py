@@ -106,6 +106,18 @@ class UtilsTest(unittest.TestCase):
         np.testing.assert_array_equal(filtered["golds"], np.array([0, 0, 1]))
         np.testing.assert_array_equal(filtered["preds"], np.array([0, 1, 1]))
 
+    def test_filter_labels_three_label_sets(self):
+        golds = np.array([-1, 0, 0, 1, 1])
+        preds = np.array([0, 0, 1, 1, -1])
+        other = np.array([0, -1, 0, 0, 0])
+        filtered = filter_labels(
+            label_dict={"golds": golds, "preds": preds, "other": other},
+            filter_dict={"golds": [-1], "preds": [-1], "other": [-1]},
+        )
+        np.testing.assert_array_equal(filtered["golds"], np.array([0, 1]))
+        np.testing.assert_array_equal(filtered["preds"], np.array([1, 1]))
+        np.testing.assert_array_equal(filtered["other"], np.array([0, 0]))
+
 
 if __name__ == "__main__":
     unittest.main()

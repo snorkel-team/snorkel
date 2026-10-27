@@ -303,6 +303,12 @@ class TestDaskApplier(unittest.TestCase):
         L = applier.apply(df, n_parallel=2)
         np.testing.assert_equal(L, L_EXPECTED)
 
+    def test_lf_applier_pandas_parallel_unsorted_index(self) -> None:
+        df = pd.DataFrame(dict(num=DATA), index=list(reversed(range(len(DATA)))))
+        applier = PandasParallelLFApplier([f, g])
+        L = applier.apply(df, n_parallel=2)
+        np.testing.assert_equal(L, L_EXPECTED)
+
     def test_lf_applier_pandas_parallel_raises(self) -> None:
         df = pd.DataFrame(dict(num=DATA))
         applier = PandasParallelLFApplier([f, g])

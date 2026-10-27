@@ -94,5 +94,7 @@ class PandasParallelLFApplier(DaskLFApplier):
                 "n_parallel should be >= 2. "
                 "For single process Pandas, use PandasLFApplier."
             )
-        df = dd.from_pandas(df, npartitions=n_parallel)
+        # sort=False keeps the input row order, so row i of the label
+        # matrix corresponds to row i of ``df`` even if the index is unsorted
+        df = dd.from_pandas(df, npartitions=n_parallel, sort=False)
         return super().apply(df, scheduler=scheduler, fault_tolerant=fault_tolerant)
